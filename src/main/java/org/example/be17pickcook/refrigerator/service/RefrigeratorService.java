@@ -14,7 +14,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class Rservice {
+public class RefrigeratorService {
 
     private final RefrigeratorRepository refrigeratorRepository;
     private final RefrigeratorItemRepository itemRepository;

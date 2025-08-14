@@ -29,8 +29,15 @@ public class RecipeController {
         return ResponseEntity.status(200).body("레시피 작성 성공");
     }
 
-    @GetMapping("/list")
-    public ResponseEntity list(@AuthenticationPrincipal UserDto.AuthUser authUser) {
-        return null;
+    // 특정 레시피 조회
+    @GetMapping("/{id}")
+    public ResponseEntity<RecipeDto.RecipeResponseDto> getRecipe(@PathVariable Long id) {
+        return ResponseEntity.ok(recipeService.getRecipe(id));
+    }
+
+    // 레시피 목록 조회
+    @GetMapping
+    public ResponseEntity<List<RecipeDto.RecipeResponseDto>> getRecipeList() {
+        return ResponseEntity.ok(recipeService.getRecipeList());
     }
 }

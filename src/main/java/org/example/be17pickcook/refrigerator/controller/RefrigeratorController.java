@@ -2,7 +2,7 @@ package org.example.be17pickcook.refrigerator.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.example.be17pickcook.refrigerator.service.Rservice;
+import org.example.be17pickcook.refrigerator.service.RefrigeratorService;
 import org.example.be17pickcook.refrigerator.model.RefrigeratorItemDto;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,9 +11,9 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/refrigerators")
-public class Rcontroller {
+public class RefrigeratorController {
 
-    private final Rservice service;
+    private final RefrigeratorService service;
 
     @GetMapping("/{refrigeratorId}/items")
     public List<RefrigeratorItemDto.ItemRes> list(@PathVariable Long refrigeratorId) {
