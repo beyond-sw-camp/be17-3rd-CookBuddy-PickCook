@@ -1,4 +1,4 @@
-package org.example.be17pickcook.product.P_Repository;
+package org.example.be17pickcook.product.repository;
 
 import org.example.be17pickcook.product.model.Product;
 import org.springframework.data.jpa.repository.JpaRepository;

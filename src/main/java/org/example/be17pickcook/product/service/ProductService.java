@@ -1,7 +1,7 @@
-package org.example.be17pickcook.product.P_Service;
+package org.example.be17pickcook.product.service;
 
 import lombok.RequiredArgsConstructor;
-import org.example.be17pickcook.product.P_Repository.ProductRepository;
+import org.example.be17pickcook.product.repository.ProductRepository;
 import org.example.be17pickcook.product.model.Product;
 import org.example.be17pickcook.product.model.ProductDto;
 import org.springframework.stereotype.Service;

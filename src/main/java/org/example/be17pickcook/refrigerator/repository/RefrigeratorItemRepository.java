@@ -1,4 +1,4 @@
-package org.example.be17pickcook.refrigerator.R_Repository;
+package org.example.be17pickcook.refrigerator.repository;
 
 import org.example.be17pickcook.refrigerator.model.RefrigeratorItem;
 import org.springframework.data.jpa.repository.JpaRepository;

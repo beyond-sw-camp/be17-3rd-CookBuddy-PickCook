@@ -1,8 +1,8 @@
-package org.example.be17pickcook.refrigerator.R_Service;
+package org.example.be17pickcook.refrigerator.service;
 
 import lombok.RequiredArgsConstructor;
-import org.example.be17pickcook.refrigerator.R_Repository.RefrigeratorItemRepository;
-import org.example.be17pickcook.refrigerator.R_Repository.RefrigeratorRepository;
+import org.example.be17pickcook.refrigerator.repository.RefrigeratorItemRepository;
+import org.example.be17pickcook.refrigerator.repository.RefrigeratorRepository;
 import org.example.be17pickcook.refrigerator.model.Refrigerator;
 import org.example.be17pickcook.refrigerator.model.RefrigeratorItem;
 import org.example.be17pickcook.refrigerator.model.RefrigeratorItemDto;
@@ -14,7 +14,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class RService {
+public class Rservice {
 
     private final RefrigeratorRepository refrigeratorRepository;
     private final RefrigeratorItemRepository itemRepository;

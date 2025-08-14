@@ -1,7 +1,7 @@
-package org.example.be17pickcook.product.P_Controller;
+package org.example.be17pickcook.product.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.example.be17pickcook.product.P_Service.ProductService;
+import org.example.be17pickcook.product.service.ProductService;
 import org.example.be17pickcook.product.model.ProductDto;
 import org.springframework.web.bind.annotation.*;
 
