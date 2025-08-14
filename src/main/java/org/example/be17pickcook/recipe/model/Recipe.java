@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.example.be17pickcook.common.BaseEntity;
 import org.example.be17pickcook.domain.user.model.User;
+import org.example.be17pickcook.likes.model.Likes;
 
 import java.util.ArrayList;
 import java.util.List;

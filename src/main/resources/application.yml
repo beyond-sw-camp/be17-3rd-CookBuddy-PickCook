@@ -50,13 +50,13 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
         format_sql: truespring.application.name=instagram
-    database-platform: org.hibernate.dialect.MariaDBDialect
-    defer-datasource-initialization: true
+#    database-platform: org.hibernate.dialect.MariaDBDialect
+#    defer-datasource-initialization: true
 
   cloud:
     aws:
