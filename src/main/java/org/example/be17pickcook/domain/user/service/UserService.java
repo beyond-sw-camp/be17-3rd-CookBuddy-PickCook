@@ -1,10 +1,10 @@
-package org.example.be17pickcook.user.service;
+package org.example.be17pickcook.domain.user.service;
 
-import org.example.be17pickcook.user.model.EmailVerify;
-import org.example.be17pickcook.user.model.User;
-import org.example.be17pickcook.user.model.UserDto;
-import org.example.be17pickcook.user.repository.EmailVerifyRepository;
-import org.example.be17pickcook.user.repository.UserRepository;
+import org.example.be17pickcook.domain.user.model.EmailVerify;
+import org.example.be17pickcook.domain.user.model.User;
+import org.example.be17pickcook.domain.user.model.UserDto;
+import org.example.be17pickcook.domain.user.repository.EmailVerifyRepository;
+import org.example.be17pickcook.domain.user.repository.UserRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;

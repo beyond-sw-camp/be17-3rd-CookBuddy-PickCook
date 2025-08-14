@@ -1,8 +1,7 @@
 package org.example.be17pickcook.config.oauth;
 
-import org.example.be17pickcook.user.model.UserDto;
+import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.utils.JwtUtil;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;

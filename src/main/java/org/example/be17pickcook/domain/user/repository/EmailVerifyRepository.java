@@ -1,6 +1,6 @@
-package org.example.be17pickcook.user.repository;
+package org.example.be17pickcook.domain.user.repository;
 
-import org.example.be17pickcook.user.model.EmailVerify;
+import org.example.be17pickcook.domain.user.model.EmailVerify;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

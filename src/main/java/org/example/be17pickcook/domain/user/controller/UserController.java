@@ -1,15 +1,15 @@
-package org.example.be17pickcook.user.controller;
+package org.example.be17pickcook.domain.user.controller;
 
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.example.be17pickcook.template.EmailTemplates;
-import org.example.be17pickcook.user.model.UserDto;
-import org.example.be17pickcook.user.repository.UserRepository;
-import org.example.be17pickcook.user.service.UserService;
+import org.example.be17pickcook.domain.user.model.UserDto;
+import org.example.be17pickcook.domain.user.repository.UserRepository;
+import org.example.be17pickcook.domain.user.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.example.be17pickcook.user.model.User;
+import org.example.be17pickcook.domain.user.model.User;
 
 import java.util.HashMap;
 import java.util.Map;

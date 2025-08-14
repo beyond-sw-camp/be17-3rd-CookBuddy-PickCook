@@ -1,6 +1,6 @@
-package org.example.be17pickcook.user.repository;
+package org.example.be17pickcook.domain.user.repository;
 
-import org.example.be17pickcook.user.model.User;
+import org.example.be17pickcook.domain.user.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
