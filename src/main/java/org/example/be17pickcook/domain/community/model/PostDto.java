@@ -4,7 +4,6 @@ import lombok.*;
 import org.example.be17pickcook.domain.user.model.User;
 
 import java.text.SimpleDateFormat;
-import java.util.List;
 
 public class PostDto {
 
@@ -36,9 +35,10 @@ public class PostDto {
         private String title;
         private String content;
         private String authorName;
-        private String createdAt;
+        private Integer likes;
+        private Integer scraps;
 
-        public static Response toResponse(Post post) {
+        public static Response toResponse(Post post, int likes, int scraps) {
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
             return Response.builder()
@@ -46,19 +46,8 @@ public class PostDto {
                     .title(post.getTitle())
                     .content(post.getContent())
                     .authorName(post.getUser().getNickname())
-                    .createdAt(formatter.format(post.getCreatedAt()))
-                    .build();
-        }
-    }
-
-    @Getter
-    @Builder
-    public static class PostList {
-        private List<Response> posts;
-
-        public static PostList from(List<Post> entityList) {
-            return PostList.builder()
-                    .posts(entityList.stream().map(Response::toResponse).toList())
+                    .likes(likes)
+                    .scraps(scraps)
                     .build();
         }
     }
