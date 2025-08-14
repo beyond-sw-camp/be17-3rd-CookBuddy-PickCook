@@ -28,6 +28,11 @@ public enum BaseResponseStatus {
 //    INVALID_USER_EMAIL(false,20010,"이메일 정보가 잘못되었습니다."),
 //    INVALID_EMAIL_RESET_TIMEOUT(false,20011,"이메일 변경 링크가 만료되었습니다. 다시 시도해주세요."),
 
+    /**
+     * 31000 : 커뮤니티 오류
+     */
+    POST_NOT_FOUND(false, 31001, "존재하지 않는 게시글입니다."),
+
 
 
     /**

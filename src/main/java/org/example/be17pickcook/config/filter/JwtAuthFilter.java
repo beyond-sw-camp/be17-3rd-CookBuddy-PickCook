@@ -1,6 +1,6 @@
 package org.example.be17pickcook.config.filter;
 
-import org.example.be17pickcook.user.model.UserDto;
+import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.utils.JwtUtil;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;

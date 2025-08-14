@@ -1,8 +1,8 @@
-package org.example.be17pickcook.user.service;
+package org.example.be17pickcook.domain.user.service;
 
-import org.example.be17pickcook.user.model.User;
-import org.example.be17pickcook.user.model.UserDto;
-import org.example.be17pickcook.user.repository.UserRepository;
+import org.example.be17pickcook.domain.user.model.User;
+import org.example.be17pickcook.domain.user.model.UserDto;
+import org.example.be17pickcook.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;

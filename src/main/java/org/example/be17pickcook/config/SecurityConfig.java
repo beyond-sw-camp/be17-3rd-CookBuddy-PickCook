@@ -4,7 +4,7 @@ import org.example.be17pickcook.config.filter.JwtAuthFilter;
 import org.example.be17pickcook.config.filter.LoginFilter;
 import lombok.RequiredArgsConstructor;
 import org.example.be17pickcook.config.oauth.OAuth2AuthenticationSuccessHandler;
-import org.example.be17pickcook.user.service.OAuth2UserSerivce;
+import org.example.be17pickcook.domain.user.service.OAuth2UserSerivce;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -31,7 +31,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowCredentials(true);
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:8080"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
 

@@ -1,4 +1,4 @@
-package org.example.be17pickcook.user.model;
+package org.example.be17pickcook.domain.user.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
