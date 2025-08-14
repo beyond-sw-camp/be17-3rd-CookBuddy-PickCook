@@ -2,7 +2,9 @@ package org.example.be17pickcook.domain.user.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.example.be17pickcook.domain.likes.model.Likes;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -25,6 +27,9 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     List<EmailVerify> emailVerifyList;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Likes> likes = new ArrayList<>();
 
     public void userVerify() {
         this.enabled = true;
