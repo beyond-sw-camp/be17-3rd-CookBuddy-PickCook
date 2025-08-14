@@ -4,7 +4,8 @@ import org.example.be17pickcook.config.filter.JwtAuthFilter;
 import org.example.be17pickcook.config.filter.LoginFilter;
 import lombok.RequiredArgsConstructor;
 import org.example.be17pickcook.config.oauth.OAuth2AuthenticationSuccessHandler;
-import org.example.be17pickcook.domain.user.service.OAuth2UserSerivce;
+import org.example.be17pickcook.domain.user.mapper.UserMapper;
+import org.example.be17pickcook.domain.user.service.OAuth2UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -24,8 +25,9 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
     private final AuthenticationConfiguration configuration;
-    private final OAuth2UserSerivce oAuth2UserSerivce;
+    private final OAuth2UserService oAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+    private final UserMapper userMapper;
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -50,7 +52,7 @@ public class SecurityConfig {
         http.oauth2Login(config -> {
                     config.userInfoEndpoint(
                             endpoint ->
-                                    endpoint.userService(oAuth2UserSerivce)
+                                    endpoint.userService(oAuth2UserService)
                     );
                     config.successHandler(oAuth2AuthenticationSuccessHandler);
                 }
@@ -72,7 +74,9 @@ public class SecurityConfig {
         http.formLogin(AbstractHttpConfigurer::disable);
 
         http.addFilterBefore(new JwtAuthFilter(), UsernamePasswordAuthenticationFilter.class);
-        http.addFilterAt(new LoginFilter(configuration.getAuthenticationManager()), UsernamePasswordAuthenticationFilter.class);
+
+        LoginFilter loginFilter = new LoginFilter(configuration.getAuthenticationManager(), userMapper);
+        http.addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

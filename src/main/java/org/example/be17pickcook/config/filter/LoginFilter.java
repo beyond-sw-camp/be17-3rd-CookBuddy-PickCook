@@ -1,5 +1,6 @@
 package org.example.be17pickcook.config.filter;
 
+import org.example.be17pickcook.domain.user.mapper.UserMapper;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.utils.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,9 +20,11 @@ import java.io.IOException;
 //@RequiredArgsConstructor
 public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     private final AuthenticationManager authenticationManager;
+    private final UserMapper userMapper;
 
-    public LoginFilter(AuthenticationManager authenticationManager) {
+    public LoginFilter(AuthenticationManager authenticationManager, UserMapper userMapper) {
         this.authenticationManager = authenticationManager;
+        this.userMapper = userMapper;
         setFilterProcessesUrl("/login"); // 경로 설정
     }
 
@@ -55,14 +58,15 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
         String jwt = JwtUtil.generateToken(authUser.getEmail(), authUser.getIdx());
 
-        if(jwt != null) {
+        if (jwt != null) {
             Cookie cookie = new Cookie("PICKCOOK_AT", jwt);
             cookie.setHttpOnly(true);
             cookie.setPath("/");
             response.addCookie(cookie);
-            response.getWriter().write(new ObjectMapper().writeValueAsString(UserDto.LoginRes.from(authUser)));
+
+            UserDto.Response responseDto = userMapper.authUserToResponse(authUser);
+            response.getWriter().write(new ObjectMapper().writeValueAsString(responseDto));
         }
-
-
     }
 }
+

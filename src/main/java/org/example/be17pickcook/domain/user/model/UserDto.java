@@ -21,36 +21,10 @@ public class UserDto {
 
     @Getter
     @Builder
-    public static class LoginRes {
+    public static class Response {
         private Integer idx;
         private String email;
         private String nickname;
-        public static LoginRes from(AuthUser authUser) {
-            LoginRes dto  = LoginRes.builder()
-                    .idx(authUser.getIdx())
-                    .email(authUser.getEmail())
-                    .nickname(authUser.getNickname())
-                    .build();
-
-            return dto;
-        }
-    }
-    @Getter
-    @Builder
-    public static class UserRes {
-        private Integer idx;
-        private String email;
-        private String nickname;
-
-        public static UserRes from(User entity) {
-            UserRes dto  = UserRes.builder()
-                    .idx(entity.getIdx())
-                    .email(entity.getEmail())
-                    .nickname(entity.getNickname())
-                    .build();
-
-            return dto;
-        }
     }
 
     @Getter
@@ -58,16 +32,8 @@ public class UserDto {
         private String email;
         private String nickname;
         private String password;
-        public User toEntity() {
-            User entity = User.builder()
-                    .email(email)
-                    .nickname(nickname)
-                    .password(password)
-                    .enabled(false)
-                    .build();
-            return entity;
-        }
     }
+
     @Getter
     @Builder
     public static class AuthUser implements UserDetails, OAuth2User {
@@ -86,16 +52,6 @@ public class UserDto {
         @Override
         public boolean isEnabled() {
             return enabled;
-        }
-
-        public static AuthUser from(User entity) {
-           return UserDto.AuthUser.builder()
-                    .idx(entity.getIdx())
-                    .email(entity.getEmail())
-                    .password(entity.getPassword())
-                    .nickname(entity.getNickname())
-                    .enabled(entity.getEnabled())
-                    .build();
         }
 
         @Override

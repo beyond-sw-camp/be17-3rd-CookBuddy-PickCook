@@ -17,15 +17,16 @@ public class User {
     private String email;
     private String password;
     private String nickname;
-    private String ProfileImage;
-    private String role;
-    private Boolean enabled;
+    private String profileImage;
+    @Builder.Default
+    private String role = "USER";
+    @Builder.Default
+    private Boolean enabled = false;
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     List<EmailVerify> emailVerifyList;
 
     public void userVerify() {
         this.enabled = true;
     }
-
 }
