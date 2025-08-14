@@ -1,0 +1,123 @@
+package org.example.be17pickcook.user.model;
+
+
+import lombok.Builder;
+import lombok.Getter;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
+public class UserDto {
+    @Getter
+    public static class Login {
+        private String email;
+        private String password;
+    }
+
+    @Getter
+    @Builder
+    public static class LoginRes {
+        private Integer idx;
+        private String email;
+        private String nickname;
+        public static LoginRes from(AuthUser authUser) {
+            LoginRes dto  = LoginRes.builder()
+                    .idx(authUser.getIdx())
+                    .email(authUser.getEmail())
+                    .nickname(authUser.getNickname())
+                    .build();
+
+            return dto;
+        }
+    }
+    @Getter
+    @Builder
+    public static class UserRes {
+        private Integer idx;
+        private String email;
+        private String nickname;
+
+        public static UserRes from(User entity) {
+            UserRes dto  = UserRes.builder()
+                    .idx(entity.getIdx())
+                    .email(entity.getEmail())
+                    .nickname(entity.getNickname())
+                    .build();
+
+            return dto;
+        }
+    }
+
+    @Getter
+    public static class Register {
+        private String email;
+        private String nickname;
+        private String password;
+        public User toEntity() {
+            User entity = User.builder()
+                    .email(email)
+                    .nickname(nickname)
+                    .password(password)
+                    .enabled(false)
+                    .build();
+            return entity;
+        }
+    }
+    @Getter
+    @Builder
+    public static class AuthUser implements UserDetails, OAuth2User {
+        private Integer idx;
+        private String email;
+        private String password;
+        private String nickname;
+        private Boolean enabled;
+        private Map<String, Object> attributes;
+
+        @Override
+        public Map<String, Object> getAttributes() {
+            return attributes;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public static AuthUser from(User entity) {
+           return UserDto.AuthUser.builder()
+                    .idx(entity.getIdx())
+                    .email(entity.getEmail())
+                    .password(entity.getPassword())
+                    .nickname(entity.getNickname())
+                    .enabled(entity.getEnabled())
+                    .build();
+        }
+
+        @Override
+        public Collection<? extends GrantedAuthority> getAuthorities() {
+            return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        }
+
+        @Override
+        public String getUsername() {
+            return email;
+        }
+
+        public String getPassword() {
+            return "{noop}"+password;
+        }
+
+
+        @Override
+        public String getName() {
+            return nickname;
+        }
+    }
+
+
+}
