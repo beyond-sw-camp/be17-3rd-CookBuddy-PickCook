@@ -24,6 +24,8 @@ public class RecipeService {
     private static final String DEFAULT_LARGE_IMAGE = "https://example.com/default-large.jpg";
     private static final String DEFAULT_STEP_IMAGE  = "https://example.com/default-step.jpg";
 
+
+    // 레시피 등록
     @Transactional
     public void register(UserDto.AuthUser authUser,
                          RecipeDto.RecipeRequestDto dto,
@@ -69,6 +71,24 @@ public class RecipeService {
         }
 
         recipeRepository.save(recipe);
+    }
+
+
+
+    // 특정 레시피 조회
+    public RecipeDto.RecipeResponseDto getRecipe(Long recipeId) {
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 레시피가 존재하지 않습니다. id=" + recipeId));
+
+        return RecipeDto.RecipeResponseDto.fromEntity(recipe);
+    }
+
+    // 레시피 전체 목록 조회
+    public List<RecipeDto.RecipeResponseDto> getRecipeList() {
+        List<Recipe> recipes = recipeRepository.findAll();
+        return recipes.stream()
+                .map(RecipeDto.RecipeResponseDto::fromEntity)
+                .toList();
     }
 
 }
