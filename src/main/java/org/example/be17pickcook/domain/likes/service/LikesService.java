@@ -33,4 +33,14 @@ public class LikesService {
             likesRepository.save(likes);
         }
     }
+
+    // 좋아요 개수 가져오기
+    public int getLikesCount(LikeTargetType targetType, Long targetId) {
+        return likesRepository.countByTargetTypeAndTargetId(targetType, targetId);
+    }
+
+    // 사용자가 좋아요 눌렀는지 확인
+    public boolean hasUserLiked(Integer userIdx, LikeTargetType targetType, Long targetId) {
+        return likesRepository.existsByUserIdxAndTargetTypeAndTargetId(userIdx, targetType, targetId);
+    }
 }

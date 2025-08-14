@@ -10,4 +10,5 @@ public interface LikesRepository extends JpaRepository<Likes, Long> {
     Optional<Likes> findByUserIdxAndTargetTypeAndTargetId(Integer userIdx, LikeTargetType targetType, Long targetId);
     Integer countByTargetTypeAndTargetId(LikeTargetType targetType, Long targetId);
     void deleteByUserIdxAndTargetTypeAndTargetId(Integer userIdx, LikeTargetType targetType, Long targetId);
+    boolean existsByUserIdxAndTargetTypeAndTargetId(Integer userIdx, LikeTargetType targetType, Long targetId);
 }
