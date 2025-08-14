@@ -26,7 +26,7 @@ public class CommentController {
     // 댓글 작성
     @PostMapping
     public BaseResponse<CommentDto.Response> createComment(@RequestBody CommentDto.Request commentDto, @AuthenticationPrincipal UserDto.AuthUser authUser) {
-        CommentDto.Response saved = commentService.createComment(commentDto, authUser);
+        CommentDto.Response saved = commentService.createComment(commentDto, authUser.getIdx());
         return BaseResponse.success(saved);
     }
 
