@@ -2,6 +2,9 @@ package org.example.be17pickcook.domain.recipe.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.example.be17pickcook.domain.likes.model.LikeTargetType;
+import org.example.be17pickcook.domain.likes.repository.LikesRepository;
+import org.example.be17pickcook.domain.likes.service.LikesService;
 import org.example.be17pickcook.domain.recipe.model.Recipe;
 import org.example.be17pickcook.domain.recipe.model.RecipeDto;
 import org.example.be17pickcook.domain.recipe.model.RecipeIngredient;
@@ -21,11 +24,13 @@ import java.util.List;
 public class RecipeService {
     private final RecipeRepository recipeRepository;
     private final S3UploadService s3UploadService;
+    private final LikesService likesService;
 
     // 기본 이미지
     private static final String DEFAULT_SMALL_IMAGE = "https://example.com/default-small.jpg";
     private static final String DEFAULT_LARGE_IMAGE = "https://example.com/default-large.jpg";
     private static final String DEFAULT_STEP_IMAGE  = "https://example.com/default-step.jpg";
+    private final LikesRepository likesRepository;
 
 
     // 레시피 등록
@@ -78,20 +83,34 @@ public class RecipeService {
 
 
 
-    // 특정 레시피 조회
-    public RecipeDto.RecipeResponseDto getRecipe(Long recipeId) {
+    // 특정 레시피 조회 + 좋아요 정보 포함
+    public RecipeDto.RecipeResponseDto getRecipe(Long recipeId, Integer userIdx) {
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 레시피가 존재하지 않습니다. id=" + recipeId));
 
-        return RecipeDto.RecipeResponseDto.fromEntity(recipe);
+        Integer likeCount = likesService.getLikesCount(LikeTargetType.RECIPE, recipeId);
+        Boolean likedByUser = userIdx != null &&
+                likesService.hasUserLiked(userIdx, LikeTargetType.RECIPE, recipeId);
+
+        RecipeDto.RecipeResponseDto dto = RecipeDto.RecipeResponseDto.fromEntity(recipe);
+        dto.setLikeInfo(likeCount, likedByUser);
+
+        return dto;
     }
 
-    // 레시피 전체 목록 조회
-    public List<RecipeDto.RecipeResponseDto> getRecipeList() {
+    // 레시피 전체 목록 조회 + 좋아요 정보 포함
+    public List<RecipeDto.RecipeResponseDto> getRecipeList(Integer userIdx) {
         List<Recipe> recipes = recipeRepository.findAll();
-        return recipes.stream()
-                .map(RecipeDto.RecipeResponseDto::fromEntity)
-                .toList();
+
+        return recipes.stream().map(recipe -> {
+            Integer likeCount = likesService.getLikesCount(LikeTargetType.RECIPE, recipe.getIdx());
+            Boolean likedByUser = userIdx != null &&
+                    likesService.hasUserLiked(userIdx, LikeTargetType.RECIPE, recipe.getIdx());
+
+            RecipeDto.RecipeResponseDto dto = RecipeDto.RecipeResponseDto.fromEntity(recipe);
+            dto.setLikeInfo(likeCount, likedByUser);
+            return dto;
+        }).toList();
     }
 
 }
