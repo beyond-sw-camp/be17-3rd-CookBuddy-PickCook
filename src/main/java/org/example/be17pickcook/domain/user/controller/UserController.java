@@ -2,6 +2,8 @@ package org.example.be17pickcook.domain.user.controller;
 
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
+import org.example.be17pickcook.common.BaseResponse;
+import org.example.be17pickcook.common.BaseResponseStatus;
 import org.example.be17pickcook.domain.user.mapper.UserMapper;
 import org.example.be17pickcook.template.EmailTemplates;
 import org.example.be17pickcook.domain.user.model.UserDto;
@@ -18,23 +20,24 @@ import java.util.Map;
 @RequiredArgsConstructor
 @RequestMapping("/api/user")
 public class UserController {
+
     private final UserService userService;
     private final EmailTemplates emailTemplates;
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
     @PostMapping("/signup")
-    public ResponseEntity<String> signup(@RequestBody UserDto.Register dto) throws MessagingException {
+    public ResponseEntity<BaseResponse<Void>> signup(@RequestBody UserDto.Register dto) {
         try {
             userService.signup(dto);
-
-            return ResponseEntity.status(200).body("회원가입 성공");
-
-        } catch (RuntimeException e) {
-
-            return ResponseEntity.status(400).body(e.getMessage());
+            return ResponseEntity.ok(BaseResponse.success(null));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(BaseResponse.error(BaseResponseStatus.DUPLICATE_EMAIL));
+        } catch (MessagingException e) {
+            return ResponseEntity.internalServerError()
+                    .body(BaseResponse.error(BaseResponseStatus.SERVER_ERROR));
         }
-
     }
 
     @GetMapping("/verify")
@@ -45,29 +48,42 @@ public class UserController {
                     .header("Content-Type", "text/html; charset=UTF-8")
                     .body(emailTemplates.getEmailVerificationCompletePage());
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("인증 실패: " + e.getMessage());
+            String errorHtml = "<h2>인증 실패: " + e.getMessage() + "</h2>" +
+                    "<a href='http://localhost:5173/signup'>회원가입 다시하기</a>";
+            return ResponseEntity.badRequest()
+                    .header("Content-Type", "text/html; charset=UTF-8")
+                    .body(errorHtml);
         }
     }
 
     @GetMapping("/me")
-    public ResponseEntity<UserDto.Response> getCurrentUser(@AuthenticationPrincipal UserDto.AuthUser authUser) {
+    public ResponseEntity<BaseResponse<UserDto.Response>> getCurrentUser(@AuthenticationPrincipal UserDto.AuthUser authUser) {
         if (authUser == null) {
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(401)
+                    .body(BaseResponse.error(BaseResponseStatus.UNAUTHORIZED));
         }
 
-        // MapStruct 매퍼 사용 (authUser → Response 변환)
         UserDto.Response userResponse = userMapper.authUserToResponse(authUser);
-        return ResponseEntity.ok(userResponse);
+        return ResponseEntity.ok(BaseResponse.success(userResponse));
     }
 
     @GetMapping("/check-email")
-    public ResponseEntity<Map<String, Object>> checkEmailDuplicate(@RequestParam String email) {
-        Map<String, Object> response = new HashMap<>();
+    public ResponseEntity<BaseResponse<Map<String, Object>>> checkEmailDuplicate(@RequestParam String email) {
         boolean exists = userRepository.findByEmail(email).isPresent();
 
-        response.put("available", !exists);
-        response.put("message", exists ? "이미 사용 중인 이메일입니다." : "사용 가능한 이메일입니다.");
+        Map<String, Object> data = new HashMap<>();
+        data.put("available", !exists);
 
-        return ResponseEntity.ok(response);
+        if (exists) {
+            return ResponseEntity.ok(
+                    new BaseResponse<>(false, BaseResponseStatus.EMAIL_NOT_AVAILABLE.getCode(),
+                            BaseResponseStatus.EMAIL_NOT_AVAILABLE.getMessage(), data)
+            );
+        } else {
+            return ResponseEntity.ok(
+                    new BaseResponse<>(true, BaseResponseStatus.EMAIL_AVAILABLE.getCode(),
+                            BaseResponseStatus.EMAIL_AVAILABLE.getMessage(), data)
+            );
+        }
     }
 }

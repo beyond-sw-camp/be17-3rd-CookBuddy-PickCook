@@ -1,5 +1,7 @@
 package org.example.be17pickcook.config.filter;
 
+import org.example.be17pickcook.common.BaseResponse;
+import org.example.be17pickcook.common.BaseResponseStatus;
 import org.example.be17pickcook.domain.user.mapper.UserMapper;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.utils.JwtUtil;
@@ -16,6 +18,8 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 //@RequiredArgsConstructor
 public class LoginFilter extends UsernamePasswordAuthenticationFilter {
@@ -64,9 +68,32 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
             cookie.setPath("/");
             response.addCookie(cookie);
 
+            // BaseResponse 형식으로 JSON 응답 (리다이렉트 대신)
             UserDto.Response responseDto = userMapper.authUserToResponse(authUser);
-            response.getWriter().write(new ObjectMapper().writeValueAsString(responseDto));
+            BaseResponse<UserDto.Response> baseResponse = new BaseResponse<>(
+                    true,
+                    BaseResponseStatus.LOGIN_SUCCESS.getCode(),
+                    BaseResponseStatus.LOGIN_SUCCESS.getMessage(),
+                    responseDto
+            );
+
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write(new ObjectMapper().writeValueAsString(baseResponse));
         }
+    }
+
+    @Override
+    protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws IOException, ServletException {
+        System.out.println("LoginFilter 실패 로직.");
+
+        // BaseResponse 형식으로 에러 응답
+        BaseResponse<Void> errorResponse = BaseResponse.error(BaseResponseStatus.INVALID_USER_INFO);
+
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write(new ObjectMapper().writeValueAsString(errorResponse));
     }
 }
 

@@ -12,6 +12,12 @@ public enum BaseResponseStatus {
      */
     SUCCESS(true, 20000, "요청에 성공하였습니다."),
 
+    // User 관련 성공 응답 추가
+    SIGNUP_SUCCESS(true, 20100, "회원가입이 완료되었습니다. 이메일을 확인해주세요."),
+    LOGIN_SUCCESS(true, 20101, "로그인에 성공하였습니다."),
+    EMAIL_VERIFY_SUCCESS(true, 20102, "이메일 인증이 완료되었습니다."),
+    EMAIL_AVAILABLE(true, 20103, "사용 가능한 이메일입니다."),
+
 
     /**
      * 30000 : Request 오류, Validation 오류
@@ -21,12 +27,15 @@ public enum BaseResponseStatus {
     EXPIRED_JWT(false, 20001, "JWT 토큰이 만료되었습니다."),
     INVALID_JWT(false, 20002, "유효하지 않은 JWT입니다."),
     INVALID_USER_ROLE(false,20003,"권한이 없는 유저의 접근입니다."),
-//    INVALID_USER_INFO(false,20004,"이메일 또는 비밀번호를 확인해주세요."),
-//    INVALID_USER_DISABLED(false,20005,"이메일 인증이 필요합니다. 이메일을 확인해주세요."),
-//    DUPLICATE_USER_EMAIL(false,20006,"중복된 이메일입니다. 다른 이메일을 사용해주세요."),
-//    INVALID_USER_PASSWORD(false,20009,"비밀번호가 일치하지 않습니다."),
-//    INVALID_USER_EMAIL(false,20010,"이메일 정보가 잘못되었습니다."),
-//    INVALID_EMAIL_RESET_TIMEOUT(false,20011,"이메일 변경 링크가 만료되었습니다. 다시 시도해주세요."),
+
+    // User 관련 오류 응답 추가
+    DUPLICATE_EMAIL(false, 30100, "이미 사용 중인 이메일입니다."),
+    EMAIL_NOT_AVAILABLE(false, 30101, "이미 사용 중인 이메일입니다."),
+    INVALID_EMAIL_TOKEN(false, 30102, "유효하지 않은 인증 코드입니다."),
+    EXPIRED_EMAIL_TOKEN(false, 30103, "인증 코드가 만료되었습니다."),
+    USER_NOT_FOUND(false, 30104, "사용자를 찾을 수 없습니다."),
+    UNAUTHORIZED(false, 30105, "인증이 필요합니다."),
+    INVALID_USER_INFO(false, 30106, "이메일 또는 비밀번호가 올바르지 않습니다."),
 
     /**
      * 31000 : 커뮤니티 오류
