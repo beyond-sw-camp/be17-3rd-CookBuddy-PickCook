@@ -19,7 +19,7 @@ import java.io.IOException;
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-        System.out.println("LoginFilter 성공 로직.");
+        System.out.println("=== OAuth2 로그인 성공 ===");
         UserDto.AuthUser authUser = (UserDto.AuthUser) authentication.getPrincipal();
 
         String jwt = JwtUtil.generateToken(authUser.getEmail(), authUser.getIdx());
@@ -29,7 +29,14 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             cookie.setHttpOnly(true);
             cookie.setPath("/");
             response.addCookie(cookie);
-            response.getWriter().write(new ObjectMapper().writeValueAsString(UserDto.LoginRes.from(authUser)));
+            System.out.println("OAuth2 쿠키 설정 완료");
+
+            // 프론트엔드 메인 페이지로 리다이렉트
+            response.sendRedirect("http://localhost:5173/?loginSuccess=true");
+            System.out.println("OAuth2 리다이렉트 완료");
+        } else {
+            System.out.println("JWT 생성 실패");
+            response.sendRedirect("http://localhost:5173/login?error=true");
         }
     }
 }
