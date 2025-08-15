@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Getter
+@Setter
 @Entity
 @Builder
 @NoArgsConstructor
@@ -19,6 +20,8 @@ public class User {
     private String email;
     private String password;
     private String nickname;
+    private String name;         // 추가
+    private String phone;
     private String profileImage;
     @Builder.Default
     private String role = "USER";

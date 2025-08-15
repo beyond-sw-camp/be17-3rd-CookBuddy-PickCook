@@ -10,6 +10,7 @@ public enum BaseResponseStatus {
     /**
      * 20000 : 요청 성공
      */
+    // 성공 응답
     SUCCESS(true, 20000, "요청에 성공하였습니다."),
     LOGIN_SUCCESS(true, 20101, "로그인에 성공하였습니다."),
     LOGOUT_SUCCESS(true, 20102, "로그아웃이 완료되었습니다."), // 추가
@@ -17,11 +18,15 @@ public enum BaseResponseStatus {
     EMAIL_VERIFY_SUCCESS(true, 20102, "이메일 인증이 완료되었습니다."),
     EMAIL_AVAILABLE(true, 20103, "사용 가능한 이메일입니다."),
 
+    // 추가: 닉네임 관련 성공 응답
+    NICKNAME_AVAILABLE(true, 20104, "사용 가능한 닉네임입니다."),
+    PROFILE_UPDATE_SUCCESS(true, 20105, "회원정보가 성공적으로 수정되었습니다."),
+
 
     /**
      * 30000 : Request 오류, Validation 오류
      */
-    // Common
+    // 요청 오류
     REQUEST_ERROR(false, 30001, "입력값을 확인해주세요."),
     EXPIRED_JWT(false, 20001, "JWT 토큰이 만료되었습니다."),
     INVALID_JWT(false, 20002, "유효하지 않은 JWT입니다."),
@@ -36,6 +41,11 @@ public enum BaseResponseStatus {
     UNAUTHORIZED(false, 30105, "인증이 필요합니다."),
     INVALID_USER_INFO(false, 30106, "이메일 또는 비밀번호가 올바르지 않습니다."),
 
+
+    // 추가: 닉네임 관련 오류
+    NICKNAME_NOT_AVAILABLE(false, 30107, "이미 사용 중인 닉네임입니다."),
+    INVALID_NICKNAME_LENGTH(false, 30108, "닉네임은 2자 이상 20자 이하로 입력해주세요."),
+
     /**
      * 31000 : 커뮤니티 오류
      */
@@ -43,10 +53,11 @@ public enum BaseResponseStatus {
 
 
 
+
     /**
      * 40000 : Response 오류
      */
-    // Common
+    // 응답 오류
     RESPONSE_ERROR(false, 40001, "값을 불러오는데 실패하였습니다."),
     RESPONSE_NULL_ERROR(false,40002,"[NULL]입력된 IDX 값로 접근한 DB의 유효한 ROW가 존재하지 않습니다."),
 

@@ -60,7 +60,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         System.out.println("LoginFilter 성공 로직.");
         UserDto.AuthUser authUser = (UserDto.AuthUser) authResult.getPrincipal();
 
-        String jwt = JwtUtil.generateToken(authUser.getEmail(), authUser.getIdx());
+        String jwt = JwtUtil.generateToken(authUser.getEmail(), authUser.getIdx(), authUser.getNickname());
 
         if (jwt != null) {
             Cookie cookie = new Cookie("PICKCOOK_AT", jwt);

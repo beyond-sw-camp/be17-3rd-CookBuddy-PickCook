@@ -1,5 +1,6 @@
 package org.example.be17pickcook.domain.user.controller;
 
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -7,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.be17pickcook.common.BaseResponse;
 import org.example.be17pickcook.common.BaseResponseStatus;
 import org.example.be17pickcook.domain.user.mapper.UserMapper;
+import org.example.be17pickcook.domain.user.model.User;
 import org.example.be17pickcook.template.EmailTemplates;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.domain.user.repository.UserRepository;
@@ -31,6 +33,60 @@ public class UserController {
     private final EmailTemplates emailTemplates;
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+
+    @Operation(
+            summary = "사용자 정보 수정",
+            description = "현재 로그인된 사용자의 프로필 정보를 수정합니다.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "프로필 수정 성공",
+                            content = @Content(schema = @Schema(implementation = UserDto.Response.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "잘못된 요청",
+                            content = @Content(schema = @Schema(implementation = BaseResponse.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "인증되지 않은 사용자",
+                            content = @Content(schema = @Schema(implementation = BaseResponse.class))
+                    )
+            }
+    )
+
+    @PatchMapping("/profile")
+    public ResponseEntity<BaseResponse<UserDto.Response>> updateProfile(
+            @AuthenticationPrincipal UserDto.AuthUser authUser,
+            @RequestBody UserDto.UpdateProfile dto
+    ) {
+        if (authUser == null) {
+            return ResponseEntity.status(401)
+                    .body(BaseResponse.error(BaseResponseStatus.UNAUTHORIZED));
+        }
+
+        try {
+            // UserService에서 프로필 업데이트 처리
+            UserDto.Response updatedUser = userService.updateProfile(authUser.getIdx(), dto);
+
+            // 성공 응답에 새로운 상태코드 사용
+            return ResponseEntity.ok(
+                    new BaseResponse<>(true, BaseResponseStatus.PROFILE_UPDATE_SUCCESS.getCode(),
+                            BaseResponseStatus.PROFILE_UPDATE_SUCCESS.getMessage(), updatedUser)
+            );
+
+        } catch (IllegalArgumentException e) {
+            // 닉네임 중복이나 유효성 검사 실패 시
+            return ResponseEntity.badRequest()
+                    .body(new BaseResponse<>(false, BaseResponseStatus.REQUEST_ERROR.getCode(),
+                            e.getMessage(), null));
+        } catch (Exception e) {
+            System.out.println("프로필 수정 중 예외 발생: " + e.getMessage());
+            return ResponseEntity.internalServerError()
+                    .body(BaseResponse.error(BaseResponseStatus.SERVER_ERROR));
+        }
+    }
 
     @Operation(
             summary = "사용자 로그아웃",
@@ -153,7 +209,13 @@ public class UserController {
                     .body(BaseResponse.error(BaseResponseStatus.UNAUTHORIZED));
         }
 
-        UserDto.Response userResponse = userMapper.authUserToResponse(authUser);
+        // 수정: AuthUser 대신 데이터베이스에서 직접 조회한 최신 데이터 사용
+        User userFromDB = userRepository.findById(authUser.getIdx())
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        // 수정: 데이터베이스 Entity를 직접 Response로 매핑
+        UserDto.Response userResponse = userMapper.entityToResponse(userFromDB);
+
         return ResponseEntity.ok(BaseResponse.success(userResponse));
     }
 
@@ -184,6 +246,82 @@ public class UserController {
             return ResponseEntity.ok(
                     new BaseResponse<>(true, BaseResponseStatus.EMAIL_AVAILABLE.getCode(),
                             BaseResponseStatus.EMAIL_AVAILABLE.getMessage(), data)
+            );
+        }
+    }
+
+    @Operation(
+            summary = "닉네임 중복 확인",
+            description = "회원정보 수정 시 입력한 닉네임이 이미 사용 중인지 확인합니다. 현재 사용자의 기존 닉네임은 사용 가능으로 처리됩니다.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "닉네임 중복 확인 완료",
+                            content = @Content(schema = @Schema(implementation = BaseResponse.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "인증되지 않은 사용자",
+                            content = @Content(schema = @Schema(implementation = BaseResponse.class))
+                    )
+            }
+    )
+    @GetMapping("/check-nickname")
+    public ResponseEntity<BaseResponse<Map<String, Object>>> checkNicknameDuplicate(
+            @Parameter(description = "확인할 닉네임", required = true)
+            @RequestParam String nickname,
+            @AuthenticationPrincipal UserDto.AuthUser authUser
+    ) {
+
+        // 닉네임 유효성 검사 추가
+        if (nickname == null || nickname.trim().isEmpty()) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("available", false);
+            return ResponseEntity.badRequest().body(
+                    new BaseResponse<>(false, BaseResponseStatus.REQUEST_ERROR.getCode(),
+                            "닉네임을 입력해주세요.", data)
+            );
+        }
+
+        // 닉네임 길이 검사 추가
+        String trimmedNickname = nickname.trim();
+        if (trimmedNickname.length() < 2 || trimmedNickname.length() > 20) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("available", false);
+            return ResponseEntity.badRequest().body(
+                    new BaseResponse<>(false, BaseResponseStatus.INVALID_NICKNAME_LENGTH.getCode(),
+                            BaseResponseStatus.INVALID_NICKNAME_LENGTH.getMessage(), data)
+            );
+        }
+
+        // 핵심: 현재 사용자의 기존 닉네임과 같다면 사용 가능
+        if (authUser != null && trimmedNickname.equals(authUser.getNickname())) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("available", true);
+
+            System.out.println("기존 닉네임과 동일 - 사용 가능");
+
+            return ResponseEntity.ok(
+                    new BaseResponse<>(true, BaseResponseStatus.NICKNAME_AVAILABLE.getCode(),
+                            BaseResponseStatus.NICKNAME_AVAILABLE.getMessage(), data)
+            );
+        }
+
+        // 다른 사용자가 이미 사용 중인지 확인
+        boolean exists = userRepository.findByNickname(trimmedNickname).isPresent();
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("available", !exists);
+
+        if (exists) {
+            return ResponseEntity.ok(
+                    new BaseResponse<>(false, BaseResponseStatus.NICKNAME_NOT_AVAILABLE.getCode(),
+                            BaseResponseStatus.NICKNAME_NOT_AVAILABLE.getMessage(), data)
+            );
+        } else {
+            return ResponseEntity.ok(
+                    new BaseResponse<>(true, BaseResponseStatus.NICKNAME_AVAILABLE.getCode(),
+                            BaseResponseStatus.NICKNAME_AVAILABLE.getMessage(), data)
             );
         }
     }

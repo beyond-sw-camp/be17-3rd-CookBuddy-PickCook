@@ -59,14 +59,16 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             try {
                 Claims claims = JwtUtil.getClaims(jwt);
                 if (claims != null) {
-                    // 사용자 정보 조회 및 인증 설정
-                    String email = claims.getSubject();
-                    Integer userId = claims.get("userId", Integer.class);
+                    // 이메일은 claims에서만 가져오기 (subject는 사용 안 함)
+                    String email = claims.get("email", String.class);
+                    String userIdStr = claims.get("idx", String.class);
+                    Integer userId = Integer.parseInt(userIdStr);
+                    String nickname = claims.get("nickname", String.class);
 
-                    // UserDetails 구현체로 인증 정보 설정
                     UserDto.AuthUser authUser = UserDto.AuthUser.builder()
                             .idx(userId)
                             .email(email)
+                            .nickname(nickname)
                             .enabled(true)
                             .build();
 
@@ -77,7 +79,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             } catch (ExpiredJwtException e) {
-                // 만료된 토큰 - 쿠키 삭제하고 계속 진행
                 clearExpiredCookie(response);
                 System.out.println("만료된 JWT 토큰이 삭제되었습니다.");
             } catch (Exception e) {

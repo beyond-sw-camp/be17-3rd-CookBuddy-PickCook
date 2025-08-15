@@ -1,6 +1,5 @@
 package org.example.be17pickcook.domain.user.model;
 
-
 import lombok.Builder;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
@@ -20,18 +19,29 @@ public class UserDto {
     }
 
     @Getter
+    public static class Register {
+        private String email;
+        private String nickname;
+        private String password;
+    }
+
+    @Getter
+    public static class UpdateProfile {
+        private String nickname;
+        private String name;
+        private String phone;
+        private String profileImage;
+    }
+
+    @Getter
     @Builder
     public static class Response {
         private Integer idx;
         private String email;
         private String nickname;
-    }
-
-    @Getter
-    public static class Register {
-        private String email;
-        private String nickname;
-        private String password;
+        private String name;        // 추가
+        private String phone;       // 추가
+        private String profileImage; // 추가
     }
 
     @Getter
@@ -41,6 +51,9 @@ public class UserDto {
         private String email;
         private String password;
         private String nickname;
+        private String name;           // 추가: 이름 필드
+        private String phone;          // 추가: 연락처 필드
+        private String profileImage;   // 추가: 프로필 이미지 필드
         private Boolean enabled;
         private Map<String, Object> attributes;
 
@@ -51,7 +64,7 @@ public class UserDto {
 
         @Override
         public boolean isEnabled() {
-            return enabled;
+            return enabled != null ? enabled : false;
         }
 
         @Override
@@ -68,7 +81,6 @@ public class UserDto {
             return "{noop}"+password;
         }
 
-
         @Override
         public String getName() {
             return nickname;
@@ -80,6 +92,4 @@ public class UserDto {
                     .build();
         }
     }
-
-
 }

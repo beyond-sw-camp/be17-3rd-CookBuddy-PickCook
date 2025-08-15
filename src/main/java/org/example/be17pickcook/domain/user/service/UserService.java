@@ -28,7 +28,6 @@ public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final EmailVerifyRepository emailVerifyRepository;
     private final JavaMailSender emailSender;
-    // MapStruct 매퍼들 주입
     private final UserMapper userMapper;
     private final EmailVerifyMapper emailVerifyMapper;
 
@@ -37,32 +36,65 @@ public class UserService implements UserDetailsService {
         User user = userRepository.findByEmail(username)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username));
 
-        // MapStruct 매퍼 사용
         return userMapper.entityToAuthUser(user);
     }
 
     @Transactional
     public void signup(UserDto.Register dto) throws MessagingException {
-        // 이메일 중복 체크
         if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
         }
 
-        // MapStruct 매퍼로 Entity 변환
         User user = userMapper.registerDtoToEntity(dto);
         User savedUser = userRepository.save(user);
 
-        // UUID 생성 및 이메일 인증 데이터 저장
         String uuid = UUID.randomUUID().toString();
-
-        // MapStruct 매퍼로 EmailVerify 생성
         EmailVerify emailVerify = emailVerifyMapper.createEmailVerify(uuid, savedUser);
         emailVerifyRepository.save(emailVerify);
 
-        // 인증 이메일 발송
         sendVerificationEmail(dto.getEmail(), uuid);
-
         log.info("회원가입 완료 - 사용자: {}, UUID: {}", dto.getEmail(), uuid);
+    }
+
+    // 추가: 프로필 수정 메서드
+    @Transactional
+    public UserDto.Response updateProfile(Integer userId, UserDto.UpdateProfile dto) {
+
+        // 1. 사용자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        // 2. 닉네임이 변경되었을 때만 중복 체크
+        if (dto.getNickname() != null && !dto.getNickname().equals(user.getNickname())) {
+            // 닉네임 유효성 검사
+            String trimmedNickname = dto.getNickname().trim();
+            if (trimmedNickname.length() < 2 || trimmedNickname.length() > 20) {
+                throw new IllegalArgumentException("닉네임은 2자 이상 20자 이하로 입력해주세요.");
+            }
+
+            // 중복 체크 (다른 사용자가 사용 중인지)
+            if (userRepository.findByNickname(trimmedNickname).isPresent()) {
+                throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
+            }
+
+            log.info("닉네임 중복 체크 통과: {} -> {}", user.getNickname(), trimmedNickname);
+        } else {
+            log.info("닉네임 변경 없음 - 중복 체크 건너뛰기");
+        }
+
+        // 3. MapStruct를 사용한 Entity 업데이트
+        userMapper.updateEntityFromDto(user, dto);
+
+        // 4. 매핑 후 결과 확인
+
+        // 5. 데이터베이스 저장
+        User savedUser = userRepository.save(user);
+
+
+        // 6. Response DTO 변환
+        UserDto.Response response = userMapper.entityToResponse(savedUser);
+
+        return response;
     }
 
     @Transactional
@@ -70,19 +102,15 @@ public class UserService implements UserDetailsService {
         EmailVerify emailVerify = emailVerifyRepository.findByUuid(uuid)
                 .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 인증 코드입니다."));
 
-        // 만료 시간 체크 (Entity의 비즈니스 로직 사용)
         if (emailVerify.isExpired()) {
             throw new IllegalArgumentException("인증 코드가 만료되었습니다.");
         }
 
         User user = emailVerify.getUser();
-        user.userVerify(); // 계정 활성화
+        user.userVerify();
         userRepository.save(user);
-
-        log.info("이메일 인증 완료 - 사용자: {}", user.getEmail());
     }
 
-    // 이메일 발송 로직 분리
     private void sendVerificationEmail(String email, String uuid) throws MessagingException {
         MimeMessage message = emailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -96,7 +124,6 @@ public class UserService implements UserDetailsService {
         emailSender.send(message);
     }
 
-    // 이메일 템플릿 분리
     private String buildEmailContent(String uuid) {
         return "<h2 style='color: #2e6c80;'>PickCook 가입을 환영합니다!</h2>"
                 + "<p>아래 링크를 클릭하여 이메일 인증을 완료해주세요:</p>"
