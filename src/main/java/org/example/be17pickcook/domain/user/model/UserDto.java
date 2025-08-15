@@ -85,5 +85,11 @@ public class UserDto {
         public String getName() {
             return nickname;
         }
+
+        public User toEntity() {
+            return User.builder()
+                    .idx(idx)
+                    .build();
+        }
     }
 }
