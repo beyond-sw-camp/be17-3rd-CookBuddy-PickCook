@@ -36,6 +36,11 @@ public enum BaseResponseStatus {
     UNAUTHORIZED(false, 30105, "인증이 필요합니다."),
     INVALID_USER_INFO(false, 30106, "이메일 또는 비밀번호가 올바르지 않습니다."),
 
+    /**
+     * 31000 : 커뮤니티 오류
+     */
+    POST_NOT_FOUND(false, 31001, "존재하지 않는 게시글입니다."),
+
 
 
     /**
