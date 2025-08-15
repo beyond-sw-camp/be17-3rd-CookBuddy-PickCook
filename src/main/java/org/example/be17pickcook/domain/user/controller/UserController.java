@@ -1,6 +1,8 @@
 package org.example.be17pickcook.domain.user.controller;
 
 import jakarta.mail.MessagingException;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.example.be17pickcook.common.BaseResponse;
 import org.example.be17pickcook.common.BaseResponseStatus;
@@ -25,6 +27,21 @@ public class UserController {
     private final EmailTemplates emailTemplates;
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+
+    @PostMapping("/logout")
+    public ResponseEntity<BaseResponse<Void>> logout(HttpServletResponse response) {
+
+        Cookie jwtCookie = new Cookie("PICKCOOK_AT", null);
+        jwtCookie.setMaxAge(0);
+        jwtCookie.setPath("/");
+        jwtCookie.setHttpOnly(true);
+        response.addCookie(jwtCookie);
+
+        return ResponseEntity.ok(
+                new BaseResponse<>(true, BaseResponseStatus.LOGOUT_SUCCESS.getCode(),
+                        BaseResponseStatus.LOGOUT_SUCCESS.getMessage(), null)
+        );
+    }
 
     @PostMapping("/signup")
     public ResponseEntity<BaseResponse<Void>> signup(@RequestBody UserDto.Register dto) {

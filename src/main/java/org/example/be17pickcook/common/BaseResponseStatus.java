@@ -11,10 +11,9 @@ public enum BaseResponseStatus {
      * 20000 : 요청 성공
      */
     SUCCESS(true, 20000, "요청에 성공하였습니다."),
-
-    // User 관련 성공 응답 추가
-    SIGNUP_SUCCESS(true, 20100, "회원가입이 완료되었습니다. 이메일을 확인해주세요."),
     LOGIN_SUCCESS(true, 20101, "로그인에 성공하였습니다."),
+    LOGOUT_SUCCESS(true, 20102, "로그아웃이 완료되었습니다."), // 추가
+    SIGNUP_SUCCESS(true, 20100, "회원가입이 완료되었습니다. 이메일을 확인해주세요."),
     EMAIL_VERIFY_SUCCESS(true, 20102, "이메일 인증이 완료되었습니다."),
     EMAIL_AVAILABLE(true, 20103, "사용 가능한 이메일입니다."),
 

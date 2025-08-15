@@ -27,6 +27,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             "/api/user/signup",
             "/api/user/verify",
             "/api/user/check-email",
+            "/api/user/logout",
             "/oauth2/authorization/kakao"
     );
 
@@ -58,18 +59,19 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             try {
                 Claims claims = JwtUtil.getClaims(jwt);
                 if (claims != null) {
-                    String email = JwtUtil.getValue(claims, "email");
-                    Integer idx = Integer.parseInt(JwtUtil.getValue(claims, "idx"));
+                    // 사용자 정보 조회 및 인증 설정
+                    String email = claims.getSubject();
+                    Integer userId = claims.get("userId", Integer.class);
 
+                    // UserDetails 구현체로 인증 정보 설정
                     UserDto.AuthUser authUser = UserDto.AuthUser.builder()
-                            .idx(idx)
+                            .idx(userId)
                             .email(email)
+                            .enabled(true)
                             .build();
 
                     Authentication authentication = new UsernamePasswordAuthenticationToken(
-                            authUser,
-                            null,
-                            List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                            authUser, null, authUser.getAuthorities()
                     );
 
                     SecurityContextHolder.getContext().setAuthentication(authentication);
