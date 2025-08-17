@@ -1,29 +1,30 @@
 package org.example.be17pickcook.domain.user.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.mail.MessagingException;
-import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.be17pickcook.common.BaseResponse;
 import org.example.be17pickcook.common.BaseResponseStatus;
 import org.example.be17pickcook.domain.user.mapper.UserMapper;
 import org.example.be17pickcook.domain.user.model.User;
-import org.example.be17pickcook.template.EmailTemplates;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.domain.user.repository.UserRepository;
 import org.example.be17pickcook.domain.user.service.UserService;
+import org.example.be17pickcook.template.EmailTemplates;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/user")
@@ -34,121 +35,33 @@ public class UserController {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
-    @Operation(
-            summary = "사용자 정보 수정",
-            description = "현재 로그인된 사용자의 프로필 정보를 수정합니다.",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "프로필 수정 성공",
-                            content = @Content(schema = @Schema(implementation = UserDto.Response.class))
-                    ),
-                    @ApiResponse(
-                            responseCode = "400",
-                            description = "잘못된 요청",
-                            content = @Content(schema = @Schema(implementation = BaseResponse.class))
-                    ),
-                    @ApiResponse(
-                            responseCode = "401",
-                            description = "인증되지 않은 사용자",
-                            content = @Content(schema = @Schema(implementation = BaseResponse.class))
-                    )
-            }
-    )
-
-    @PatchMapping("/profile")
-    public ResponseEntity<BaseResponse<UserDto.Response>> updateProfile(
-            @AuthenticationPrincipal UserDto.AuthUser authUser,
-            @RequestBody UserDto.UpdateProfile dto
-    ) {
-        if (authUser == null) {
-            return ResponseEntity.status(401)
-                    .body(BaseResponse.error(BaseResponseStatus.UNAUTHORIZED));
-        }
-
-        try {
-            // UserService에서 프로필 업데이트 처리
-            UserDto.Response updatedUser = userService.updateProfile(authUser.getIdx(), dto);
-
-            // 성공 응답에 새로운 상태코드 사용
-            return ResponseEntity.ok(
-                    new BaseResponse<>(true, BaseResponseStatus.PROFILE_UPDATE_SUCCESS.getCode(),
-                            BaseResponseStatus.PROFILE_UPDATE_SUCCESS.getMessage(), updatedUser)
-            );
-
-        } catch (IllegalArgumentException e) {
-            // 닉네임 중복이나 유효성 검사 실패 시
-            return ResponseEntity.badRequest()
-                    .body(new BaseResponse<>(false, BaseResponseStatus.REQUEST_ERROR.getCode(),
-                            e.getMessage(), null));
-        } catch (Exception e) {
-            System.out.println("프로필 수정 중 예외 발생: " + e.getMessage());
-            return ResponseEntity.internalServerError()
-                    .body(BaseResponse.error(BaseResponseStatus.SERVER_ERROR));
-        }
-    }
-
-    @Operation(
-            summary = "사용자 로그아웃",
-            description = "현재 로그인된 사용자를 로그아웃 처리하고 JWT 쿠키를 삭제합니다.",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "로그아웃 성공",
-                            content = @Content(schema = @Schema(implementation = BaseResponse.class))
-                    ),
-                    @ApiResponse(
-                            responseCode = "500",
-                            description = "서버 오류",
-                            content = @Content(schema = @Schema(implementation = BaseResponse.class))
-                    )
-            }
-    )
-    @PostMapping("/logout")
-    public ResponseEntity<BaseResponse<Void>> logout(HttpServletResponse response) {
-
-        Cookie jwtCookie = new Cookie("PICKCOOK_AT", null);
-        jwtCookie.setMaxAge(0);
-        jwtCookie.setPath("/");
-        jwtCookie.setHttpOnly(true);
-        response.addCookie(jwtCookie);
-
-        return ResponseEntity.ok(
-                new BaseResponse<>(true, BaseResponseStatus.LOGOUT_SUCCESS.getCode(),
-                        BaseResponseStatus.LOGOUT_SUCCESS.getMessage(), null)
-        );
-    }
+    // 🔧 개선: 비밀번호 검증 로직 상수화
+    private static final int MIN_PASSWORD_LENGTH = 8;
+    private static final String PASSWORD_PATTERN = ".*[a-zA-Z].*.*\\d.*.*[!@#$%^&*()].*";
 
     @Operation(
             summary = "회원가입",
             description = "새로운 사용자 계정을 생성하고 이메일 인증을 위한 메일을 발송합니다.",
             responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "회원가입 성공",
-                            content = @Content(schema = @Schema(implementation = BaseResponse.class))
-                    ),
-                    @ApiResponse(
-                            responseCode = "400",
-                            description = "중복된 이메일",
-                            content = @Content(schema = @Schema(implementation = BaseResponse.class))
-                    ),
-                    @ApiResponse(
-                            responseCode = "500",
-                            description = "서버 오류",
-                            content = @Content(schema = @Schema(implementation = BaseResponse.class))
-                    )
+                    @ApiResponse(responseCode = "200", description = "회원가입 성공"),
+                    @ApiResponse(responseCode = "400", description = "중복된 이메일 또는 잘못된 비밀번호"),
+                    @ApiResponse(responseCode = "500", description = "서버 오류")
             }
     )
     @PostMapping("/signup")
     public ResponseEntity<BaseResponse<Void>> signup(@RequestBody UserDto.Register dto) {
         try {
+            // 🔧 개선: 비밀번호 검증 메서드 분리
+            validatePassword(dto.getPassword());
+
             userService.signup(dto);
-            return ResponseEntity.ok(BaseResponse.success(null));
+            return ResponseEntity.ok(BaseResponse.success(null, BaseResponseStatus.SIGNUP_SUCCESS));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest()
-                    .body(BaseResponse.error(BaseResponseStatus.DUPLICATE_EMAIL));
+            // 🔧 개선: 구체적인 에러 메시지에 따른 상태 코드 반환
+            BaseResponseStatus status = determineErrorStatus(e.getMessage());
+            return ResponseEntity.badRequest().body(BaseResponse.error(status));
         } catch (MessagingException e) {
+            log.error("이메일 발송 실패: {}", e.getMessage());
             return ResponseEntity.internalServerError()
                     .body(BaseResponse.error(BaseResponseStatus.SERVER_ERROR));
         }
@@ -156,19 +69,7 @@ public class UserController {
 
     @Operation(
             summary = "이메일 인증",
-            description = "회원가입 시 발송된 이메일의 인증 링크를 통해 계정을 활성화합니다.",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "인증 성공",
-                            content = @Content(schema = @Schema(implementation = String.class))
-                    ),
-                    @ApiResponse(
-                            responseCode = "400",
-                            description = "인증 실패",
-                            content = @Content(schema = @Schema(implementation = String.class))
-                    )
-            }
+            description = "회원가입 시 발송된 이메일의 인증 링크를 통해 계정을 활성화합니다."
     )
     @GetMapping("/verify")
     public ResponseEntity<String> verify(@RequestParam String uuid) {
@@ -178,8 +79,7 @@ public class UserController {
                     .header("Content-Type", "text/html; charset=UTF-8")
                     .body(emailTemplates.getEmailVerificationCompletePage());
         } catch (Exception e) {
-            String errorHtml = "<h2>인증 실패: " + e.getMessage() + "</h2>" +
-                    "<a href='http://localhost:5173/signup'>회원가입 다시하기</a>";
+            String errorHtml = generateErrorHtml("인증 실패", e.getMessage(), "/signup");
             return ResponseEntity.badRequest()
                     .header("Content-Type", "text/html; charset=UTF-8")
                     .body(errorHtml);
@@ -188,141 +88,265 @@ public class UserController {
 
     @Operation(
             summary = "현재 사용자 정보 조회",
-            description = "현재 로그인된 사용자의 정보를 조회합니다.",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "사용자 정보 조회 성공",
-                            content = @Content(schema = @Schema(implementation = UserDto.Response.class))
-                    ),
-                    @ApiResponse(
-                            responseCode = "401",
-                            description = "인증되지 않은 사용자",
-                            content = @Content(schema = @Schema(implementation = BaseResponse.class))
-                    )
-            }
+            description = "현재 로그인된 사용자의 정보를 조회합니다."
     )
     @GetMapping("/me")
-    public ResponseEntity<BaseResponse<UserDto.Response>> getCurrentUser(@AuthenticationPrincipal UserDto.AuthUser authUser) {
+    public ResponseEntity<BaseResponse<UserDto.Response>> getCurrentUser(
+            @AuthenticationPrincipal UserDto.AuthUser authUser) {
+
         if (authUser == null) {
             return ResponseEntity.status(401)
                     .body(BaseResponse.error(BaseResponseStatus.UNAUTHORIZED));
         }
 
-        // 수정: AuthUser 대신 데이터베이스에서 직접 조회한 최신 데이터 사용
+        // 🔧 개선: 데이터베이스에서 최신 데이터 조회 (캐시 방지)
         User userFromDB = userRepository.findById(authUser.getIdx())
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        // 수정: 데이터베이스 Entity를 직접 Response로 매핑
         UserDto.Response userResponse = userMapper.entityToResponse(userFromDB);
-
         return ResponseEntity.ok(BaseResponse.success(userResponse));
     }
 
     @Operation(
-            summary = "이메일 중복 확인",
-            description = "회원가입 시 입력한 이메일이 이미 사용 중인지 확인합니다.",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "이메일 중복 확인 완료",
-                            content = @Content(schema = @Schema(implementation = BaseResponse.class))
-                    )
-            }
+            summary = "사용자 정보 수정",
+            description = "현재 로그인된 사용자의 프로필 정보를 수정합니다."
     )
-    @GetMapping("/check-email")
-    public ResponseEntity<BaseResponse<Map<String, Object>>> checkEmailDuplicate(@RequestParam String email) {
-        boolean exists = userRepository.findByEmail(email).isPresent();
+    @PatchMapping("/profile")
+    public ResponseEntity<BaseResponse<UserDto.Response>> updateProfile(
+            @AuthenticationPrincipal UserDto.AuthUser authUser,
+            @RequestBody UserDto.UpdateProfile dto) {
 
-        Map<String, Object> data = new HashMap<>();
-        data.put("available", !exists);
+        if (authUser == null) {
+            return ResponseEntity.status(401)
+                    .body(BaseResponse.error(BaseResponseStatus.UNAUTHORIZED));
+        }
 
-        if (exists) {
-            return ResponseEntity.ok(
-                    new BaseResponse<>(false, BaseResponseStatus.EMAIL_NOT_AVAILABLE.getCode(),
-                            BaseResponseStatus.EMAIL_NOT_AVAILABLE.getMessage(), data)
-            );
-        } else {
-            return ResponseEntity.ok(
-                    new BaseResponse<>(true, BaseResponseStatus.EMAIL_AVAILABLE.getCode(),
-                            BaseResponseStatus.EMAIL_AVAILABLE.getMessage(), data)
-            );
+        try {
+            UserDto.Response updatedUser = userService.updateProfile(authUser.getIdx(), dto);
+            return ResponseEntity.ok(BaseResponse.success(updatedUser, BaseResponseStatus.PROFILE_UPDATE_SUCCESS));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(BaseResponse.error(BaseResponseStatus.REQUEST_ERROR, e.getMessage()));
+        } catch (Exception e) {
+            log.error("프로필 수정 중 예외 발생: {}", e.getMessage());
+            return ResponseEntity.internalServerError()
+                    .body(BaseResponse.error(BaseResponseStatus.SERVER_ERROR));
         }
     }
 
     @Operation(
+            summary = "사용자 로그아웃",
+            description = "현재 로그인된 사용자를 로그아웃 처리하고 JWT 쿠키를 삭제합니다."
+    )
+    @PostMapping("/logout")
+    public ResponseEntity<BaseResponse<Void>> logout(
+            HttpServletRequest request,
+            HttpServletResponse response) {
+
+        // 🔧 개선: 로그아웃 로직을 서비스로 분리
+        userService.logout(request, response);
+
+        return ResponseEntity.ok(BaseResponse.success(null, BaseResponseStatus.LOGOUT_SUCCESS));
+    }
+
+    @Operation(
+            summary = "아이디 찾기",
+            description = "이름과 전화번호로 가입된 이메일 주소를 찾습니다."
+    )
+    @PostMapping("/find-email")
+    public ResponseEntity<BaseResponse<UserDto.FindEmailResponse>> findEmail(
+            @RequestBody UserDto.FindEmailRequest dto) {
+        try {
+            UserDto.FindEmailResponse result = userService.findEmailByNameAndPhone(dto);
+            return ResponseEntity.ok(BaseResponse.success(result));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404)
+                    .body(BaseResponse.error(BaseResponseStatus.USER_NOT_FOUND));
+        } catch (Exception e) {
+            log.error("아이디 찾기 중 오류 발생", e);
+            return ResponseEntity.internalServerError()
+                    .body(BaseResponse.error(BaseResponseStatus.SERVER_ERROR));
+        }
+    }
+
+    @Operation(
+            summary = "비밀번호 재설정 요청",
+            description = "이메일로 비밀번호 재설정 링크를 발송합니다."
+    )
+    @PostMapping("/request-password-reset")
+    public ResponseEntity<BaseResponse<Void>> requestPasswordReset(
+            @RequestBody UserDto.PasswordResetRequest dto) {
+        try {
+            userService.requestPasswordReset(dto.getEmail());
+            return ResponseEntity.ok(BaseResponse.success(null, "비밀번호 재설정 이메일이 발송되었습니다."));
+        } catch (MessagingException e) {
+            log.error("이메일 발송 실패", e);
+            return ResponseEntity.internalServerError()
+                    .body(BaseResponse.error(BaseResponseStatus.SERVER_ERROR));
+        } catch (Exception e) {
+            log.error("비밀번호 재설정 요청 중 오류 발생", e);
+            return ResponseEntity.internalServerError()
+                    .body(BaseResponse.error(BaseResponseStatus.SERVER_ERROR));
+        }
+    }
+
+    @Operation(
+            summary = "비밀번호 재설정 페이지",
+            description = "이메일 링크를 통해 접근하는 비밀번호 재설정 페이지입니다."
+    )
+    @GetMapping("/reset-password")
+    public ResponseEntity<String> validateResetToken(@RequestParam String token) {
+        boolean isValid = userService.validateResetToken(token);
+
+        if (isValid) {
+            return ResponseEntity.ok()
+                    .header("Content-Type", "text/html; charset=UTF-8")
+                    .body(emailTemplates.getPasswordResetPage(token));
+        } else {
+            return ResponseEntity.badRequest()
+                    .header("Content-Type", "text/html; charset=UTF-8")
+                    .body(emailTemplates.getPasswordResetErrorPage());
+        }
+    }
+
+    @Operation(
+            summary = "비밀번호 재설정",
+            description = "새로운 비밀번호로 변경합니다."
+    )
+    @PostMapping("/reset-password")
+    public ResponseEntity<BaseResponse<Void>> resetPassword(@RequestBody UserDto.ResetPassword dto) {
+        try {
+            // 🔧 개선: 검증 로직 통합
+            validatePasswordReset(dto);
+
+            userService.resetPassword(dto.getToken(), dto.getNewPassword());
+            return ResponseEntity.ok(BaseResponse.success(null, "비밀번호가 성공적으로 변경되었습니다."));
+
+        } catch (IllegalArgumentException e) {
+            BaseResponseStatus errorStatus = determinePasswordResetError(e.getMessage());
+            return ResponseEntity.badRequest().body(BaseResponse.error(errorStatus));
+        } catch (Exception e) {
+            log.error("비밀번호 재설정 중 오류 발생", e);
+            return ResponseEntity.internalServerError()
+                    .body(BaseResponse.error(BaseResponseStatus.SERVER_ERROR));
+        }
+    }
+
+    @Operation(
+            summary = "이메일 중복 확인",
+            description = "회원가입 시 입력한 이메일이 이미 사용 중인지 확인합니다."
+    )
+    @GetMapping("/check-email")
+    public ResponseEntity<BaseResponse<Map<String, Object>>> checkEmailDuplicate(
+            @RequestParam String email) {
+        boolean exists = userRepository.findByEmailAndNotDeleted(email).isPresent();
+
+        Map<String, Object> data = Map.of("available", !exists);
+        BaseResponseStatus status = exists ? BaseResponseStatus.EMAIL_NOT_AVAILABLE : BaseResponseStatus.EMAIL_AVAILABLE;
+
+        return ResponseEntity.ok(BaseResponse.success(data, status));
+    }
+
+    @Operation(
             summary = "닉네임 중복 확인",
-            description = "회원정보 수정 시 입력한 닉네임이 이미 사용 중인지 확인합니다. 현재 사용자의 기존 닉네임은 사용 가능으로 처리됩니다.",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "닉네임 중복 확인 완료",
-                            content = @Content(schema = @Schema(implementation = BaseResponse.class))
-                    ),
-                    @ApiResponse(
-                            responseCode = "401",
-                            description = "인증되지 않은 사용자",
-                            content = @Content(schema = @Schema(implementation = BaseResponse.class))
-                    )
-            }
+            description = "회원정보 수정 시 입력한 닉네임이 이미 사용 중인지 확인합니다."
     )
     @GetMapping("/check-nickname")
     public ResponseEntity<BaseResponse<Map<String, Object>>> checkNicknameDuplicate(
-            @Parameter(description = "확인할 닉네임", required = true)
-            @RequestParam String nickname,
-            @AuthenticationPrincipal UserDto.AuthUser authUser
-    ) {
+            @Parameter(description = "확인할 닉네임", required = true) @RequestParam String nickname,
+            @AuthenticationPrincipal UserDto.AuthUser authUser) {
 
-        // 닉네임 유효성 검사 추가
-        if (nickname == null || nickname.trim().isEmpty()) {
-            Map<String, Object> data = new HashMap<>();
-            data.put("available", false);
-            return ResponseEntity.badRequest().body(
-                    new BaseResponse<>(false, BaseResponseStatus.REQUEST_ERROR.getCode(),
-                            "닉네임을 입력해주세요.", data)
-            );
+        // 🔧 개선: 중복 체크 로직을 서비스로 분리
+        Integer currentUserId = (authUser != null) ? authUser.getIdx() : null;
+        boolean available = userService.isNicknameAvailable(nickname, currentUserId);
+
+        Map<String, Object> data = Map.of("available", available);
+        BaseResponseStatus status = available ? BaseResponseStatus.NICKNAME_AVAILABLE : BaseResponseStatus.NICKNAME_NOT_AVAILABLE;
+
+        return ResponseEntity.ok(BaseResponse.success(data, status));
+    }
+
+    @Operation(
+            summary = "회원탈퇴",
+            description = "현재 로그인된 사용자의 계정을 탈퇴 처리합니다."
+    )
+    @PostMapping("/withdraw")
+    public ResponseEntity<BaseResponse<UserDto.WithdrawResponse>> withdrawUser(
+            @AuthenticationPrincipal UserDto.AuthUser authUser,
+            @RequestBody UserDto.WithdrawRequest dto,
+            HttpServletResponse response) {
+
+        if (authUser == null) {
+            return ResponseEntity.status(401)
+                    .body(BaseResponse.error(BaseResponseStatus.UNAUTHORIZED));
         }
 
-        // 닉네임 길이 검사 추가
-        String trimmedNickname = nickname.trim();
-        if (trimmedNickname.length() < 2 || trimmedNickname.length() > 20) {
-            Map<String, Object> data = new HashMap<>();
-            data.put("available", false);
-            return ResponseEntity.badRequest().body(
-                    new BaseResponse<>(false, BaseResponseStatus.INVALID_NICKNAME_LENGTH.getCode(),
-                            BaseResponseStatus.INVALID_NICKNAME_LENGTH.getMessage(), data)
-            );
+        try {
+            UserDto.WithdrawResponse result = userService.withdrawUser(authUser.getIdx(), dto);
+
+            // 🔧 개선: 탈퇴 후 쿠키 삭제도 서비스에서 처리
+            userService.clearAuthenticationCookies(response);
+
+            return ResponseEntity.ok(BaseResponse.success(result, BaseResponseStatus.WITHDRAW_SUCCESS));
+        } catch (IllegalArgumentException e) {
+            BaseResponseStatus errorStatus = determineWithdrawError(e.getMessage());
+            return ResponseEntity.badRequest().body(BaseResponse.error(errorStatus));
+        } catch (Exception e) {
+            log.error("회원탈퇴 중 오류 발생", e);
+            return ResponseEntity.internalServerError()
+                    .body(BaseResponse.error(BaseResponseStatus.SERVER_ERROR));
+        }
+    }
+
+    // 🔧 개선: 헬퍼 메서드들을 private으로 분리
+
+    private void validatePassword(String password) {
+        if (password == null || password.length() < MIN_PASSWORD_LENGTH) {
+            throw new IllegalArgumentException("비밀번호는 8자 이상이어야 합니다.");
         }
 
-        // 핵심: 현재 사용자의 기존 닉네임과 같다면 사용 가능
-        if (authUser != null && trimmedNickname.equals(authUser.getNickname())) {
-            Map<String, Object> data = new HashMap<>();
-            data.put("available", true);
-
-            System.out.println("기존 닉네임과 동일 - 사용 가능");
-
-            return ResponseEntity.ok(
-                    new BaseResponse<>(true, BaseResponseStatus.NICKNAME_AVAILABLE.getCode(),
-                            BaseResponseStatus.NICKNAME_AVAILABLE.getMessage(), data)
-            );
+        if (!password.matches(".*[a-zA-Z].*") ||
+                !password.matches(".*\\d.*") ||
+                !password.matches(".*[!@#$%^&*()].*")) {
+            throw new IllegalArgumentException("비밀번호는 영문, 숫자, 특수문자를 포함해야 합니다.");
         }
+    }
 
-        // 다른 사용자가 이미 사용 중인지 확인
-        boolean exists = userRepository.findByNickname(trimmedNickname).isPresent();
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("available", !exists);
-
-        if (exists) {
-            return ResponseEntity.ok(
-                    new BaseResponse<>(false, BaseResponseStatus.NICKNAME_NOT_AVAILABLE.getCode(),
-                            BaseResponseStatus.NICKNAME_NOT_AVAILABLE.getMessage(), data)
-            );
-        } else {
-            return ResponseEntity.ok(
-                    new BaseResponse<>(true, BaseResponseStatus.NICKNAME_AVAILABLE.getCode(),
-                            BaseResponseStatus.NICKNAME_AVAILABLE.getMessage(), data)
-            );
+    private void validatePasswordReset(UserDto.ResetPassword dto) {
+        if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
+            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
+        validatePassword(dto.getNewPassword());
+    }
+
+    private BaseResponseStatus determineErrorStatus(String message) {
+        if (message.contains("이미 사용")) {
+            return BaseResponseStatus.DUPLICATE_EMAIL;
+        }
+        if (message.contains("비밀번호")) {
+            return BaseResponseStatus.INVALID_PASSWORD_FORMAT;
+        }
+        return BaseResponseStatus.REQUEST_ERROR;
+    }
+
+    private BaseResponseStatus determinePasswordResetError(String message) {
+        if (message.contains("일치하지")) return BaseResponseStatus.PASSWORD_MISMATCH;
+        if (message.contains("비밀번호")) return BaseResponseStatus.INVALID_PASSWORD_FORMAT;
+        if (message.contains("토큰")) return BaseResponseStatus.INVALID_TOKEN;
+        return BaseResponseStatus.REQUEST_ERROR;
+    }
+
+    private BaseResponseStatus determineWithdrawError(String message) {
+        if (message.contains("탈퇴 확인")) return BaseResponseStatus.WITHDRAW_CONFIRM_REQUIRED;
+        if (message.contains("이미 탈퇴")) return BaseResponseStatus.ALREADY_WITHDRAWN;
+        if (message.contains("비밀번호")) return BaseResponseStatus.INVALID_USER_INFO;
+        return BaseResponseStatus.REQUEST_ERROR;
+    }
+
+    private String generateErrorHtml(String title, String message, String returnUrl) {
+        return String.format("""
+            <h2>%s: %s</h2>
+            <a href='http://localhost:5173%s'>%s</a>
+            """, title, message, returnUrl, "다시 시도하기");
     }
 }

@@ -27,7 +27,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             "/api/user/signup",
             "/api/user/verify",
             "/api/user/check-email",
-            "/api/user/logout",
+            "/api/user/find-email",              // ✅ 추가
+            "/api/user/request-password-reset",  // ✅ 추가
+            "/api/user/reset-password",          // ✅ 추가
             "/oauth2/authorization/kakao"
     );
 
