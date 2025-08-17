@@ -22,6 +22,12 @@ public enum BaseResponseStatus {
     NICKNAME_AVAILABLE(true, 20104, "사용 가능한 닉네임입니다."),
     PROFILE_UPDATE_SUCCESS(true, 20105, "회원정보가 성공적으로 수정되었습니다."),
 
+    // 🔧 추가: 비밀번호 재설정 관련 성공 응답
+    PASSWORD_RESET_EMAIL_SENT(true, 20106, "비밀번호 재설정 이메일이 발송되었습니다."),
+    PASSWORD_RESET_SUCCESS(true, 20107, "비밀번호가 성공적으로 변경되었습니다."),
+
+    // 🔧 추가: 회원탈퇴 관련 상태 코드
+    WITHDRAW_SUCCESS(true, 20108, "회원탈퇴가 완료되었습니다."),
 
     /**
      * 30000 : Request 오류, Validation 오류
@@ -46,13 +52,24 @@ public enum BaseResponseStatus {
     NICKNAME_NOT_AVAILABLE(false, 30107, "이미 사용 중인 닉네임입니다."),
     INVALID_NICKNAME_LENGTH(false, 30108, "닉네임은 2자 이상 20자 이하로 입력해주세요."),
 
+    // 🔧 추가: 비밀번호 재설정 관련 오류
+    INVALID_RESET_TOKEN(false, 30109, "유효하지 않은 재설정 토큰입니다."),
+    EXPIRED_RESET_TOKEN(false, 30110, "재설정 토큰이 만료되었습니다."),
+    INVALID_TOKEN(false, 30117, "유효하지 않은 토큰입니다."),
+    SAME_AS_CURRENT_PASSWORD(false, 30111, "기존 비밀번호와 동일합니다. 다른 비밀번호를 사용해주세요."),
+    INVALID_PASSWORD_FORMAT(false, 30112, "비밀번호는 8자 이상, 영문+숫자+특수문자를 포함해야 합니다."),
+    PASSWORD_MISMATCH(false, 30113, "비밀번호가 일치하지 않습니다."),
+
+    // 회원탈퇴 관련 오류
+    WITHDRAW_CONFIRM_REQUIRED(false, 30114, "탈퇴 확인이 필요합니다."),
+    ALREADY_WITHDRAWN(false, 30115, "이미 탈퇴한 계정입니다."),
+    WITHDRAWAL_NOT_ALLOWED(false, 30116, "탈퇴할 수 없는 상태입니다."),
+
+
     /**
      * 31000 : 커뮤니티 오류
      */
     POST_NOT_FOUND(false, 31001, "존재하지 않는 게시글입니다."),
-
-
-
 
     /**
      * 40000 : Response 오류

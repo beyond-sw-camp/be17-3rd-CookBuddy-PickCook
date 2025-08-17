@@ -54,21 +54,32 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     }
 
 
-    // 그림에서 9번 로직
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
-        System.out.println("LoginFilter 성공 로직.");
+        System.out.println("=== LoginFilter 성공 로직 시작 ===");
         UserDto.AuthUser authUser = (UserDto.AuthUser) authResult.getPrincipal();
+        System.out.println("인증된 사용자: " + authUser.getEmail());
 
         String jwt = JwtUtil.generateToken(authUser.getEmail(), authUser.getIdx(), authUser.getNickname());
+        System.out.println("생성된 JWT: " + (jwt != null ? "성공" : "실패"));
 
         if (jwt != null) {
-            Cookie cookie = new Cookie("PICKCOOK_AT", jwt);
-            cookie.setHttpOnly(true);
-            cookie.setPath("/");
-            response.addCookie(cookie);
+            // 🔧 수정: 기본 쿠키 설정 제거하고 헤더로만 설정
 
-            // BaseResponse 형식으로 JSON 응답 (리다이렉트 대신)
+            // 🔧 수정: Set-Cookie 헤더 직접 설정 (SameSite=Lax 추가)
+            String cookieValue = String.format(
+                    "PICKCOOK_AT=%s; Path=/; HttpOnly; Max-Age=7200; SameSite=Lax",
+                    jwt
+            );
+
+            response.setHeader("Set-Cookie", cookieValue);
+            System.out.println("🍪 Set-Cookie 헤더 설정: " + cookieValue);
+
+            // 🔧 추가: CORS 헤더 명시적 설정
+            response.setHeader("Access-Control-Allow-Credentials", "true");
+            response.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
+
+            // BaseResponse 형식으로 JSON 응답
             UserDto.Response responseDto = userMapper.authUserToResponse(authUser);
             BaseResponse<UserDto.Response> baseResponse = new BaseResponse<>(
                     true,
@@ -80,6 +91,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
             response.getWriter().write(new ObjectMapper().writeValueAsString(baseResponse));
+            System.out.println("=== LoginFilter 성공 로직 완료 ===");
         }
     }
 
