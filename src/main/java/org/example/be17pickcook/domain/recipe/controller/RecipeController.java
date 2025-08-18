@@ -31,7 +31,7 @@ public class RecipeController {
     )
     @PostMapping(value="/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity register(@AuthenticationPrincipal UserDto.AuthUser authUser,
-                                   @ModelAttribute RecipeDto.RecipeRequestDto dto,
+                                   @RequestPart RecipeDto.RecipeRequestDto dto,
                                    @RequestPart(value = "files", required = false)List<MultipartFile> files) throws SQLException, IOException {
         recipeService.register(authUser, dto, files);
 
