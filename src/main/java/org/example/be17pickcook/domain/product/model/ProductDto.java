@@ -3,6 +3,7 @@ package org.example.be17pickcook.domain.product.model;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.example.be17pickcook.domain.user.model.User;
 
 import java.time.LocalDateTime;
 
@@ -23,7 +24,6 @@ public class ProductDto {
         private String subtitle;
         private String mainImageUrl;
         private String detailImageUrl;
-        private String productUrl;
         private String seller;
         private Integer price;
         private Integer discountRate;
@@ -47,7 +47,6 @@ public class ProductDto {
                     .subtitle(entity.getSubtitle())
                     .mainImageUrl(entity.getMainImageUrl())
                     .detailImageUrl(entity.getDetailImageUrl())
-                    .productUrl(entity.getProductUrl())
                     .seller(entity.getSeller())
                     .price(entity.getPrice())
                     .discountRate(entity.getDiscountRate())
@@ -78,8 +77,8 @@ public class ProductDto {
         private String subtitle;
         private String mainImageUrl;
         private String detailImageUrl;
-        private String productUrl;
         private String seller;
+        @NotBlank private String seller_address;
 
         @NotNull private Integer price;
         private Integer discountRate;
@@ -94,26 +93,27 @@ public class ProductDto {
         private String notice;
         private String description;
 
-        public Product toEntity() {
+        public Product toEntity(User authUser) {
             return Product.builder()
-                    .category(category)
-                    .title(title)
-                    .subtitle(subtitle)
-                    .mainImageUrl(mainImageUrl)
-                    .detailImageUrl(detailImageUrl)
-                    .productUrl(productUrl)
-                    .seller(seller)
-                    .price(price)
-                    .discountRate(discountRate)
-                    .originalPrice(originalPrice)
-                    .unit(unit)
-                    .weightOrVolume(weightOrVolume)
-                    .expirationDate(expirationDate)
-                    .origin(origin)
-                    .packaging(packaging)
-                    .shippingInfo(shippingInfo)
-                    .notice(notice)
-                    .description(description)
+                    .category(this.category)
+                    .title(this.title)
+                    .subtitle(this.subtitle)
+                    .mainImageUrl(this.mainImageUrl)
+                    .detailImageUrl(this.detailImageUrl)
+                    .seller(this.seller)
+                    .seller_address(this.seller_address)
+                    .price(this.price)
+                    .discountRate(this.discountRate)
+                    .originalPrice(this.originalPrice)
+                    .unit(this.unit)
+                    .weightOrVolume(this.weightOrVolume)
+                    .expirationDate(this.expirationDate)
+                    .origin(this.origin)
+                    .packaging(this.packaging)
+                    .shippingInfo(this.shippingInfo)
+                    .notice(this.notice)
+                    .description(this.description)
+                    .user(authUser)
                     .build();
         }
     }
@@ -130,7 +130,6 @@ public class ProductDto {
         private Integer originalPrice;
         private String mainImageUrl;
         private String detailImageUrl;
-        private String productUrl;
         private String unit;
         private String weightOrVolume;
         private String expirationDate;
@@ -147,7 +146,6 @@ public class ProductDto {
             if (originalPrice != null) entity.setOriginalPrice(originalPrice);
             if (mainImageUrl != null) entity.setMainImageUrl(mainImageUrl);
             if (detailImageUrl != null) entity.setDetailImageUrl(detailImageUrl);
-            if (productUrl != null) entity.setProductUrl(productUrl);
             if (unit != null) entity.setUnit(unit);
             if (weightOrVolume != null) entity.setWeightOrVolume(weightOrVolume);
             if (expirationDate != null) entity.setExpirationDate(expirationDate);
