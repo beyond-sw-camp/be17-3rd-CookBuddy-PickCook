@@ -44,6 +44,10 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
 
+  sql:
+    init:
+      mode: always
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -51,4 +55,22 @@ spring:
     properties:
       hibernate:
         format_sql: truespring.application.name=instagram
+#    database-platform: org.hibernate.dialect.MariaDBDialect
+#    defer-datasource-initialization: true
 
+  cloud:
+    aws:
+      credentials:
+        access-key: ${ACCESS_KEY}
+        secret-key: ${SECRET_KEY}
+      s3:
+        bucket: ${MY_BUCKET}
+      region:
+        static: ${MY_REGION}
+
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 20MB
+      max-request-size: 20MB

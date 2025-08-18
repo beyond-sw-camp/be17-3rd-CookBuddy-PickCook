@@ -15,11 +15,12 @@ public class JwtUtil {
     private static final Key KEY = Keys.hmacShaKeyFor(SECRET.getBytes());
     private static final Long EXP = 1000 * 60 * 120L;
 
-    public static String generateToken(String email, Integer idx) {
+    public static String generateToken(String email, Integer idx, String nickname) {
 
         Map<String, String> claims =  new HashMap<>();
         claims.put("idx", ""+idx);
         claims.put("email", email);
+        claims.put("nickname", nickname);
         claims.put("role", "USER");
 
         return Jwts.builder()
