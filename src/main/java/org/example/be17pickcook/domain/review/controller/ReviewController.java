@@ -2,10 +2,12 @@ package org.example.be17pickcook.domain.review.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.be17pickcook.domain.review.model.ReviewDto;
 import org.example.be17pickcook.domain.review.service.ReviewService;
 import org.example.be17pickcook.domain.user.model.UserDto;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -18,22 +20,39 @@ import java.util.List;
 @Tag(name = "리뷰 기능", description = "리뷰 등록, 조회, 목록 조회 기능을 제공합니다.")
 @RequiredArgsConstructor
 public class ReviewController {
+
     private final ReviewService reviewService;
 
     @Operation(
             summary = "리뷰 등록",
-            description = "사용자가 새로운 리뷰를 등록합니다.\n" +
-                    "- 리뷰 정보는 RecipeRequestDto로 전달\n" +
-                    "- 이미지 파일은 optional로 MultipartFile 리스트 형태로 전달 가능"
+            description = """
+                    사용자가 새로운 리뷰를 등록합니다.
+                    - 리뷰 본문은 @RequestPart("review")로 JSON 전달
+                    - 이미지 파일은 선택(List<MultipartFile>)로 @RequestPart("files") 전송 가능
+                    """
     )
-    @PostMapping("/register")
-    public ResponseEntity register(@AuthenticationPrincipal UserDto.AuthUser authUser,
-                                   @ModelAttribute ReviewDto.ReviewRequestDto dto,
-                                   @RequestPart(value = "files", required = false) List<MultipartFile> files) {
+    @PostMapping(
+            value = "/register",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<?> register(
+            @AuthenticationPrincipal UserDto.AuthUser authUser,
+            @Valid @RequestPart("review") ReviewDto.ReviewRequestDto dto,
+            @RequestPart(name = "files", required = false) List<MultipartFile> files
+    ) {
+        // 인증 널가드
+        if (authUser == null || authUser.getIdx() == null) {
+            return ResponseEntity.status(401).body("인증 필요 혹은 사용자 ID 누락");
+        }
 
-        reviewService.register(authUser, dto, files);
+        // Integer든 Long이든 모두 안전하게 Long으로 변환
+        Long userId = (authUser.getIdx() == null)
+                ? null
+                : Long.valueOf(authUser.getIdx().longValue());
 
-        return ResponseEntity.status(200).body("리뷰 작성 성공");
+        reviewService.register(userId, dto, files);
+        return ResponseEntity.ok("리뷰 작성 성공");
     }
 
     @Operation(
