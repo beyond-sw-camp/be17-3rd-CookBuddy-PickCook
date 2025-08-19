@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import org.example.be17pickcook.domain.user.model.User;
 
-import java.time.LocalDateTime;  // ✅ Date → LocalDateTime으로 변경
+import java.util.Date;
 import java.util.List;
 
 public class RecipeDto {
@@ -17,16 +17,10 @@ public class RecipeDto {
     public static class RecipeRequestDto { // 등록
         @Schema(description = "레시피 제목", example = "김치찌개")
         private String title;
-        @Schema(description = "레시피에 대한 간단한 설명", example = "귀찮을 때 간단하게 만들어 먹기 좋은 김치찌개 레시피 알려드릴게요!")
-        private String description;
         @Schema(description = "조리 방법", example = "끓이기")
         private String cooking_method;
         @Schema(description = "레시피 카테고리", example = "한식")
         private String category;
-        @Schema(description = "소요시간", example = "20분")
-        private String time_taken;
-        @Schema(description = "난이도", example = "어려움/보통/쉬움")
-        private String difficulty_level;
         @Schema(description = "인분/양", example = "2인분")
         private String serving_size;
         @Schema(description = "해시태그", example = "#매운 #한식")
@@ -45,15 +39,13 @@ public class RecipeDto {
         @Schema(description = "영양 정보")
         private RecipeNutritionDto nutrition;
 
+
         // DTO → Entity 변환 메서드
         public Recipe toEntity(User authUser) {
             Recipe recipe = Recipe.builder()
                     .title(this.title)
-                    .description(this.description)
                     .cooking_method(this.cooking_method)
                     .category(this.category)
-                    .time_taken(this.time_taken)
-                    .difficulty_level(this.difficulty_level)
                     .serving_size(this.serving_size)
                     .hashtags(this.hashtags)
                     .tip(this.tip)
@@ -88,6 +80,7 @@ public class RecipeDto {
         }
     }
 
+
     @Getter
     @Builder
     @Schema(description = "레시피 조리 단계 DTO")
@@ -117,6 +110,7 @@ public class RecipeDto {
         }
     }
 
+
     @Getter
     @Builder
     @Schema(description = "레시피 재료 DTO")
@@ -141,6 +135,7 @@ public class RecipeDto {
                     .build();
         }
     }
+
 
     @Getter
     @Builder
@@ -179,6 +174,7 @@ public class RecipeDto {
         }
     }
 
+
     @Getter
     @Builder
     @Schema(description = "레시피 응답 DTO")
@@ -187,16 +183,10 @@ public class RecipeDto {
         private Long idx;
         @Schema(description = "레시피 제목", example = "김치찌개")
         private String title;
-        @Schema(description = "레시피에 대한 간단한 설명", example = "귀찮을 때 간단하게 만들어 먹기 좋은 김치찌개 레시피 알려드릴게요!")
-        private String description;
         @Schema(description = "조리 방법", example = "끓이기")
         private String cooking_method;
         @Schema(description = "레시피 카테고리", example = "한식")
         private String category;
-        @Schema(description = "소요시간", example = "20분")
-        private String time_taken;
-        @Schema(description = "난이도", example = "어려움/보통/쉬움")
-        private String difficulty_level;
         @Schema(description = "인분/양", example = "2인분")
         private String serving_size;
         @Schema(description = "해시태그", example = "#매운 #한식")
@@ -216,9 +206,9 @@ public class RecipeDto {
         @Schema(description = "영양 정보")
         private RecipeNutritionDto nutrition;
         @Schema(description = "생성일")
-        private LocalDateTime createdAt;        // ✅ LocalDateTime으로 변경
+        private Date createdAt;
         @Schema(description = "수정일")
-        private LocalDateTime updatedAt;        // ✅ LocalDateTime으로 변경
+        private Date updatedAt;
         @Schema(description = "좋아요 수", example = "12")
         private Integer likeCount;
         @Schema(description = "로그인 사용자가 좋아요를 눌렀는지 여부", example = "true")
@@ -234,11 +224,8 @@ public class RecipeDto {
             return RecipeResponseDto.builder()
                     .idx(recipe.getIdx())
                     .title(recipe.getTitle())
-                    .description(recipe.getDescription())
                     .cooking_method(recipe.getCooking_method())
                     .category(recipe.getCategory())
-                    .time_taken(recipe.getTime_taken())
-                    .difficulty_level(recipe.getDifficulty_level())
                     .serving_size(recipe.getServing_size())
                     .hashtags(recipe.getHashtags())
                     .image_small_url(recipe.getImage_small_url())
@@ -250,8 +237,8 @@ public class RecipeDto {
                     .ingredients(recipe.getIngredients() != null ? recipe.getIngredients().stream()
                             .map(RecipeIngredientDto::fromEntity).toList() : null)
                     .nutrition(recipe.getNutrition() != null ? RecipeNutritionDto.fromEntity(recipe.getNutrition()) : null)
-                    .createdAt(recipe.getCreatedAt())    // ✅ 이제 타입이 일치함
-                    .updatedAt(recipe.getUpdatedAt())    // ✅ 이제 타입이 일치함
+                    .createdAt(recipe.getCreatedAt())
+                    .updatedAt(recipe.getUpdatedAt())
                     .build();
         }
     }
