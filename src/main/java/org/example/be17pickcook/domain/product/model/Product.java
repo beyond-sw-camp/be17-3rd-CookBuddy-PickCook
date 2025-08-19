@@ -141,10 +141,6 @@ public class Product {
     @Column(name = "updated_at") // 마지막 수정일시
     private LocalDateTime updatedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
-
     // (편의 메서드) 가격 변경
 // - 0원 이상만 허용
     public void changePrice(Integer price) {

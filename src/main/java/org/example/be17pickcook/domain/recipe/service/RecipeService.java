@@ -55,7 +55,7 @@ public class RecipeService {
         recipe.setImage_large_url(imageLargeUrl);
 
         // Recipe 먼저 저장
-        recipe = recipeRepository.save(recipe);
+//        recipe = recipeRepository.save(recipe);
 
         // Steps 매핑 및 이미지 업로드
         if (dto.getSteps() != null) {

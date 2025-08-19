@@ -21,6 +21,7 @@ public class Recipe extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idx;
     private String title;
+    private String description;
     private String cooking_method;
     private String category;
     private String serving_size;

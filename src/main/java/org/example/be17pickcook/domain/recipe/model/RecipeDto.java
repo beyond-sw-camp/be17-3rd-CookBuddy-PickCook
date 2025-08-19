@@ -17,6 +17,8 @@ public class RecipeDto {
     public static class RecipeRequestDto { // 등록
         @Schema(description = "레시피 제목", example = "김치찌개")
         private String title;
+        @Schema(description = "레시피에 대한 간단한 설명", example = "귀찮을 때 간단하게 만들어 먹기 좋은 김치찌개 레시피 알려드릴게요!")
+        private String description;
         @Schema(description = "조리 방법", example = "끓이기")
         private String cooking_method;
         @Schema(description = "레시피 카테고리", example = "한식")
@@ -44,6 +46,7 @@ public class RecipeDto {
         public Recipe toEntity(User authUser) {
             Recipe recipe = Recipe.builder()
                     .title(this.title)
+                    .description(this.description)
                     .cooking_method(this.cooking_method)
                     .category(this.category)
                     .serving_size(this.serving_size)
@@ -183,6 +186,8 @@ public class RecipeDto {
         private Long idx;
         @Schema(description = "레시피 제목", example = "김치찌개")
         private String title;
+        @Schema(description = "레시피에 대한 간단한 설명", example = "귀찮을 때 간단하게 만들어 먹기 좋은 김치찌개 레시피 알려드릴게요!")
+        private String description;
         @Schema(description = "조리 방법", example = "끓이기")
         private String cooking_method;
         @Schema(description = "레시피 카테고리", example = "한식")
@@ -224,6 +229,7 @@ public class RecipeDto {
             return RecipeResponseDto.builder()
                     .idx(recipe.getIdx())
                     .title(recipe.getTitle())
+                    .description(recipe.getDescription())
                     .cooking_method(recipe.getCooking_method())
                     .category(recipe.getCategory())
                     .serving_size(recipe.getServing_size())
