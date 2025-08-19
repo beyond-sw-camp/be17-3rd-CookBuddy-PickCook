@@ -295,7 +295,7 @@ public class UserDto {
 
     @Schema(description = "비밀번호 재설정 실행 정보")
     @Getter
-    public static class ResetPassword {
+    public static class ResetPasswordRequest {
         @Schema(description = "비밀번호 재설정 토큰 (필수)",
                 example = "abc123-def456-ghi789")
         @NotBlank(message = "토큰이 필요합니다")
@@ -320,6 +320,141 @@ public class UserDto {
             }
             return newPassword.equals(confirmPassword);
         }
+    }
+
+    @Schema(description = "마이페이지 비밀번호 변경용 현재 비밀번호 확인 요청")
+    @Getter
+    public static class CurrentPasswordRequest {
+        @Schema(description = "현재 비밀번호",
+                example = "currentPassword123!")
+        @NotBlank(message = "현재 비밀번호를 입력해주세요")
+        private String currentPassword;
+
+        @Schema(description = "새로운 비밀번호",
+                example = "newPassword123!")
+        @NotBlank(message = "새 비밀번호를 입력해주세요")
+        @Pattern(message = "비밀번호는 영문 대소문자, 숫자, 특수문자(!@#$%^&*())를 조합해 8~20자로 생성해주세요.",
+                regexp = "^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*()]).{8,20}$")
+        private String newPassword;
+
+        @Schema(description = "새 비밀번호 확인",
+                example = "newPassword123!")
+        @NotBlank(message = "비밀번호 확인을 입력해주세요")
+        private String confirmPassword;
+
+        // 비밀번호 일치 검증을 위한 커스텀 검증 메서드
+        @Schema(hidden = true)
+        @AssertTrue(message = "비밀번호가 일치하지 않습니다")
+        public boolean isPasswordMatching() {
+            if (newPassword == null || confirmPassword == null) {
+                return true;
+            }
+            return newPassword.equals(confirmPassword);
+        }
+    }
+
+    // =================================================================
+    // 토큰 관련 DTO
+    // =================================================================
+
+    @Schema(description = "토큰 검증 응답 정보")
+    @Getter
+    @Builder
+    public static class TokenValidationResponse {
+        @Schema(description = "토큰 유효성", example = "true")
+        private Boolean valid;
+
+        @Schema(description = "토큰 타입 (EMAIL_RESET 또는 INTERNAL_RESET)",
+                example = "EMAIL_RESET")
+        private String tokenType;
+
+        @Schema(description = "토큰 만료시간까지 남은 분", example = "25")
+        private Long remainingMinutes;
+    }
+
+    @Schema(description = "내부 토큰 생성 응답 정보")
+    @Getter
+    @Builder
+    public static class InternalTokenResponse {
+        @Schema(description = "생성된 토큰",
+                example = "abc123-def456-ghi789")
+        private String token;
+
+        @Schema(description = "토큰 타입", example = "INTERNAL_RESET")
+        private String tokenType;
+
+        @Schema(description = "토큰 만료시간 (분)", example = "10")
+        private Integer expirationMinutes;
+
+        @Schema(description = "Vue 컴포넌트로 리다이렉트할 URL",
+                example = "/reset-password?token=abc123&type=internal")
+        private String redirectUrl;
+    }
+
+    // =================================================================
+    // OAuth2 관련 DTO
+    // =================================================================
+
+    @Schema(description = "OAuth2 비밀번호 변경 리다이렉트 응답")
+    @Getter
+    @Builder
+    public static class OAuth2RedirectResponse {
+        @Schema(description = "안내 메시지",
+                example = "소셜 로그인 사용자는 카카오 계정에서 비밀번호를 변경해주세요.")
+        private String message;
+
+        @Schema(description = "카카오 계정 관리 페이지 URL",
+                example = "https://accounts.kakao.com/weblogin/account/info")
+        private String redirectUrl;
+
+        @Schema(description = "OAuth2 제공자", example = "KAKAO")
+        private String provider;
+    }
+
+    // =================================================================
+    // 비밀번호 재설정 응답 DTO
+    // =================================================================
+
+    @Schema(description = "비밀번호 재설정 완료 응답")
+    @Getter
+    @Builder
+    public static class PasswordResetResponse {
+        @Schema(description = "완료 메시지",
+                example = "비밀번호가 성공적으로 변경되었습니다.")
+        private String message;
+
+        @Schema(description = "재설정 완료 시간")
+        private LocalDateTime resetAt;
+
+        @Schema(description = "JWT 토큰 무효화 여부", example = "true")
+        private Boolean jwtInvalidated;
+
+        @Schema(description = "로그인 페이지 리다이렉트 안내",
+                example = "모든 기기에서 재로그인이 필요합니다.")
+        private String redirectMessage;
+    }
+
+    // =================================================================
+    // 에러 응답 관련 DTO (향후 확장용)
+    // =================================================================
+
+    @Schema(description = "비밀번호 재설정 에러 응답")
+    @Getter
+    @Builder
+    public static class PasswordResetErrorResponse {
+        @Schema(description = "에러 메시지",
+                example = "토큰이 만료되었습니다.")
+        private String message;
+
+        @Schema(description = "에러 코드", example = "30302")
+        private Integer errorCode;
+
+        @Schema(description = "다시 시도 가능 여부", example = "true")
+        private Boolean retryable;
+
+        @Schema(description = "권장 액션",
+                example = "비밀번호 재설정을 다시 요청해주세요.")
+        private String recommendedAction;
     }
 
     // =================================================================

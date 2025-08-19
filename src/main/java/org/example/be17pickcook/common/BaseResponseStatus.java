@@ -27,8 +27,10 @@ public enum BaseResponseStatus {
     // 회원가입 관련 성공
     SIGNUP_SUCCESS(true, 20100, "회원가입이 완료되었습니다. 이메일을 확인해주세요."),
     EMAIL_VERIFY_SUCCESS(true, 20101, "이메일 인증이 완료되었습니다."),
+    EMAIL_VERIFICATION_SUCCESS(true, 20101, "이메일 인증이 완료되었습니다."), // 별칭 추가
     EMAIL_AVAILABLE(true, 20102, "사용 가능한 이메일입니다."),
     NICKNAME_AVAILABLE(true, 20103, "사용 가능한 닉네임입니다."),
+    EMAIL_FOUND_SUCCESS(true, 20104, "이메일을 찾았습니다."), // 🆕 새로 추가
 
     // 프로필 관리 성공
     PROFILE_UPDATE_SUCCESS(true, 20200, "회원정보가 성공적으로 수정되었습니다."),
@@ -36,6 +38,12 @@ public enum BaseResponseStatus {
     // 비밀번호 관리 성공
     PASSWORD_RESET_EMAIL_SENT(true, 20300, "비밀번호 재설정 이메일이 발송되었습니다."),
     PASSWORD_RESET_SUCCESS(true, 20301, "비밀번호가 성공적으로 변경되었습니다."),
+    INTERNAL_TOKEN_GENERATED(true, 20302, "비밀번호 변경 토큰이 생성되었습니다."), // 🆕 새로 추가
+    TOKEN_VALID(true, 20303, "유효한 토큰입니다."), // 🆕 새로 추가
+
+    // OAuth2 관련 성공 (🆕 새로 추가)
+    OAUTH_REDIRECT_REQUIRED(true, 20310, "소셜 로그인 사용자 리다이렉트"),
+    OAUTH_PASSWORD_REDIRECT_SUCCESS(true, 20311, "카카오 계정 관리 페이지로 안내되었습니다."),
 
     // 회원탈퇴 성공
     WITHDRAW_SUCCESS(true, 20400, "회원탈퇴가 완료되었습니다."),
@@ -45,7 +53,7 @@ public enum BaseResponseStatus {
     // =================================================================
 
     // 기본 요청 오류
-    REQUEST_ERROR(true, 30000, "입력값을 확인해주세요."),
+    REQUEST_ERROR(false, 30000, "입력값을 확인해주세요."),
 
     // JWT 인증 오류
     EXPIRED_JWT(false, 30001, "JWT 토큰이 만료되었습니다."),
@@ -71,6 +79,14 @@ public enum BaseResponseStatus {
     INVALID_TOKEN(false, 30302, "유효하지 않은 토큰입니다."),
     SAME_AS_CURRENT_PASSWORD(false, 30303, "기존 비밀번호와 동일합니다. 다른 비밀번호를 사용해주세요."),
     PASSWORD_MISMATCH(false, 30304, "비밀번호가 일치하지 않습니다."),
+    CURRENT_PASSWORD_REQUIRED(false, 30305, "현재 비밀번호를 입력해주세요."), // 🆕 새로 추가
+    INVALID_CURRENT_PASSWORD(false, 30306, "현재 비밀번호가 일치하지 않습니다."), // 🆕 새로 추가
+    TOKEN_ALREADY_USED(false, 30307, "이미 사용된 토큰입니다."), // 🆕 새로 추가
+
+    // OAuth2 관련 오류 (🆕 새로 추가)
+    NOT_OAUTH_USER(false, 30310, "일반 로그인 사용자입니다."),
+    OAUTH_PROVIDER_NOT_SUPPORTED(false, 30311, "지원하지 않는 OAuth2 제공자입니다."),
+    OAUTH_TOKEN_INVALID(false, 30312, "OAuth2 토큰이 유효하지 않습니다."),
 
     // 회원탈퇴 오류
     WITHDRAW_CONFIRM_REQUIRED(false, 30400, "탈퇴 확인이 필요합니다."),
