@@ -11,10 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.be17pickcook.common.BaseResponse;
 import org.example.be17pickcook.common.BaseResponseStatus;
-import org.example.be17pickcook.domain.user.mapper.UserMapper;
-import org.example.be17pickcook.domain.user.model.User;
 import org.example.be17pickcook.domain.user.model.UserDto;
-import org.example.be17pickcook.domain.user.repository.UserRepository;
 import org.example.be17pickcook.domain.user.service.UserService;
 import org.example.be17pickcook.template.EmailTemplates;
 import org.springframework.http.ResponseEntity;
@@ -43,8 +40,6 @@ public class UserController {
 
     private final UserService userService;
     private final EmailTemplates emailTemplates;
-    private final UserRepository userRepository;
-    private final UserMapper userMapper;
 
     // =================================================================
     // 회원가입 관련 API
@@ -89,17 +84,16 @@ public class UserController {
                 .body(emailTemplates.getEmailVerificationCompletePage());
     }
 
-    @Operation(
-            summary = "이메일 중복 확인",
-            description = "회원가입 시 입력한 이메일이 이미 사용 중인지 확인합니다."
-    )
     @GetMapping("/check-email")
     public ResponseEntity<BaseResponse<Map<String, Object>>> checkEmailDuplicate(
             @RequestParam String email) {
-        boolean exists = userRepository.findByEmailAndNotDeleted(email).isPresent();
 
-        Map<String, Object> data = Map.of("available", !exists);
-        BaseResponseStatus status = exists ? BaseResponseStatus.EMAIL_NOT_AVAILABLE : BaseResponseStatus.EMAIL_AVAILABLE;
+        // Service로 위임
+        Map<String, Object> data = userService.checkEmailAvailability(email);
+        boolean available = (Boolean) data.get("available");
+
+        BaseResponseStatus status = available ?
+                BaseResponseStatus.EMAIL_AVAILABLE : BaseResponseStatus.EMAIL_NOT_AVAILABLE;
 
         return ResponseEntity.ok(BaseResponse.success(data, status));
     }
@@ -121,11 +115,8 @@ public class UserController {
                     .body(BaseResponse.error(BaseResponseStatus.UNAUTHORIZED));
         }
 
-        // 데이터베이스에서 최신 데이터 조회 (캐시 방지)
-        User userFromDB = userRepository.findById(authUser.getIdx())
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-
-        UserDto.Response userResponse = userMapper.entityToResponse(userFromDB);
+        // Service로 위임 - 데이터베이스에서 최신 데이터 조회 및 DTO 변환
+        UserDto.Response userResponse = userService.getCurrentUserInfo(authUser.getIdx());
         return ResponseEntity.ok(BaseResponse.success(userResponse));
     }
 
@@ -270,7 +261,8 @@ public class UserController {
     @PostMapping("/reset-password")
     public ResponseEntity<BaseResponse<Void>> resetPassword(
             @Valid @RequestBody UserDto.ResetPassword dto,
-            BindingResult bindingResult) {
+            BindingResult bindingResult,
+            HttpServletResponse response) {
 
         // Validation 오류 처리
         if (bindingResult.hasErrors()) {
@@ -280,8 +272,27 @@ public class UserController {
         }
 
         // GlobalExceptionHandler가 예외 처리
-        userService.resetPassword(dto.getToken(), dto.getNewPassword());
+        userService.resetPassword(dto.getToken(), dto.getNewPassword(), response);
         return ResponseEntity.ok(BaseResponse.success(null, "비밀번호가 성공적으로 변경되었습니다."));
+    }
+
+    @Operation(
+            summary = "마이페이지 비밀번호 변경 토큰 생성",
+            description = "현재 로그인된 사용자의 비밀번호 변경을 위한 토큰을 생성합니다. 이메일 발송 없이 즉시 토큰을 반환합니다."
+    )
+    @PostMapping("/generate-password-change-token")
+    public ResponseEntity<BaseResponse<Map<String, String>>> generatePasswordChangeToken(
+            @AuthenticationPrincipal UserDto.AuthUser authUser) {
+
+        if (authUser == null) {
+            return ResponseEntity.status(401)
+                    .body(BaseResponse.error(BaseResponseStatus.UNAUTHORIZED));
+        }
+
+        String token = userService.generatePasswordChangeToken(authUser.getIdx());
+        Map<String, String> result = Map.of("token", token);
+
+        return ResponseEntity.ok(BaseResponse.success(result, "비밀번호 변경 토큰이 생성되었습니다."));
     }
 
     // =================================================================
