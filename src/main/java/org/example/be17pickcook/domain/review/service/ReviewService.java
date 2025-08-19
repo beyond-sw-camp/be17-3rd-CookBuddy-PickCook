@@ -52,4 +52,14 @@ public class ReviewService {
         //     // 이미지 업로드/연결 로직
         // }
     }
+
+    // 특정 상품의 리뷰 전체 조회
+    public List<ReviewDto.ReviewResponseDto> getAllReviewByProductId(Long productId) {
+        List<Review> reviews = reviewRepository.findAllByProductId(productId);
+
+        return reviews.stream().map(review -> {
+            ReviewDto.ReviewResponseDto dto = ReviewDto.ReviewResponseDto.from(review);
+            return dto;
+        }).toList();
+    }
 }

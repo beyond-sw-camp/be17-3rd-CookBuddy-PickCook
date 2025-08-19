@@ -115,7 +115,6 @@ public class ProductDto {
                     .shippingInfo(this.shippingInfo)
                     .notice(this.notice)
                     .description(this.description)
-                    .user(authUser)
                     .build();
         }
     }
