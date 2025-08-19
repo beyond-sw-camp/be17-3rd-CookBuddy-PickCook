@@ -8,14 +8,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.be17pickcook.common.BaseResponseStatus;
 import org.example.be17pickcook.common.exception.BaseException;
-import org.example.be17pickcook.domain.user.mapper.EmailVerifyMapper;
 import org.example.be17pickcook.domain.user.mapper.UserMapper;
 import org.example.be17pickcook.domain.user.model.EmailVerify;
 import org.example.be17pickcook.domain.user.model.PasswordReset;
 import org.example.be17pickcook.domain.user.model.User;
 import org.example.be17pickcook.domain.user.model.UserDto;
-import org.example.be17pickcook.domain.user.repository.EmailVerifyRepository;
-import org.example.be17pickcook.domain.user.repository.PasswordResetRepository;
 import org.example.be17pickcook.domain.user.repository.UserRepository;
 import org.example.be17pickcook.template.EmailTemplates;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -31,8 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * - PickCook 사용자 서비스
@@ -50,13 +47,11 @@ public class UserService implements UserDetailsService {
     // =================================================================
 
     private final UserRepository userRepository;
-    private final EmailVerifyRepository emailVerifyRepository;
-    private final PasswordResetRepository passwordResetRepository;
     private final JavaMailSender emailSender;
     private final UserMapper userMapper;
-    private final EmailVerifyMapper emailVerifyMapper;
     private final PasswordEncoder passwordEncoder;
     private final EmailTemplates emailTemplates;
+    private final TokenService tokenService;
 
     // =================================================================
     // Spring Security 인증 관련
@@ -84,19 +79,8 @@ public class UserService implements UserDetailsService {
      * - Security Context 초기화
      */
     public void logout(HttpServletRequest request, HttpServletResponse response) {
-        // JWT 쿠키 삭제
-        Cookie jwtCookie = new Cookie("PICKCOOK_AT", null);
-        jwtCookie.setMaxAge(0);
-        jwtCookie.setPath("/");
-        jwtCookie.setHttpOnly(true);
-        response.addCookie(jwtCookie);
-
-        // JSESSIONID 쿠키 삭제 (OAuth2 세션)
-        Cookie sessionCookie = new Cookie("JSESSIONID", null);
-        sessionCookie.setMaxAge(0);
-        sessionCookie.setPath("/");
-        sessionCookie.setHttpOnly(true);
-        response.addCookie(sessionCookie);
+        // 🔧 공통 메서드 사용
+        clearAllAuthenticationCookies(response);
 
         // 세션 무효화
         HttpSession session = request.getSession(false);
@@ -114,13 +98,9 @@ public class UserService implements UserDetailsService {
      * 인증 쿠키 삭제 (회원탈퇴 시 사용)
      */
     public void clearAuthenticationCookies(HttpServletResponse response) {
-        Cookie jwtCookie = new Cookie("PICKCOOK_AT", null);
-        jwtCookie.setMaxAge(0);
-        jwtCookie.setPath("/");
-        jwtCookie.setHttpOnly(true);
-        response.addCookie(jwtCookie);
 
-        log.info("인증 쿠키 삭제 완료");
+        clearAllAuthenticationCookies(response);
+
     }
 
     // =================================================================
@@ -157,13 +137,8 @@ public class UserService implements UserDetailsService {
 
                 User savedUser = userRepository.save(user);
 
-                // 기존 이메일 인증 삭제
-                emailVerifyRepository.deleteByUser(savedUser);
-
-                // 새로운 이메일 인증 발송
-                String uuid = UUID.randomUUID().toString();
-                EmailVerify emailVerify = emailVerifyMapper.createEmailVerify(uuid, savedUser);
-                emailVerifyRepository.save(emailVerify);
+                // TokenService로 이메일 인증 토큰 생성 위임
+                String uuid = tokenService.createEmailVerificationToken(savedUser);
 
                 sendVerificationEmail(dto.getEmail(), uuid);
 
@@ -181,9 +156,8 @@ public class UserService implements UserDetailsService {
 
         User savedUser = userRepository.save(user);
 
-        String uuid = UUID.randomUUID().toString();
-        EmailVerify emailVerify = emailVerifyMapper.createEmailVerify(uuid, savedUser);
-        emailVerifyRepository.save(emailVerify);
+        // TokenService로 이메일 인증 토큰 생성 위임
+        String uuid = tokenService.createEmailVerificationToken(savedUser);
 
         sendVerificationEmail(dto.getEmail(), uuid);
         log.info("새 사용자 회원가입 완료 - 사용자: {}, UUID: {}", dto.getEmail(), uuid);
@@ -195,8 +169,8 @@ public class UserService implements UserDetailsService {
      */
     @Transactional
     public void verify(String uuid) {
-        EmailVerify emailVerify = emailVerifyRepository.findByUuid(uuid)
-                .orElseThrow(() -> BaseException.from(BaseResponseStatus.INVALID_EMAIL_TOKEN));
+        // TokenService로 토큰 검증 및 조회 위임
+        EmailVerify emailVerify = tokenService.getEmailVerifyByUuid(uuid);
 
         if (emailVerify.isExpired()) {
             throw BaseException.from(BaseResponseStatus.EXPIRED_EMAIL_TOKEN);
@@ -205,6 +179,9 @@ public class UserService implements UserDetailsService {
         User user = emailVerify.getUser();
         user.userVerify();
         userRepository.save(user);
+
+        // TokenService로 인증 완료 처리 위임
+        tokenService.markEmailVerificationAsCompleted(emailVerify);
     }
 
     // =================================================================
@@ -233,6 +210,21 @@ public class UserService implements UserDetailsService {
     }
 
     /**
+     * 현재 사용자 정보 조회 (Controller용)
+     * - 데이터베이스에서 최신 정보 조회
+     * - Response DTO로 변환하여 반환
+     * @param userId 사용자 ID
+     * @return 사용자 응답 DTO
+     */
+    @Transactional(readOnly = true)
+    public UserDto.Response getCurrentUserInfo(Integer userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> BaseException.from(BaseResponseStatus.USER_NOT_FOUND));
+
+        return userMapper.entityToResponse(user);
+    }
+
+    /**
      * 닉네임 사용 가능 여부 확인
      * @param nickname 확인할 닉네임
      * @param currentUserId 현재 사용자 ID (본인 닉네임은 허용)
@@ -253,6 +245,17 @@ public class UserService implements UserDetailsService {
         }
 
         return false; // 다른 사용자가 사용 중
+    }
+
+    /**
+     * 이메일 중복 확인
+     * @param email 확인할 이메일
+     * @return 사용 가능 여부가 포함된 응답 Map
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> checkEmailAvailability(String email) {
+        boolean exists = userRepository.findByEmailAndNotDeleted(email).isPresent();
+        return Map.of("available", !exists);
     }
 
     // =================================================================
@@ -303,44 +306,46 @@ public class UserService implements UserDetailsService {
     // =================================================================
 
     /**
-     * 비밀번호 재설정 요청 처리
+     * 비밀번호 재설정 요청 처리 (이메일 발송)
      * - 존재하지 않는 이메일도 보안상 동일하게 응답
-     * - 기존 토큰 무효화 후 새 토큰 생성
+     * - TokenService를 사용한 토큰 생성
      */
     @Transactional
     public void requestPasswordReset(String email) throws MessagingException {
         log.info("=== 비밀번호 재설정 요청 ===");
         log.info("이메일: {}", email);
 
-        // 사용자 조회 (존재하지 않아도 에러 안 남)
         Optional<User> userOptional = userRepository.findByEmail(email);
 
         if (userOptional.isPresent()) {
             User user = userOptional.get();
 
-            // 기존 미사용 토큰들 무효화
-            passwordResetRepository.markAllAsUsedByUser(user);
+            // TokenService로 토큰 생성 위임
+            String token = tokenService.createPasswordResetToken(user);
 
-            // 새 토큰 생성
-            String token = UUID.randomUUID().toString();
-
-            PasswordReset passwordReset = PasswordReset.builder()
-                    .email(email)
-                    .token(token)
-                    .user(user)
-                    .expiresAt(LocalDateTime.now().plusMinutes(30)) // 30분 후 만료
-                    .build();
-
-            passwordResetRepository.save(passwordReset);
-
-            // 실제 이메일 발송
+            // 이메일 발송
             sendPasswordResetEmail(email, token);
 
             log.info("비밀번호 재설정 이메일 발송 완료: {}", email);
         } else {
-            // 보안: 존재하지 않는 이메일이어도 동일한 응답
             log.info("존재하지 않는 이메일이지만 보안상 성공 응답: {}", email);
         }
+    }
+
+    /**
+     * 마이페이지용 비밀번호 변경 토큰 생성 (이메일 발송 없음)
+     */
+    @Transactional
+    public String generatePasswordChangeToken(Integer userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> BaseException.from(BaseResponseStatus.USER_NOT_FOUND));
+
+        // TokenService로 토큰 생성 위임
+        String token = tokenService.createPasswordResetToken(user);
+
+        log.info("마이페이지 비밀번호 변경 토큰 생성 완료: 사용자 ID = {}", userId);
+
+        return token;
     }
 
     /**
@@ -348,14 +353,8 @@ public class UserService implements UserDetailsService {
      */
     @Transactional(readOnly = true)
     public boolean validateResetToken(String token) {
-        Optional<PasswordReset> resetOptional = passwordResetRepository.findByTokenAndUsedFalse(token);
-
-        if (resetOptional.isPresent()) {
-            PasswordReset reset = resetOptional.get();
-            return reset.isValid();
-        }
-
-        return false;
+        // TokenService로 검증 위임
+        return tokenService.validatePasswordResetToken(token);
     }
 
     /**
@@ -364,9 +363,9 @@ public class UserService implements UserDetailsService {
      * - 토큰 사용 처리
      */
     @Transactional
-    public void resetPassword(String token, String newPassword) {
-        PasswordReset reset = passwordResetRepository.findByTokenAndUsedFalse(token)
-                .orElseThrow(() -> BaseException.from(BaseResponseStatus.INVALID_TOKEN));
+    public void resetPassword(String token, String newPassword, HttpServletResponse response) {
+        // TokenService로 토큰 조회 위임
+        PasswordReset reset = tokenService.getPasswordResetByToken(token);
 
         if (!reset.isValid()) {
             throw BaseException.from(BaseResponseStatus.EXPIRED_RESET_TOKEN);
@@ -384,11 +383,34 @@ public class UserService implements UserDetailsService {
         user.updatePassword(encodedPassword);
         userRepository.save(user);
 
-        // 토큰 사용 처리
-        reset.markAsUsed();
-        passwordResetRepository.save(reset);
+        // TokenService로 토큰 사용 처리 위임
+        tokenService.markPasswordResetTokenAsUsed(reset);
+
+        // 기존 JWT 토큰 무효화를 위한 쿠키 삭제
+        clearAllAuthenticationCookies(response);
 
         log.info("비밀번호 재설정 완료: {}", user.getEmail());
+    }
+
+    /**
+     * 모든 인증 관련 쿠키 삭제 (공통 메서드)
+     */
+    public void clearAllAuthenticationCookies(HttpServletResponse response) {
+        // JWT 쿠키 삭제
+        Cookie jwtCookie = new Cookie("PICKCOOK_AT", null);
+        jwtCookie.setMaxAge(0);
+        jwtCookie.setPath("/");
+        jwtCookie.setHttpOnly(true);
+        response.addCookie(jwtCookie);
+
+        // 세션 쿠키 삭제
+        Cookie sessionCookie = new Cookie("JSESSIONID", null);
+        sessionCookie.setMaxAge(0);
+        sessionCookie.setPath("/");
+        sessionCookie.setHttpOnly(true);
+        response.addCookie(sessionCookie);
+
+        log.info("모든 인증 쿠키 삭제 완료");
     }
 
     // =================================================================

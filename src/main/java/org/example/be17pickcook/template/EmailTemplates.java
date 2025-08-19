@@ -301,7 +301,7 @@ public class EmailTemplates {
                             
                             if (result.success) {
                                 alert('🎉 비밀번호가 성공적으로 변경되었습니다!\\n로그인 페이지로 이동합니다.');
-                                window.location.href = 'http://localhost:5173/login';
+                                window.location.href = 'http://localhost:5174/login';
                             } else {
                                 alert('⚠ 오류: ' + result.message);
                                 submitBtn.disabled = false;
@@ -342,7 +342,7 @@ public class EmailTemplates {
                         새로운 링크를 요청해주세요.
                     </p>
                     <div style="margin-top: 30px;">
-                        <a href="http://localhost:5173/login" 
+                        <a href="http://localhost:5174/login" 
                            style="background-color: #E14345; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; text-decoration: none; display: inline-block; font-size: 16px; font-weight: 600;">
                             로그인 페이지로 이동
                         </a>

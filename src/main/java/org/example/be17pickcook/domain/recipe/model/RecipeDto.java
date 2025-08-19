@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import org.example.be17pickcook.domain.user.model.User;
 
-import java.util.Date;
+import java.time.LocalDateTime;  // ✅ Date → LocalDateTime으로 변경
 import java.util.List;
 
 public class RecipeDto {
@@ -44,7 +44,6 @@ public class RecipeDto {
         private List<RecipeIngredientDto> ingredients;
         @Schema(description = "영양 정보")
         private RecipeNutritionDto nutrition;
-
 
         // DTO → Entity 변환 메서드
         public Recipe toEntity(User authUser) {
@@ -89,7 +88,6 @@ public class RecipeDto {
         }
     }
 
-
     @Getter
     @Builder
     @Schema(description = "레시피 조리 단계 DTO")
@@ -119,7 +117,6 @@ public class RecipeDto {
         }
     }
 
-
     @Getter
     @Builder
     @Schema(description = "레시피 재료 DTO")
@@ -144,7 +141,6 @@ public class RecipeDto {
                     .build();
         }
     }
-
 
     @Getter
     @Builder
@@ -183,7 +179,6 @@ public class RecipeDto {
         }
     }
 
-
     @Getter
     @Builder
     @Schema(description = "레시피 응답 DTO")
@@ -221,9 +216,9 @@ public class RecipeDto {
         @Schema(description = "영양 정보")
         private RecipeNutritionDto nutrition;
         @Schema(description = "생성일")
-        private Date createdAt;
+        private LocalDateTime createdAt;        // ✅ LocalDateTime으로 변경
         @Schema(description = "수정일")
-        private Date updatedAt;
+        private LocalDateTime updatedAt;        // ✅ LocalDateTime으로 변경
         @Schema(description = "좋아요 수", example = "12")
         private Integer likeCount;
         @Schema(description = "로그인 사용자가 좋아요를 눌렀는지 여부", example = "true")
@@ -255,8 +250,8 @@ public class RecipeDto {
                     .ingredients(recipe.getIngredients() != null ? recipe.getIngredients().stream()
                             .map(RecipeIngredientDto::fromEntity).toList() : null)
                     .nutrition(recipe.getNutrition() != null ? RecipeNutritionDto.fromEntity(recipe.getNutrition()) : null)
-                    .createdAt(recipe.getCreatedAt())
-                    .updatedAt(recipe.getUpdatedAt())
+                    .createdAt(recipe.getCreatedAt())    // ✅ 이제 타입이 일치함
+                    .updatedAt(recipe.getUpdatedAt())    // ✅ 이제 타입이 일치함
                     .build();
         }
     }
