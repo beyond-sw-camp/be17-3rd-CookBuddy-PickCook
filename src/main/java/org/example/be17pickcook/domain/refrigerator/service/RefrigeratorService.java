@@ -6,8 +6,11 @@ import org.example.be17pickcook.domain.refrigerator.repository.RefrigeratorRepos
 import org.example.be17pickcook.domain.refrigerator.model.Refrigerator;
 import org.example.be17pickcook.domain.refrigerator.model.RefrigeratorItem;
 import org.example.be17pickcook.domain.refrigerator.model.RefrigeratorItemDto;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -26,26 +29,36 @@ public class RefrigeratorService {
                 .toList();
     }
 
+    /** Product 스타일: 컨트롤러가 메시지로만 응답 → void 반환 */
     @Transactional
-    public RefrigeratorItemDto.ItemRes addItem(Long refrigeratorId, RefrigeratorItemDto.Register req) {
+    public void addItem(Long refrigeratorId, RefrigeratorItemDto.Register req) {
         Refrigerator ref = refrigeratorRepository.findById(refrigeratorId)
-                .orElseThrow(() -> new IllegalArgumentException("Refrigerator not found: " + refrigeratorId));
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.NOT_FOUND, "Refrigerator not found: " + refrigeratorId));
 
-        RefrigeratorItem saved = itemRepository.save(req.toEntity(ref));
-        return RefrigeratorItemDto.ItemRes.from(saved);
+        try {
+            itemRepository.save(req.toEntity(ref));
+        } catch (DataIntegrityViolationException e) {
+            // 유니크 제약(같은 냉장고+재료명 중복) 등
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Item already exists in this refrigerator");
+        }
     }
 
     @Transactional
     public RefrigeratorItemDto.ItemRes updateItem(Long itemId, RefrigeratorItemDto.Update req) {
         RefrigeratorItem item = itemRepository.findById(itemId)
-                .orElseThrow(() -> new IllegalArgumentException("Item not found: " + itemId));
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.NOT_FOUND, "Item not found: " + itemId));
 
-        req.apply(item); // changeQuantity / changeExpirationDate 호출
+        req.apply(item); // changeIngredientName / changeQuantity / changeExpirationDate
         return RefrigeratorItemDto.ItemRes.from(item);
     }
 
     @Transactional
     public void deleteItem(Long itemId) {
+        if (!itemRepository.existsById(itemId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Item not found: " + itemId);
+        }
         itemRepository.deleteById(itemId);
     }
 }
