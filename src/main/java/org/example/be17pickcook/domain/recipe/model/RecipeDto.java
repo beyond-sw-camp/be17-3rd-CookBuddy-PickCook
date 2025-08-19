@@ -198,6 +198,10 @@ public class RecipeDto {
         private String cooking_method;
         @Schema(description = "레시피 카테고리", example = "한식")
         private String category;
+        @Schema(description = "소요시간", example = "20분")
+        private String time_taken;
+        @Schema(description = "난이도", example = "어려움/보통/쉬움")
+        private String difficulty_level;
         @Schema(description = "인분/양", example = "2인분")
         private String serving_size;
         @Schema(description = "해시태그", example = "#매운 #한식")
@@ -238,6 +242,8 @@ public class RecipeDto {
                     .description(recipe.getDescription())
                     .cooking_method(recipe.getCooking_method())
                     .category(recipe.getCategory())
+                    .time_taken(recipe.getTime_taken())
+                    .difficulty_level(recipe.getDifficulty_level())
                     .serving_size(recipe.getServing_size())
                     .hashtags(recipe.getHashtags())
                     .image_small_url(recipe.getImage_small_url())
