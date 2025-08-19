@@ -26,7 +26,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @EnableWebSecurity
 public class SecurityConfig {
-    private final AuthenticationConfiguration configuration;
+    private final AuthenticationConfiguration authConfiguration;  // 변수명 변경
     private final OAuth2UserService oAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
     private final UserMapper userMapper;
@@ -38,25 +38,21 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
+        CorsConfiguration corsConfiguration = new CorsConfiguration();  // 변수명 변경
 
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")); // 수정: PATCH 추가!
-        configuration.setAllowedHeaders(List.of("*"));
+        corsConfiguration.setAllowedOrigins(List.of(
+                "http://localhost:5174" // 현재 사용 포트
 
-        // 🔧 핵심 추가: 쿠키/인증 정보 허용
-        configuration.setAllowCredentials(true);
+        ));
+        corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        corsConfiguration.setAllowedHeaders(List.of("*"));
+        corsConfiguration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
+        source.registerCorsConfiguration("/**", corsConfiguration);  // 올바른 변수 사용
         return source;
     }
 
-    // @Component vs @Bean
-    // @Component : 프로젝트가 실행될 때 컴포넌트 스캔을 통해서 객체를 생성해서 스프링 컨테이너에 Bean으로 등록
-    //              개발자가 직접 개발한 클래스의 객체를 등록할 때 사용
-    // @Bean : 컴포넌트 스캔 X, 개발자가 직접 객체를 생성해서 스프링 컨테이너에 Bean으로 등록
-    //              라이브러리를 가져와서 라이브러리의 객체를 등록할 때 사용
     @Bean
     public SecurityFilterChain configure(HttpSecurity http) throws Exception {
         http.oauth2Login(config -> {
@@ -72,19 +68,18 @@ public class SecurityConfig {
                 (auth) -> auth
                         .requestMatchers(
                                 "/login",
-                                "/api/user/signup",          // ✅ 수정: 올바른 경로
-                                "/api/user/verify",          // ✅ 추가: 이메일 인증
-                                "/api/user/check-email",     // ✅ 추가: 이메일 중복체크
-                                "/api/user/find-email",      // ✅ 추가: 아이디 찾기
-                                "/api/user/request-password-reset", // ✅ 추가: 비밀번호 재설정 요청
-                                "/api/user/reset-password",  // ✅ 추가: 비밀번호 재설정
-                                "/oauth2/authorization/kakao" // ✅ OAuth2 카카오 로그인
+                                "/api/user/signup",
+                                "/api/user/verify",
+                                "/api/user/check-email",
+                                "/api/user/find-email",
+                                "/api/user/request-password-reset",
+                                "/api/user/reset-password",
+                                "/oauth2/authorization/kakao"
                         ).permitAll()
-                        .requestMatchers("/test/*").hasRole("USER") // 특정 권한(USER)이 있는 사용자만 허용
-//                        .requestMatchers("/test/*").authenticated() // 로그인한 모든 사용자만 허용
-//                        .anyRequest().authenticated()
+                        .requestMatchers("/test/*").hasRole("USER")
                         .anyRequest().permitAll()
         );
+
         http.cors(cors ->
                 cors.configurationSource(corsConfigurationSource()));
 
@@ -94,7 +89,7 @@ public class SecurityConfig {
 
         http.addFilterBefore(new JwtAuthFilter(), UsernamePasswordAuthenticationFilter.class);
 
-        LoginFilter loginFilter = new LoginFilter(configuration.getAuthenticationManager(), userMapper);
+        LoginFilter loginFilter = new LoginFilter(authConfiguration.getAuthenticationManager(), userMapper);  // 변경된 변수명 사용
         http.addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

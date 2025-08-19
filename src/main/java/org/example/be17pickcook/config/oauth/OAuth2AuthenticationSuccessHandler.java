@@ -29,7 +29,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         System.out.println("- email: " + authUser.getEmail());
         System.out.println("- nickname: " + authUser.getNickname());
 
-        String jwt = JwtUtil.generateToken(authUser.getEmail(), authUser.getIdx(), authUser.getNickname());
+        String jwt = JwtUtil.generateToken(authUser.getEmail(), authUser.getIdx(), authUser.getNickname(), authUser.getName());
 
         if (jwt != null) {
             Cookie cookie = new Cookie("PICKCOOK_AT", jwt);
