@@ -72,12 +72,9 @@ public class UserService implements UserDetailsService {
         User user = userRepository.findByEmail(username)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username));
 
-        // 탈퇴한 계정 체크
-        if (user.getDeleted() != null && user.getDeleted()) {
-            throw new UsernameNotFoundException("탈퇴한 계정입니다. 동일한 이메일로 재가입하시면 계정이 복구됩니다.");
-        }
+        UserDto.AuthUser authUser = userMapper.entityToAuthUser(user);
 
-        return userMapper.entityToAuthUser(user);
+        return authUser;
     }
 
     /**

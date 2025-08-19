@@ -36,7 +36,7 @@ public class UserDto {
 
     @Schema(description = "인증된 사용자 정보 (내부용)")
     @Getter
-    @Builder
+    @Builder(toBuilder = true)
     public static class AuthUser implements UserDetails, OAuth2User {
         @Schema(description = "사용자 고유 ID", example = "1")
         private Integer idx;
@@ -82,7 +82,7 @@ public class UserDto {
 
         @Override
         public String getName() {
-            return nickname;
+            return name;
         }
 
         // UserDetails 구현
