@@ -23,6 +23,8 @@ public class RecipeDto {
         private String category;
         @Schema(description = "인분/양", example = "2인분")
         private String serving_size;
+        @Schema(description = "해시태그", example = "#매운 #한식")
+        private String hashtags;
         @Schema(description = "작은 이미지 URL")
         private String image_small_url;
         @Schema(description = "큰 이미지 URL")
@@ -36,8 +38,6 @@ public class RecipeDto {
         private List<RecipeIngredientDto> ingredients;
         @Schema(description = "영양 정보")
         private RecipeNutritionDto nutrition;
-        @ArraySchema(schema = @Schema(implementation = RecipeHashTagDto.class), arraySchema = @Schema(description = "해시태그 리스트"))
-        private List<RecipeHashTagDto> hashTags;
 
 
         // DTO → Entity 변환 메서드
@@ -47,6 +47,7 @@ public class RecipeDto {
                     .cooking_method(this.cooking_method)
                     .category(this.category)
                     .serving_size(this.serving_size)
+                    .hashtags(this.hashtags)
                     .tip(this.tip)
                     .image_small_url(this.image_small_url)
                     .image_large_url(this.image_large_url)
@@ -73,14 +74,6 @@ public class RecipeDto {
             if (nutrition != null) {
                 RecipeNutrition nutritionEntity = nutrition.toEntity(recipe);
                 recipe.addNutrition(nutritionEntity);
-            }
-
-            // hashtag 엔티티 변환
-            if (hashTags != null) {
-                for (RecipeDto.RecipeHashTagDto hashDto : hashTags) {
-                    RecipeHashTag hashEntity = hashDto.toEntity(recipe);
-                    recipe.addHashTag(hashEntity); // 하나씩 추가
-                }
             }
 
             return recipe;
@@ -184,27 +177,6 @@ public class RecipeDto {
 
     @Getter
     @Builder
-    @Schema(description = "해시태그 DTO")
-    public static class RecipeHashTagDto {
-        @Schema(description = "해시태그 이름", example = "검색 키워드(ex. 간식, 닭가슴살 등등)")
-        private String hashTag_name;
-
-        public RecipeHashTag toEntity(Recipe recipe) {
-            return RecipeHashTag.builder()
-                    .hashtag_name(this.hashTag_name)
-                    .build();
-        }
-
-        public static RecipeHashTagDto fromEntity(RecipeHashTag hashTag) {
-            return RecipeHashTagDto.builder()
-                    .hashTag_name(hashTag.getHashtag_name())
-                    .build();
-        }
-    }
-
-
-    @Getter
-    @Builder
     @Schema(description = "레시피 응답 DTO")
     public static class RecipeResponseDto {
         @Schema(description = "레시피 ID", example = "1")
@@ -217,6 +189,8 @@ public class RecipeDto {
         private String category;
         @Schema(description = "인분/양", example = "2인분")
         private String serving_size;
+        @Schema(description = "해시태그", example = "#매운 #한식")
+        private String hashtags;
         @Schema(description = "작은 이미지 URL")
         private String image_small_url;
         @Schema(description = "큰 이미지 URL")
@@ -231,8 +205,6 @@ public class RecipeDto {
         private List<RecipeIngredientDto> ingredients;
         @Schema(description = "영양 정보")
         private RecipeNutritionDto nutrition;
-        @ArraySchema(schema = @Schema(implementation = RecipeHashTagDto.class), arraySchema = @Schema(description = "해시태그 리스트"))
-        private List<RecipeHashTagDto> hashTags;
         @Schema(description = "생성일")
         private Date createdAt;
         @Schema(description = "수정일")
@@ -241,21 +213,11 @@ public class RecipeDto {
         private Integer likeCount;
         @Schema(description = "로그인 사용자가 좋아요를 눌렀는지 여부", example = "true")
         private Boolean likedByUser;
-        @Schema(description = "스크랩 수", example = "12")
-        private Integer scrapCount;
-        @Schema(description = "로그인 사용자가 스크랩을 했는지 여부", example = "true")
-        private Boolean scrapedByUser;
 
         // 좋아요 관련 값 세팅 메서드
         public void setLikeInfo(Integer likeCount, Boolean likedByUser) {
             this.likeCount = likeCount;
             this.likedByUser = likedByUser;
-        }
-
-        // 스크랩 관련 값 세팅 메서드
-        public void setScrapInfo(Integer scrapCount, Boolean scrapedByUser) {
-            this.scrapCount = scrapCount;
-            this.scrapedByUser = scrapedByUser;
         }
 
         public static RecipeResponseDto fromEntity(Recipe recipe) {
@@ -265,6 +227,7 @@ public class RecipeDto {
                     .cooking_method(recipe.getCooking_method())
                     .category(recipe.getCategory())
                     .serving_size(recipe.getServing_size())
+                    .hashtags(recipe.getHashtags())
                     .image_small_url(recipe.getImage_small_url())
                     .image_large_url(recipe.getImage_large_url())
                     .tip(recipe.getTip())
@@ -274,8 +237,6 @@ public class RecipeDto {
                     .ingredients(recipe.getIngredients() != null ? recipe.getIngredients().stream()
                             .map(RecipeIngredientDto::fromEntity).toList() : null)
                     .nutrition(recipe.getNutrition() != null ? RecipeNutritionDto.fromEntity(recipe.getNutrition()) : null)
-                    .hashTags(recipe.getHashTags() != null ? recipe.getHashTags().stream()
-                            .map(RecipeHashTagDto::fromEntity).toList() : null)
                     .createdAt(recipe.getCreatedAt())
                     .updatedAt(recipe.getUpdatedAt())
                     .build();

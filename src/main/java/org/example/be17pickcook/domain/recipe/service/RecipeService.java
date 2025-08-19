@@ -57,9 +57,6 @@ public class RecipeService {
         recipe.setImage_small_url(imageSmallUrl);
         recipe.setImage_large_url(imageLargeUrl);
 
-        // Recipe 먼저 저장
-        recipe = recipeRepository.save(recipe);
-
         // Steps 매핑 및 이미지 업로드
         if (dto.getSteps() != null) {
             for (int i = 0; i < dto.getSteps().size(); i++) {
@@ -69,15 +66,6 @@ public class RecipeService {
 
                 RecipeStep step = stepDto.toEntity(recipe);
                 step.setImage_url(stepImageUrl);
-                recipe.addSteps(step); // 편의 메서드로 연관관계 설정
-            }
-        }
-
-        // 식재료 매핑
-        if (dto.getIngredients() != null) {
-            for (RecipeDto.RecipeIngredientDto ingDto : dto.getIngredients()) {
-                RecipeIngredient ingredient = ingDto.toEntity(recipe);
-                recipe.addIngredient(ingredient);
             }
         }
 

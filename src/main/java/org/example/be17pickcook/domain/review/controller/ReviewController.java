@@ -35,4 +35,13 @@ public class ReviewController {
 
         return ResponseEntity.status(200).body("리뷰 작성 성공");
     }
+
+    @Operation(
+            summary = "특정 상품 리뷰 전체 조회",
+            description = "상품 ID를 기반으로 리뷰 정보를 전체 조회합니다."
+    )
+    @GetMapping("/{id}")
+    public ResponseEntity<List<ReviewDto.ReviewResponseDto>> getReviewByProductId(@PathVariable Long productId) {
+        return ResponseEntity.ok(reviewService.getAllReviewByProductId(productId));
+    }
 }

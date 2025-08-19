@@ -1,9 +1,6 @@
 package org.example.be17pickcook.domain.refrigerator.model;
 
-
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -11,11 +8,7 @@ import java.time.LocalDateTime;
 
 public class RefrigeratorItemDto {
 
-    // ================== 응답 DTO ==================
-    @Getter
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
+    @Getter @Builder @NoArgsConstructor @AllArgsConstructor
     public static class ItemRes {
         private Long id;
         private String ingredientName;
@@ -24,31 +17,23 @@ public class RefrigeratorItemDto {
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
 
-        public static ItemRes from(RefrigeratorItem entity) {
+        public static ItemRes from(RefrigeratorItem e) {
             return ItemRes.builder()
-                    .id(entity.getId())
-                    .ingredientName(entity.getIngredientName())
-                    .quantity(entity.getQuantity())
-                    .expirationDate(entity.getExpirationDate())
-                    .createdAt(entity.getCreatedAt())
-                    .updatedAt(entity.getUpdatedAt())
+                    .id(e.getId())
+                    .ingredientName(e.getIngredientName())
+                    .quantity(e.getQuantity())
+                    .expirationDate(e.getExpirationDate())
+                    .createdAt(e.getCreatedAt())
+                    .updatedAt(e.getUpdatedAt())
                     .build();
         }
     }
 
-    // ================== 등록 DTO ==================
-    @Getter
-    @NoArgsConstructor
-    @AllArgsConstructor
+    @Getter @NoArgsConstructor @AllArgsConstructor @Builder
     public static class Register {
-        @NotBlank
-        private String ingredientName;
-
-        @Size(max = 50)
-        private String quantity;
-
-        @NotNull
-        private LocalDate expirationDate;
+        @NotBlank private String ingredientName; // 최소 검증만
+        @NotBlank private String quantity;       // 최소 검증만
+        private LocalDate expirationDate;        // null 허용
 
         public RefrigeratorItem toEntity(Refrigerator refrigerator) {
             return RefrigeratorItem.builder()
@@ -60,15 +45,14 @@ public class RefrigeratorItemDto {
         }
     }
 
-    // ================== 수정 DTO ==================
-    @Getter
-    @NoArgsConstructor
-    @AllArgsConstructor
+    @Getter @NoArgsConstructor @AllArgsConstructor @Builder
     public static class Update {
-        private String quantity;
+        private String ingredientName;  // 선택 수정
+        private String quantity;        // 선택 수정
         private LocalDate expirationDate;
 
         public void apply(RefrigeratorItem entity) {
+            if (ingredientName != null) entity.changeIngredientName(ingredientName);
             if (quantity != null) entity.changeQuantity(quantity);
             if (expirationDate != null) entity.changeExpirationDate(expirationDate);
         }
