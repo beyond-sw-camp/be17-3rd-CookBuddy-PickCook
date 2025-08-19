@@ -25,6 +25,7 @@ public class ProductDto {
         private String mainImageUrl;
         private String detailImageUrl;
         private String seller;
+        private String seller_address;
         private Integer price;
         private Integer discountRate;
         private Integer originalPrice;
@@ -48,6 +49,7 @@ public class ProductDto {
                     .mainImageUrl(entity.getMainImageUrl())
                     .detailImageUrl(entity.getDetailImageUrl())
                     .seller(entity.getSeller())
+                    .seller_address(entity.getSeller_address())
                     .price(entity.getPrice())
                     .discountRate(entity.getDiscountRate())
                     .originalPrice(entity.getOriginalPrice())
