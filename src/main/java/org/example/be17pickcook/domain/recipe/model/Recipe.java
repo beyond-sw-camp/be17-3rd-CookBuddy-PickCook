@@ -24,10 +24,12 @@ public class Recipe extends BaseEntity {
     private String description;
     private String cooking_method;
     private String category;
+    private String time_taken;
+    private String difficulty_level;
     private String serving_size;
     private String hashtags;
-    private String image_small_url;
-    private String image_large_url;
+    private String image_small_url; // 필수 아님
+    private String image_large_url; // 필수
     private String tip;
 
 
