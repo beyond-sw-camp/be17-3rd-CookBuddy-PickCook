@@ -7,6 +7,7 @@ import org.example.be17pickcook.domain.product.model.Product;
 import org.example.be17pickcook.domain.recipe.model.Recipe;
 import org.example.be17pickcook.domain.user.model.User;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -47,9 +48,9 @@ public class ReviewDto {
         @Schema(description = "평점 (1~5)", example = "5")
         private Integer rating;
         @Schema(description = "생성일")
-        private Date createdAt;
+        private LocalDateTime createdAt;
         @Schema(description = "수정일")
-        private Date updatedAt;
+        private LocalDateTime updatedAt;
 
         public static ReviewResponseDto from(Review review) {
             return ReviewResponseDto.builder()

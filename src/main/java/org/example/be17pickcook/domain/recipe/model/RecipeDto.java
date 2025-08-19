@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import org.example.be17pickcook.domain.user.model.User;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -206,18 +207,28 @@ public class RecipeDto {
         @Schema(description = "영양 정보")
         private RecipeNutritionDto nutrition;
         @Schema(description = "생성일")
-        private Date createdAt;
+        private LocalDateTime createdAt;
         @Schema(description = "수정일")
-        private Date updatedAt;
+        private LocalDateTime updatedAt;
         @Schema(description = "좋아요 수", example = "12")
         private Integer likeCount;
         @Schema(description = "로그인 사용자가 좋아요를 눌렀는지 여부", example = "true")
         private Boolean likedByUser;
+        @Schema(description = "좋아요 수", example = "12")
+        private Integer scrapCount;
+        @Schema(description = "로그인 사용자가 좋아요를 눌렀는지 여부", example = "true")
+        private Boolean scrappedByUser;
 
         // 좋아요 관련 값 세팅 메서드
         public void setLikeInfo(Integer likeCount, Boolean likedByUser) {
             this.likeCount = likeCount;
             this.likedByUser = likedByUser;
+        }
+
+        // 좋아요 관련 값 세팅 메서드
+        public void setScrapInfo(Integer scrapCount, Boolean scrappedByUser) {
+            this.scrapCount = scrapCount;
+            this.scrappedByUser = scrappedByUser;
         }
 
         public static RecipeResponseDto fromEntity(Recipe recipe) {
