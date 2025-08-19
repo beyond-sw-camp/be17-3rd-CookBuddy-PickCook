@@ -191,13 +191,13 @@ public class RecipeDto {
 
         public RecipeHashTag toEntity(Recipe recipe) {
             return RecipeHashTag.builder()
-                    .hashTag_name(this.hashTag_name)
+                    .hashtag_name(this.hashTag_name)
                     .build();
         }
 
         public static RecipeHashTagDto fromEntity(RecipeHashTag hashTag) {
             return RecipeHashTagDto.builder()
-                    .hashTag_name(hashTag.getHashTag_name())
+                    .hashTag_name(hashTag.getHashtag_name())
                     .build();
         }
     }
@@ -241,11 +241,21 @@ public class RecipeDto {
         private Integer likeCount;
         @Schema(description = "로그인 사용자가 좋아요를 눌렀는지 여부", example = "true")
         private Boolean likedByUser;
+        @Schema(description = "스크랩 수", example = "12")
+        private Integer scrapCount;
+        @Schema(description = "로그인 사용자가 스크랩을 했는지 여부", example = "true")
+        private Boolean scrapedByUser;
 
         // 좋아요 관련 값 세팅 메서드
         public void setLikeInfo(Integer likeCount, Boolean likedByUser) {
             this.likeCount = likeCount;
             this.likedByUser = likedByUser;
+        }
+
+        // 스크랩 관련 값 세팅 메서드
+        public void setScrapInfo(Integer scrapCount, Boolean scrapedByUser) {
+            this.scrapCount = scrapCount;
+            this.scrapedByUser = scrapedByUser;
         }
 
         public static RecipeResponseDto fromEntity(Recipe recipe) {

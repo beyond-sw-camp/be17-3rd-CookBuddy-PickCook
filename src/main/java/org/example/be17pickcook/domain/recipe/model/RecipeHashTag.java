@@ -15,7 +15,7 @@ public class RecipeHashTag {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idx;
-    private String hashTag_name;
+    private String hashtag_name;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "recipe_id")

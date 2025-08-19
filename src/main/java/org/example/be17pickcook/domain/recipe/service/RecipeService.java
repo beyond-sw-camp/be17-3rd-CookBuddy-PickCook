@@ -9,6 +9,8 @@ import org.example.be17pickcook.domain.recipe.model.Recipe;
 import org.example.be17pickcook.domain.recipe.model.RecipeDto;
 import org.example.be17pickcook.domain.recipe.model.RecipeIngredient;
 import org.example.be17pickcook.domain.recipe.model.RecipeStep;
+import org.example.be17pickcook.domain.scrap.model.ScrapTargetType;
+import org.example.be17pickcook.domain.scrap.service.ScrapService;
 import org.example.be17pickcook.domain.user.model.User;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.domain.recipe.repository.RecipeRepository;
@@ -25,6 +27,7 @@ public class RecipeService {
     private final RecipeRepository recipeRepository;
     private final S3UploadService s3UploadService;
     private final LikesService likesService;
+    private final ScrapService scrapService;
 
     // 기본 이미지
     private static final String DEFAULT_SMALL_IMAGE = "https://example.com/default-small.jpg";
@@ -83,7 +86,7 @@ public class RecipeService {
 
 
 
-    // 특정 레시피 조회 + 좋아요 정보 포함
+    // 특정 레시피 조회 + 좋아요 정보 + 스크랩 정보 포함
     public RecipeDto.RecipeResponseDto getRecipe(Long recipeId, Integer userIdx) {
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 레시피가 존재하지 않습니다. id=" + recipeId));
@@ -92,13 +95,18 @@ public class RecipeService {
         Boolean likedByUser = userIdx != null &&
                 likesService.hasUserLiked(userIdx, LikeTargetType.RECIPE, recipeId);
 
+        Integer scrapCount = scrapService.getScrapCount(ScrapTargetType.RECIPE, recipeId);
+        Boolean scrapedByUser = userIdx != null &&
+                scrapService.hasUserScrapped(userIdx, ScrapTargetType.RECIPE, recipeId);
+
         RecipeDto.RecipeResponseDto dto = RecipeDto.RecipeResponseDto.fromEntity(recipe);
         dto.setLikeInfo(likeCount, likedByUser);
+        dto.setScrapInfo(scrapCount, scrapedByUser);
 
         return dto;
     }
 
-    // 레시피 전체 목록 조회 + 좋아요 정보 포함
+    // 레시피 전체 목록 조회 + 좋아요 정보 + 스크랩 정보 포함
     public List<RecipeDto.RecipeResponseDto> getRecipeList(Integer userIdx) {
         List<Recipe> recipes = recipeRepository.findAll();
 
@@ -107,8 +115,13 @@ public class RecipeService {
             Boolean likedByUser = userIdx != null &&
                     likesService.hasUserLiked(userIdx, LikeTargetType.RECIPE, recipe.getIdx());
 
+            Integer scrapCount = scrapService.getScrapCount(ScrapTargetType.RECIPE, recipe.getIdx());
+            Boolean scrapedByUser = userIdx != null &&
+                    scrapService.hasUserScrapped(userIdx, ScrapTargetType.RECIPE, recipe.getIdx());
+
             RecipeDto.RecipeResponseDto dto = RecipeDto.RecipeResponseDto.fromEntity(recipe);
             dto.setLikeInfo(likeCount, likedByUser);
+            dto.setScrapInfo(scrapCount, scrapedByUser);
             return dto;
         }).toList();
     }
