@@ -1,0 +1,25 @@
+package org.example.be17pickcook.domain.recipe.model;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Getter
+@Builder
+@Entity
+@NoArgsConstructor
+@AllArgsConstructor
+public class RecipeHashTag {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long idx;
+    private String hashTag_name;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "recipe_id")
+    private Recipe recipe;
+
+    public void setRecipe(Recipe recipe) { this.recipe = recipe; }
+}

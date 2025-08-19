@@ -24,7 +24,6 @@ public class Recipe extends BaseEntity {
     private String cooking_method;
     private String category;
     private String serving_size;
-    private String hashtags;
     private String image_small_url;
     private String image_large_url;
     private String tip;
@@ -42,6 +41,9 @@ public class Recipe extends BaseEntity {
 
     @OneToOne(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
     private RecipeNutrition nutrition;
+
+    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<RecipeHashTag> hashTags;
 
 
     public void addSteps(RecipeStep step) {
@@ -62,6 +64,13 @@ public class Recipe extends BaseEntity {
 
         this.ingredients.add(ingredient);
         ingredient.setRecipe(this);
+    }
+
+    public void addHashTag(RecipeHashTag hashTag) {
+        if (this.hashTags == null) this.hashTags = new ArrayList<>();
+
+        this.hashTags.add(hashTag);
+        hashTag.setRecipe(this);
     }
 
     public void setImage_small_url(String url) { this.image_small_url = url; }
