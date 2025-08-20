@@ -93,6 +93,17 @@ public enum BaseResponseStatus {
     ALREADY_WITHDRAWN(false, 30401, "이미 탈퇴한 계정입니다."),
     WITHDRAWAL_NOT_ALLOWED(false, 30402, "탈퇴할 수 없는 상태입니다."),
 
+    // 냉장고 아이템 관련 오류
+    REFRIGERATOR_ITEM_NOT_FOUND(false, 30500, "냉장고 아이템을 찾을 수 없습니다."),
+    REFRIGERATOR_ITEM_ACCESS_DENIED(false, 30501, "해당 냉장고 아이템에 접근할 권한이 없습니다."),
+    REFRIGERATOR_ITEM_ALREADY_DELETED(false, 30502, "이미 삭제된 냉장고 아이템입니다."),
+    REFRIGERATOR_ITEM_CANNOT_RESTORE(false, 30503, "복원할 수 없는 냉장고 아이템입니다."),
+
+    // 카테고리 관련 오류
+    CATEGORY_NOT_FOUND(false, 30600, "카테고리를 찾을 수 없습니다."),
+    CATEGORY_NAME_DUPLICATE(false, 30601, "이미 존재하는 카테고리명입니다."),
+    CATEGORY_IN_USE_CANNOT_DELETE(false, 30602, "사용 중인 카테고리는 삭제할 수 없습니다."),
+
     // =================================================================
     // 31000번대: 커뮤니티 기능 오류
     // =================================================================
@@ -105,6 +116,7 @@ public enum BaseResponseStatus {
 
     RESPONSE_ERROR(false, 40001, "값을 불러오는데 실패하였습니다."),
     RESPONSE_NULL_ERROR(false, 40002, "요청된 데이터를 찾을 수 없습니다."),
+    RESOURCE_NOT_FOUND(false, 40003, "요청한 리소스를 찾을 수 없습니다."), // 🆕 추가
 
     // 결제 관련 오류
     ORDERS_VALIDATION_FAIL(false, 40100, "결제 정보가 잘못되었습니다."),
