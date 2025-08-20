@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.example.be17pickcook.common.BaseResponse;
 import org.example.be17pickcook.domain.product.model.ProductDto;
 import org.example.be17pickcook.domain.product.service.ProductService;
 import org.example.be17pickcook.domain.user.model.UserDto;
@@ -55,14 +56,14 @@ public class ProductController {
 
     // ================== 전체 목록 조회 (전부 반환 + 정렬만) ==================
     @GetMapping("/list")
-    public ResponseEntity<List<ProductDto.Res>> findAllNoPaging(
+    public BaseResponse<List<ProductDto.Res>> findAllNoPaging(
             @RequestParam(defaultValue = "id") String sort,   // [변경] createdAt → id
             @RequestParam(defaultValue = "ASC") String dir    // [변경] DESC → ASC
     ) {
         Sort s = dir.equalsIgnoreCase("DESC")
                 ? Sort.by(sort).descending()
                 : Sort.by(sort).ascending();
-        return ResponseEntity.ok(productService.findAllNoPaging(s));
+        return BaseResponse.success(productService.findAllNoPaging(s));
     }
 
     // ================== 단건 조회 ==================
@@ -78,15 +79,6 @@ public class ProductController {
             @Valid @RequestBody ProductDto.Update dto
     ) {
         return productService.update(id, dto);
-    }
-
-    // ================== 가격만 변경 ==================
-    @PatchMapping("/{id}/price")
-    public void changePrice(
-            @PathVariable Long id,
-            @RequestBody PriceReq req
-    ) {
-        productService.changePrice(id, req.price());
     }
 
     // ================== 할인율만 변경 ==================

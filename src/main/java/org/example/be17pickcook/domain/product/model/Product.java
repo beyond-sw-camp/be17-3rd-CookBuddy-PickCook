@@ -46,10 +46,10 @@ public class Product {
     private String subtitle;
 
     @Column(name = "main_image_url") // 대표 이미지 URL
-    private String mainImageUrl;
+    private String main_image_url;
 
     @Column(name = "detail_image_url") // 상세 이미지 URL
-    private String detailImageUrl;
+    private String detail_image_url;
 
     // 판매자 이름
     @Pattern(
@@ -59,30 +59,16 @@ public class Product {
     @Column(name = "seller", length = 10, nullable = false)
     private String seller;
 
-    // 판매자 주소 - 예: "서울특별시 강남구", "부산광역시 해운대구"
-    @Pattern(
-            regexp = "^[가-힣\\s]{2,30}$",
-            message = "판매자 주소는 한글로만 작성해야 하며, 시/구 단위까지만 입력 가능합니다."
-    )
-    @Column(name = "seller_address", length = 30, nullable = false)
-    private String seller_address;
-
-
-    // 실제 판매가 - 숫자만 허용 - 0 이상 필수
-    @Min(value = 0, message = "판매가는 0원 이상이어야 합니다.")
-    @Column(name = "price", nullable = false)
-    private Integer price;
-
     // 할인율 (%) - 0 이상 99 이하
     @Min(value = 0, message = "할인율은 0 이상이어야 합니다.")
     @Max(value = 99, message = "할인율은 99% 이하여야 합니다.")
     @Column(name = "discount_rate", nullable = false)
-    private Integer discountRate;
+    private Integer discount_rate;
 
     // 정가 (할인 전 가격) - 숫자만 허용 - 0 이상 필수
     @Min(value = 0, message = "정가는 0원 이상이어야 합니다.")
     @Column(name = "original_price", nullable = false)
-    private Integer originalPrice;
+    private Integer original_price;
 
 
     // 단위 (예: 1봉, 2봉, 3개 등) - 숫자 1자리 이상 + 한글(개, 봉, 박스 등)
@@ -99,12 +85,12 @@ public class Product {
             message = "무게/용량은 숫자와 단위를 조합해 입력해야 합니다. 예: 500g, 2kg, 1L"
     )
     @Column(name = "weight_or_volume", length = 10, nullable = false)
-    private String weightOrVolume;
+    private String weight_or_volume;
 
 
     // 스키마가 VARCHAR라서 String 사용 (DB에서 DATE로 안 했으니 문자열로 저장됨)
     @Column(name = "expiration_date") // 유통기한
-    private String expirationDate;
+    private String expiration_date;
 
     // 원산지 (예: 국내산, 미국산 등)- 최대 10자 이내
     @Size(max = 10, message = "원산지는 최대 10자까지 허용됩니다.")
@@ -119,7 +105,7 @@ public class Product {
     // 배송 관련 안내 (긴 문구 가능)- 최대 100자 이내
     @Size(max = 100, message = "배송 관련 안내는 최대 100자까지 허용됩니다.")
     @Column(name = "shipping_info", length = 100, nullable = false)
-    private String shippingInfo;
+    private String shipping_info;
 
 
     // 소비자 안내문구 (예: 알레르기 유발 정보) - 최대 200자 이내
@@ -135,27 +121,19 @@ public class Product {
 
     @CreationTimestamp // INSERT 시 자동 생성 (현재 시간)
     @Column(name = "created_at", updatable = false) // 생성일시 (수정 불가)
-    private LocalDateTime createdAt;
+    private LocalDateTime created_at;
 
     @UpdateTimestamp // UPDATE 시 자동 갱신
     @Column(name = "updated_at") // 마지막 수정일시
-    private LocalDateTime updatedAt;
+    private LocalDateTime updated_at;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
 
-    // (편의 메서드) 가격 변경
-// - 0원 이상만 허용
-    public void changePrice(Integer price) {
-        if (price == null || price < 0) {
-            throw new IllegalArgumentException("판매가는 0원 이상이어야 합니다.");
-        }
-        this.price = price;
-    }
 
-    public void setMainImageUrl(String url) { this.mainImageUrl = url; }
-    public void setDetailImageUrl(String url) { this.detailImageUrl = url; }
+    public void setMainImageUrl(String url) { this.main_image_url = url; }
+    public void setDetailImageUrl(String url) { this.detail_image_url = url; }
 
     // (편의 메서드) 할인율 변경
 // - 0% 이상 99% 이하만 허용
@@ -163,7 +141,7 @@ public class Product {
         if (rate == null || rate < 0 || rate > 99) {
             throw new IllegalArgumentException("할인율은 0% 이상 99% 이하여야 합니다.");
         }
-        this.discountRate = rate;
+        this.discount_rate = rate;
     }
 
 }
