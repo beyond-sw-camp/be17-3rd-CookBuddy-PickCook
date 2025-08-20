@@ -7,7 +7,6 @@ import lombok.Getter;
 import org.example.be17pickcook.domain.user.model.User;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 public class RecipeDto {
