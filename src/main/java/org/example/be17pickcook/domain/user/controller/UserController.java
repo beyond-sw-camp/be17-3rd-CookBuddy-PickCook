@@ -12,8 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.be17pickcook.common.BaseResponse;
 import org.example.be17pickcook.common.BaseResponseStatus;
 import org.example.be17pickcook.domain.user.model.UserDto;
+import org.example.be17pickcook.domain.user.service.AuthService;
 import org.example.be17pickcook.domain.user.service.UserService;
-import org.example.be17pickcook.template.EmailTemplates;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
@@ -22,8 +22,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 /**
- * PickCook 사용자 관리 컨트롤러
+ * PickCook 사용자 관리 컨트롤러 (리팩토링된 버전)
  * - 회원가입, 인증, 프로필 관리, 비밀번호 재설정, 회원탈퇴 등 사용자 관련 API 제공
+ * - AuthService와 UserService를 활용한 책임 분리
  * - GlobalExceptionHandler를 통한 통일된 예외 처리
  * - @Valid 어노테이션을 활용한 자동 Validation
  */
@@ -35,11 +36,11 @@ import java.util.Map;
 public class UserController {
 
     // =================================================================
-    // 의존성 주입
+    // 의존성 주입 (리팩토링됨)
     // =================================================================
 
     private final UserService userService;
-    private final EmailTemplates emailTemplates;
+    private final AuthService authService;
 
     // =================================================================
     // 회원가입 관련 API
@@ -50,8 +51,7 @@ public class UserController {
             description = "새로운 사용자 계정을 생성하고 이메일 인증을 위한 메일을 발송합니다.",
             responses = {
                     @ApiResponse(responseCode = "200", description = "회원가입 성공"),
-                    @ApiResponse(responseCode = "400", description = "중복된 이메일 또는 잘못된 입력"),
-                    @ApiResponse(responseCode = "500", description = "서버 오류")
+                    @ApiResponse(responseCode = "400", description = "입력값 오류 또는 이메일 중복")
             }
     )
     @PostMapping("/signup")
@@ -66,7 +66,7 @@ public class UserController {
                     .body(BaseResponse.error(BaseResponseStatus.REQUEST_ERROR, errorMessage));
         }
 
-        // GlobalExceptionHandler가 모든 예외 처리
+        // GlobalExceptionHandler가 예외 처리
         userService.signup(dto);
         return ResponseEntity.ok(BaseResponse.success(null, BaseResponseStatus.SIGNUP_SUCCESS));
     }
@@ -76,24 +76,50 @@ public class UserController {
             description = "회원가입 시 발송된 이메일의 인증 링크를 통해 계정을 활성화합니다."
     )
     @GetMapping("/verify")
-    public ResponseEntity<String> verify(@RequestParam String uuid) {
+    public ResponseEntity<BaseResponse<Void>> verify(
+            @Parameter(description = "이메일 인증 UUID", required = true) @RequestParam String uuid) {
+
         // GlobalExceptionHandler가 예외 처리
         userService.verify(uuid);
-        return ResponseEntity.ok()
-                .header("Content-Type", "text/html; charset=UTF-8")
-                .body(emailTemplates.getEmailVerificationCompletePage());
+        return ResponseEntity.ok(BaseResponse.success(null, BaseResponseStatus.EMAIL_VERIFICATION_SUCCESS));
     }
 
+    // =================================================================
+    // 중복 확인 관련 API
+    // =================================================================
+
+    @Operation(
+            summary = "이메일 중복 확인",
+            description = "회원가입 시 입력한 이메일이 이미 사용 중인지 확인합니다."
+    )
     @GetMapping("/check-email")
     public ResponseEntity<BaseResponse<Map<String, Object>>> checkEmailDuplicate(
-            @RequestParam String email) {
+            @Parameter(description = "확인할 이메일", required = true) @RequestParam String email) {
 
-        // Service로 위임
         Map<String, Object> data = userService.checkEmailAvailability(email);
         boolean available = (Boolean) data.get("available");
-
         BaseResponseStatus status = available ?
                 BaseResponseStatus.EMAIL_AVAILABLE : BaseResponseStatus.EMAIL_NOT_AVAILABLE;
+
+        return ResponseEntity.ok(BaseResponse.success(data, status));
+    }
+
+    @Operation(
+            summary = "닉네임 중복 확인",
+            description = "회원정보 수정 시 입력한 닉네임이 이미 사용 중인지 확인합니다."
+    )
+    @GetMapping("/check-nickname")
+    public ResponseEntity<BaseResponse<Map<String, Object>>> checkNicknameDuplicate(
+            @Parameter(description = "확인할 닉네임", required = true) @RequestParam String nickname,
+            @AuthenticationPrincipal UserDto.AuthUser authUser) {
+
+        // 중복 체크 로직을 서비스로 분리
+        Integer currentUserId = (authUser != null) ? authUser.getIdx() : null;
+        boolean available = userService.isNicknameAvailable(nickname, currentUserId);
+
+        Map<String, Object> data = Map.of("available", available);
+        BaseResponseStatus status = available ?
+                BaseResponseStatus.NICKNAME_AVAILABLE : BaseResponseStatus.NICKNAME_NOT_AVAILABLE;
 
         return ResponseEntity.ok(BaseResponse.success(data, status));
     }
@@ -166,25 +192,6 @@ public class UserController {
         return ResponseEntity.ok(BaseResponse.success(updatedUser, BaseResponseStatus.PROFILE_UPDATE_SUCCESS));
     }
 
-    @Operation(
-            summary = "닉네임 중복 확인",
-            description = "회원정보 수정 시 입력한 닉네임이 이미 사용 중인지 확인합니다."
-    )
-    @GetMapping("/check-nickname")
-    public ResponseEntity<BaseResponse<Map<String, Object>>> checkNicknameDuplicate(
-            @Parameter(description = "확인할 닉네임", required = true) @RequestParam String nickname,
-            @AuthenticationPrincipal UserDto.AuthUser authUser) {
-
-        // 중복 체크 로직을 서비스로 분리
-        Integer currentUserId = (authUser != null) ? authUser.getIdx() : null;
-        boolean available = userService.isNicknameAvailable(nickname, currentUserId);
-
-        Map<String, Object> data = Map.of("available", available);
-        BaseResponseStatus status = available ? BaseResponseStatus.NICKNAME_AVAILABLE : BaseResponseStatus.NICKNAME_NOT_AVAILABLE;
-
-        return ResponseEntity.ok(BaseResponse.success(data, status));
-    }
-
     // =================================================================
     // 계정 찾기 API
     // =================================================================
@@ -207,16 +214,16 @@ public class UserController {
 
         // GlobalExceptionHandler가 예외 처리
         UserDto.FindEmailResponse result = userService.findEmailByNameAndPhone(dto);
-        return ResponseEntity.ok(BaseResponse.success(result));
+        return ResponseEntity.ok(BaseResponse.success(result, BaseResponseStatus.EMAIL_FOUND_SUCCESS));
     }
 
     // =================================================================
-    // 비밀번호 관리 API
+    // 비밀번호 재설정 API (리팩토링됨)
     // =================================================================
 
     @Operation(
-            summary = "비밀번호 재설정 요청",
-            description = "이메일로 비밀번호 재설정 링크를 발송합니다."
+            summary = "비밀번호 재설정 요청 (이메일 발송)",
+            description = "입력한 이메일로 비밀번호 재설정 링크를 발송합니다. 존재하지 않는 이메일도 보안상 동일하게 처리됩니다."
     )
     @PostMapping("/request-password-reset")
     public ResponseEntity<BaseResponse<Void>> requestPasswordReset(
@@ -232,35 +239,57 @@ public class UserController {
 
         // GlobalExceptionHandler가 예외 처리
         userService.requestPasswordReset(dto.getEmail());
-        return ResponseEntity.ok(BaseResponse.success(null, "비밀번호 재설정 이메일이 발송되었습니다."));
+        return ResponseEntity.ok(BaseResponse.success(null, BaseResponseStatus.PASSWORD_RESET_EMAIL_SENT));
     }
 
     @Operation(
-            summary = "비밀번호 재설정 페이지",
-            description = "이메일 링크를 통해 접근하는 비밀번호 재설정 페이지입니다."
+            summary = "마이페이지용 비밀번호 변경 토큰 생성",
+            description = "회원정보 관리에서 비밀번호 변경을 위한 내부 토큰을 생성합니다. (이메일 발송 없음)"
     )
-    @GetMapping("/reset-password")
-    public ResponseEntity<String> validateResetToken(@RequestParam String token) {
-        boolean isValid = userService.validateResetToken(token);
+    @PostMapping("/generate-password-change-token")
+    public ResponseEntity<BaseResponse<Map<String, String>>> generatePasswordChangeToken(
+            @AuthenticationPrincipal UserDto.AuthUser authUser) {
 
-        if (isValid) {
-            return ResponseEntity.ok()
-                    .header("Content-Type", "text/html; charset=UTF-8")
-                    .body(emailTemplates.getPasswordResetPage(token));
-        } else {
-            return ResponseEntity.badRequest()
-                    .header("Content-Type", "text/html; charset=UTF-8")
-                    .body(emailTemplates.getPasswordResetErrorPage());
+        if (authUser == null) {
+            return ResponseEntity.status(401)
+                    .body(BaseResponse.error(BaseResponseStatus.UNAUTHORIZED));
         }
+
+        // GlobalExceptionHandler가 예외 처리
+        String token = userService.generatePasswordChangeToken(authUser.getIdx());
+        Map<String, String> result = Map.of("token", token);
+
+        return ResponseEntity.ok(BaseResponse.success(result, BaseResponseStatus.INTERNAL_TOKEN_GENERATED));
+    }
+
+    // =================================================================
+    // 새로운 비밀번호 관리 API (완전 개선)
+    // =================================================================
+
+    @Operation(
+            summary = "비밀번호 재설정 토큰 검증",
+            description = "비밀번호 재설정 토큰의 유효성을 검증합니다."
+    )
+    @GetMapping("/validate-reset-token")
+    public ResponseEntity<BaseResponse<Map<String, Boolean>>> validateResetToken(
+            @Parameter(description = "검증할 토큰", required = true) @RequestParam String token) {
+
+        boolean isValid = userService.validateResetToken(token);
+        Map<String, Boolean> result = Map.of("valid", isValid);
+
+        BaseResponseStatus status = isValid ?
+                BaseResponseStatus.TOKEN_VALID : BaseResponseStatus.INVALID_TOKEN;
+
+        return ResponseEntity.ok(BaseResponse.success(result, status));
     }
 
     @Operation(
-            summary = "비밀번호 재설정",
-            description = "새로운 비밀번호로 변경합니다."
+            summary = "새 비밀번호로 재설정",
+            description = "검증된 토큰을 사용하여 새 비밀번호로 재설정합니다. 모든 기존 JWT 토큰이 무효화됩니다."
     )
     @PostMapping("/reset-password")
     public ResponseEntity<BaseResponse<Void>> resetPassword(
-            @Valid @RequestBody UserDto.ResetPassword dto,
+            @Valid @RequestBody UserDto.ResetPasswordRequest dto,
             BindingResult bindingResult,
             HttpServletResponse response) {
 
@@ -273,15 +302,20 @@ public class UserController {
 
         // GlobalExceptionHandler가 예외 처리
         userService.resetPassword(dto.getToken(), dto.getNewPassword(), response);
-        return ResponseEntity.ok(BaseResponse.success(null, "비밀번호가 성공적으로 변경되었습니다."));
+
+        return ResponseEntity.ok(BaseResponse.success(null, BaseResponseStatus.PASSWORD_RESET_SUCCESS));
     }
 
+    // =================================================================
+    // OAuth2 사용자 처리 API (새로 추가)
+    // =================================================================
+
     @Operation(
-            summary = "마이페이지 비밀번호 변경 토큰 생성",
-            description = "현재 로그인된 사용자의 비밀번호 변경을 위한 토큰을 생성합니다. 이메일 발송 없이 즉시 토큰을 반환합니다."
+            summary = "소셜로그인 사용자 비밀번호 변경 안내",
+            description = "카카오 로그인 사용자가 비밀번호 변경을 요청할 때 카카오 계정 관리 페이지로 리다이렉트합니다."
     )
-    @PostMapping("/generate-password-change-token")
-    public ResponseEntity<BaseResponse<Map<String, String>>> generatePasswordChangeToken(
+    @GetMapping("/oauth-password-redirect")
+    public ResponseEntity<BaseResponse<Map<String, String>>> getOAuthPasswordRedirect(
             @AuthenticationPrincipal UserDto.AuthUser authUser) {
 
         if (authUser == null) {
@@ -289,10 +323,19 @@ public class UserController {
                     .body(BaseResponse.error(BaseResponseStatus.UNAUTHORIZED));
         }
 
-        String token = userService.generatePasswordChangeToken(authUser.getIdx());
-        Map<String, String> result = Map.of("token", token);
+        // OAuth2 사용자 확인 (이메일이 숫자로만 구성된 경우)
+        boolean isOAuth2User = authUser.getEmail().matches("^\\d+$");
 
-        return ResponseEntity.ok(BaseResponse.success(result, "비밀번호 변경 토큰이 생성되었습니다."));
+        if (isOAuth2User) {
+            Map<String, String> result = Map.of(
+                    "message", "소셜 로그인 사용자는 카카오 계정에서 비밀번호를 변경해주세요.",
+                    "redirectUrl", "https://accounts.kakao.com/weblogin/account/info"
+            );
+            return ResponseEntity.ok(BaseResponse.success(result, BaseResponseStatus.OAUTH_REDIRECT_REQUIRED));
+        } else {
+            return ResponseEntity.badRequest()
+                    .body(BaseResponse.error(BaseResponseStatus.NOT_OAUTH_USER));
+        }
     }
 
     // =================================================================

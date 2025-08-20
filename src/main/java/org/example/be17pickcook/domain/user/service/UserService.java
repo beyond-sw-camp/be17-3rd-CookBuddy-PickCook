@@ -1,23 +1,16 @@
 package org.example.be17pickcook.domain.user.service;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.be17pickcook.common.BaseResponseStatus;
 import org.example.be17pickcook.common.exception.BaseException;
 import org.example.be17pickcook.domain.user.mapper.UserMapper;
 import org.example.be17pickcook.domain.user.model.EmailVerify;
-import org.example.be17pickcook.domain.user.model.PasswordReset;
 import org.example.be17pickcook.domain.user.model.User;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.domain.user.repository.UserRepository;
-import org.example.be17pickcook.template.EmailTemplates;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -26,14 +19,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
-import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 
 /**
- * - PickCook 사용자 서비스
- * - 회원가입/탈퇴, 인증, 프로필 관리, 비밀번호 재설정 등 사용자 관련 모든 기능
+ * PickCook 사용자 서비스 (슬림화된 버전)
+ * - 사용자 도메인 로직만 담당
+ * - AuthService와 EmailService를 활용한 책임 분리
  * - BaseException을 사용한 통일된 예외 처리
  * - MapStruct를 활용한 객체 매핑
  */
@@ -43,15 +35,14 @@ import java.util.Optional;
 public class UserService implements UserDetailsService {
 
     // =================================================================
-    // 의존성 주입
+    // 의존성 주입 (슬림화됨)
     // =================================================================
 
     private final UserRepository userRepository;
-    private final JavaMailSender emailSender;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
-    private final EmailTemplates emailTemplates;
-    private final TokenService tokenService;
+    private final AuthService authService;
+    private final EmailService emailService;
 
     // =================================================================
     // Spring Security 인증 관련
@@ -73,34 +64,25 @@ public class UserService implements UserDetailsService {
     }
 
     /**
-     * 사용자 로그아웃 처리
-     * - JWT 쿠키 삭제
-     * - OAuth2 세션 무효화
-     * - Security Context 초기화
+     * 사용자 로그아웃 처리 (리팩토링됨)
+     * - AuthService로 로그아웃 로직 완전 위임
      */
     public void logout(HttpServletRequest request, HttpServletResponse response) {
-        // 🔧 공통 메서드 사용
-        clearAllAuthenticationCookies(response);
+        // ✅ AuthService로 완전한 로그아웃 처리 위임
+        authService.logout(request, response);
 
-        // 세션 무효화
-        HttpSession session = request.getSession(false);
-        if (session != null) {
-            session.invalidate();
-            log.info("OAuth2 세션 무효화 완료");
-        }
-
-        // Security Context 초기화
-        SecurityContextHolder.clearContext();
-        log.info("Security Context 초기화 완료");
+        log.info("사용자 로그아웃 처리 완료 - AuthService 위임");
     }
 
     /**
      * 인증 쿠키 삭제 (회원탈퇴 시 사용)
+     * - AuthService로 쿠키 관리 위임
      */
     public void clearAuthenticationCookies(HttpServletResponse response) {
+        // ✅ AuthService로 쿠키 삭제 위임
+        authService.clearAllAuthenticationCookies(response);
 
-        clearAllAuthenticationCookies(response);
-
+        log.info("인증 쿠키 삭제 완료 - AuthService 위임");
     }
 
     // =================================================================
@@ -108,10 +90,10 @@ public class UserService implements UserDetailsService {
     // =================================================================
 
     /**
-     * 회원가입 처리
+     * 회원가입 처리 (리팩토링됨)
      * - 이메일 중복 체크
      * - 탈퇴한 계정 재활성화 지원
-     * - 이메일 인증 발송
+     * - AuthService와 EmailService 활용
      */
     @Transactional
     public void signup(UserDto.Register dto) throws MessagingException {
@@ -137,10 +119,11 @@ public class UserService implements UserDetailsService {
 
                 User savedUser = userRepository.save(user);
 
-                // TokenService로 이메일 인증 토큰 생성 위임
-                String uuid = tokenService.createEmailVerificationToken(savedUser);
+                // ✅ AuthService로 이메일 인증 토큰 생성
+                String uuid = authService.createEmailVerificationToken(savedUser);
 
-                sendVerificationEmail(dto.getEmail(), uuid);
+                // ✅ EmailService로 인증 이메일 발송
+                emailService.sendVerificationEmail(dto.getEmail(), uuid);
 
                 log.info("탈퇴 계정 재활성화 완료 - 사용자: {}", dto.getEmail());
                 return;
@@ -156,21 +139,24 @@ public class UserService implements UserDetailsService {
 
         User savedUser = userRepository.save(user);
 
-        // TokenService로 이메일 인증 토큰 생성 위임
-        String uuid = tokenService.createEmailVerificationToken(savedUser);
+        // ✅ AuthService로 이메일 인증 토큰 생성
+        String uuid = authService.createEmailVerificationToken(savedUser);
 
-        sendVerificationEmail(dto.getEmail(), uuid);
+        // ✅ EmailService로 인증 이메일 발송
+        emailService.sendVerificationEmail(dto.getEmail(), uuid);
+
         log.info("새 사용자 회원가입 완료 - 사용자: {}, UUID: {}", dto.getEmail(), uuid);
     }
 
     /**
-     * 이메일 인증 처리
+     * 이메일 인증 처리 (리팩토링됨)
+     * - AuthService를 통한 토큰 검증 및 처리
      * @param uuid 이메일 인증 UUID
      */
     @Transactional
     public void verify(String uuid) {
-        // TokenService로 토큰 검증 및 조회 위임
-        EmailVerify emailVerify = tokenService.getEmailVerifyByUuid(uuid);
+        // ✅ AuthService로 토큰 검증 및 조회
+        EmailVerify emailVerify = authService.getEmailVerifyByUuid(uuid);
 
         if (emailVerify.isExpired()) {
             throw BaseException.from(BaseResponseStatus.EXPIRED_EMAIL_TOKEN);
@@ -180,8 +166,10 @@ public class UserService implements UserDetailsService {
         user.userVerify();
         userRepository.save(user);
 
-        // TokenService로 인증 완료 처리 위임
-        tokenService.markEmailVerificationAsCompleted(emailVerify);
+        // ✅ AuthService로 인증 완료 처리
+        authService.markEmailVerificationAsCompleted(emailVerify);
+
+        log.info("이메일 인증 완료: 사용자 = {}", user.getEmail());
     }
 
     // =================================================================
@@ -302,13 +290,13 @@ public class UserService implements UserDetailsService {
     }
 
     // =================================================================
-    // 비밀번호 재설정
+    // 비밀번호 재설정 (리팩토링됨)
     // =================================================================
 
     /**
-     * 비밀번호 재설정 요청 처리 (이메일 발송)
+     * 비밀번호 재설정 요청 처리 (이메일 발송) - 리팩토링됨
      * - 존재하지 않는 이메일도 보안상 동일하게 응답
-     * - TokenService를 사용한 토큰 생성
+     * - AuthService와 EmailService 활용
      */
     @Transactional
     public void requestPasswordReset(String email) throws MessagingException {
@@ -320,11 +308,11 @@ public class UserService implements UserDetailsService {
         if (userOptional.isPresent()) {
             User user = userOptional.get();
 
-            // TokenService로 토큰 생성 위임
-            String token = tokenService.createPasswordResetToken(user);
+            // ✅ AuthService로 이메일 발송용 토큰 생성 (30분 만료)
+            String token = authService.createEmailPasswordResetToken(user);
 
-            // 이메일 발송
-            sendPasswordResetEmail(email, token);
+            // ✅ EmailService로 이메일 발송
+            emailService.sendPasswordResetEmail(email, token);
 
             log.info("비밀번호 재설정 이메일 발송 완료: {}", email);
         } else {
@@ -333,15 +321,16 @@ public class UserService implements UserDetailsService {
     }
 
     /**
-     * 마이페이지용 비밀번호 변경 토큰 생성 (이메일 발송 없음)
+     * 마이페이지용 비밀번호 변경 토큰 생성 (이메일 발송 없음) - 리팩토링됨
+     * - AuthService를 통한 내부용 토큰 생성 (10분 만료)
      */
     @Transactional
     public String generatePasswordChangeToken(Integer userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> BaseException.from(BaseResponseStatus.USER_NOT_FOUND));
 
-        // TokenService로 토큰 생성 위임
-        String token = tokenService.createPasswordResetToken(user);
+        // ✅ AuthService로 내부용 토큰 생성 (10분 만료)
+        String token = authService.createInternalPasswordResetToken(user);
 
         log.info("마이페이지 비밀번호 변경 토큰 생성 완료: 사용자 ID = {}", userId);
 
@@ -349,68 +338,25 @@ public class UserService implements UserDetailsService {
     }
 
     /**
-     * 비밀번호 재설정 토큰 검증
+     * 비밀번호 재설정 토큰 검증 - 리팩토링됨
      */
     @Transactional(readOnly = true)
     public boolean validateResetToken(String token) {
-        // TokenService로 검증 위임
-        return tokenService.validatePasswordResetToken(token);
+        // ✅ AuthService로 검증 위임
+        return authService.validatePasswordResetToken(token);
     }
 
     /**
-     * 새 비밀번호로 재설정
-     * - 기존 비밀번호와 동일한지 확인
-     * - 토큰 사용 처리
+     * 새 비밀번호로 재설정 - 리팩토링됨
+     * - AuthService를 통한 완전한 비밀번호 재설정 처리
+     * - 기존 JWT 토큰 무효화 포함
      */
     @Transactional
     public void resetPassword(String token, String newPassword, HttpServletResponse response) {
-        // TokenService로 토큰 조회 위임
-        PasswordReset reset = tokenService.getPasswordResetByToken(token);
+        // ✅ AuthService로 완전한 비밀번호 재설정 처리 위임
+        authService.resetPassword(token, newPassword, response);
 
-        if (!reset.isValid()) {
-            throw BaseException.from(BaseResponseStatus.EXPIRED_RESET_TOKEN);
-        }
-
-        User user = reset.getUser();
-
-        // 보안: 기존 비밀번호와 동일한지 확인
-        if (passwordEncoder.matches(newPassword, user.getPassword())) {
-            throw BaseException.from(BaseResponseStatus.SAME_AS_CURRENT_PASSWORD);
-        }
-
-        // 새 비밀번호 저장
-        String encodedPassword = passwordEncoder.encode(newPassword);
-        user.updatePassword(encodedPassword);
-        userRepository.save(user);
-
-        // TokenService로 토큰 사용 처리 위임
-        tokenService.markPasswordResetTokenAsUsed(reset);
-
-        // 기존 JWT 토큰 무효화를 위한 쿠키 삭제
-        clearAllAuthenticationCookies(response);
-
-        log.info("비밀번호 재설정 완료: {}", user.getEmail());
-    }
-
-    /**
-     * 모든 인증 관련 쿠키 삭제 (공통 메서드)
-     */
-    public void clearAllAuthenticationCookies(HttpServletResponse response) {
-        // JWT 쿠키 삭제
-        Cookie jwtCookie = new Cookie("PICKCOOK_AT", null);
-        jwtCookie.setMaxAge(0);
-        jwtCookie.setPath("/");
-        jwtCookie.setHttpOnly(true);
-        response.addCookie(jwtCookie);
-
-        // 세션 쿠키 삭제
-        Cookie sessionCookie = new Cookie("JSESSIONID", null);
-        sessionCookie.setMaxAge(0);
-        sessionCookie.setPath("/");
-        sessionCookie.setHttpOnly(true);
-        response.addCookie(sessionCookie);
-
-        log.info("모든 인증 쿠키 삭제 완료");
+        log.info("비밀번호 재설정 완료 - AuthService 위임");
     }
 
     // =================================================================
@@ -529,39 +475,5 @@ public class UserService implements UserDetailsService {
      */
     private boolean isOAuth2User(User user) {
         return user.getEmail() != null && user.getEmail().matches("^\\d+$");
-    }
-
-    /**
-     * 회원가입 인증 이메일 발송
-     */
-    private void sendVerificationEmail(String email, String uuid) throws MessagingException {
-        MimeMessage message = emailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-        helper.setTo(email);
-        helper.setSubject("[PickCook] 이메일 인증을 완료해주세요");
-        helper.setFrom("noreply@pickcook.com");
-
-        String htmlContent = emailTemplates.getEmailVerificationTemplate(email, uuid);
-        helper.setText(htmlContent, true);
-
-        emailSender.send(message);
-    }
-
-    /**
-     * 비밀번호 재설정 이메일 발송
-     */
-    private void sendPasswordResetEmail(String email, String token) throws MessagingException {
-        MimeMessage message = emailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-        helper.setTo(email);
-        helper.setSubject("[PickCook] 비밀번호 재설정 요청");
-        helper.setFrom("noreply@pickcook.com");
-
-        String htmlContent = emailTemplates.getPasswordResetEmailTemplate(email, token);
-        helper.setText(htmlContent, true);
-
-        emailSender.send(message);
     }
 }
