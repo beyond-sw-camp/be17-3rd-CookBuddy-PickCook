@@ -81,14 +81,6 @@ public class ProductService {
         return ProductDto.Res.from(product);
     }
 
-    // 가격만 변경 (쓰기)
-    @Transactional
-    public void changePrice(Long id, Integer price) {
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다: id=" + id));
-        product.changePrice(price);
-    }
-
     // 할인율만 변경 (쓰기)
     @Transactional
     public void changeDiscountRate(Long id, Integer rate) {
