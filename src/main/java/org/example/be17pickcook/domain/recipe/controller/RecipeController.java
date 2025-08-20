@@ -3,6 +3,7 @@ package org.example.be17pickcook.domain.recipe.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.example.be17pickcook.common.BaseResponse;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.domain.recipe.model.RecipeDto;
 import org.example.be17pickcook.domain.recipe.service.RecipeService;
@@ -31,7 +32,7 @@ public class RecipeController {
     )
     @PostMapping(value="/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity register(@AuthenticationPrincipal UserDto.AuthUser authUser,
-                                   @ModelAttribute RecipeDto.RecipeRequestDto dto,
+                                   @RequestPart RecipeDto.RecipeRequestDto dto,
                                    @RequestPart(value = "files", required = false)List<MultipartFile> files) throws SQLException, IOException {
         recipeService.register(authUser, dto, files);
 
@@ -55,9 +56,9 @@ public class RecipeController {
             description = "등록된 모든 레시피 목록을 조회합니다."
     )
     @GetMapping
-    public ResponseEntity<List<RecipeDto.RecipeResponseDto>> getRecipeList(@AuthenticationPrincipal UserDto.AuthUser authUser) {
+    public BaseResponse<List<RecipeDto.RecipeResponseDto>> getRecipeList(@AuthenticationPrincipal UserDto.AuthUser authUser) {
         Integer userIdx = (authUser != null) ? authUser.getIdx() : null;
 
-        return ResponseEntity.ok(recipeService.getRecipeList(userIdx));
+        return BaseResponse.success(recipeService.getRecipeList(userIdx));
     }
 }

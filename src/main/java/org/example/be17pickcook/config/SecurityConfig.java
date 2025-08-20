@@ -40,10 +40,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();  // 변수명 변경
 
-        corsConfiguration.setAllowedOrigins(List.of(
-                "http://localhost:5174" // 현재 사용 포트
-
-        ));
+        corsConfiguration.addAllowedOriginPattern("http://localhost:*");
         corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         corsConfiguration.setAllowedHeaders(List.of("*"));
         corsConfiguration.setAllowCredentials(true);

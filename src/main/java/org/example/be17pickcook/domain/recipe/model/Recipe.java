@@ -23,6 +23,8 @@ public class Recipe extends BaseEntity {
     private String title;
     private String cooking_method;
     private String category;
+    private String time_taken;
+    private String difficulty_level;
     private String serving_size;
     private String hashtags;
     private String image_small_url;

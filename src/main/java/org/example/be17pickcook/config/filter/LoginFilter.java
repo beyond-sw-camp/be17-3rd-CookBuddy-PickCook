@@ -72,9 +72,6 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
             response.setHeader("Set-Cookie", cookieValue);
             System.out.println("🍪 Set-Cookie 헤더 설정: " + cookieValue);
 
-            // 🔧 추가: CORS 헤더 명시적 설정
-            response.setHeader("Access-Control-Allow-Credentials", "true");
-            response.setHeader("Access-Control-Allow-Origin", "http://localhost:5174");
 
             // BaseResponse 형식으로 JSON 응답
             UserDto.Response responseDto = userMapper.authUserToResponse(authUser);

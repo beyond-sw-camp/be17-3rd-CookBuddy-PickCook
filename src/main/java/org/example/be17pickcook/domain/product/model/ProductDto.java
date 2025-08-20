@@ -3,6 +3,7 @@ package org.example.be17pickcook.domain.product.model;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.example.be17pickcook.domain.user.model.User;
 
 import java.time.LocalDateTime;
 
@@ -21,23 +22,21 @@ public class ProductDto {
         private String category;
         private String title;
         private String subtitle;
-        private String mainImageUrl;
-        private String detailImageUrl;
-        private String productUrl;
+        private String main_image_url;
+        private String detail_image_url;
         private String seller;
-        private Integer price;
-        private Integer discountRate;
-        private Integer originalPrice;
+        private Integer discount_rate;
+        private Integer original_price;
         private String unit;
-        private String weightOrVolume;
-        private String expirationDate; // DB가 varchar -> String 유지
+        private String weight_or_volume;
+        private String expiration_date; // DB가 varchar -> String 유지
         private String origin;
         private String packaging;
-        private String shippingInfo;
+        private String shipping_info;
         private String notice;
         private String description;
-        private LocalDateTime createdAt;
-        private LocalDateTime updatedAt;
+        private LocalDateTime created_at;
+        private LocalDateTime updated_at;
 
         public static Res from(Product entity) {
             return Res.builder()
@@ -45,23 +44,21 @@ public class ProductDto {
                     .category(entity.getCategory())
                     .title(entity.getTitle())
                     .subtitle(entity.getSubtitle())
-                    .mainImageUrl(entity.getMainImageUrl())
-                    .detailImageUrl(entity.getDetailImageUrl())
-                    .productUrl(entity.getProductUrl())
+                    .main_image_url(entity.getMain_image_url())
+                    .detail_image_url(entity.getDetail_image_url())
                     .seller(entity.getSeller())
-                    .price(entity.getPrice())
-                    .discountRate(entity.getDiscountRate())
-                    .originalPrice(entity.getOriginalPrice())
+                    .discount_rate(entity.getDiscount_rate())
+                    .original_price(entity.getOriginal_price())
                     .unit(entity.getUnit())
-                    .weightOrVolume(entity.getWeightOrVolume())
-                    .expirationDate(entity.getExpirationDate())
+                    .weight_or_volume(entity.getWeight_or_volume())
+                    .expiration_date(entity.getExpiration_date())
                     .origin(entity.getOrigin())
                     .packaging(entity.getPackaging())
-                    .shippingInfo(entity.getShippingInfo())
+                    .shipping_info(entity.getShipping_info())
                     .notice(entity.getNotice())
                     .description(entity.getDescription())
-                    .createdAt(entity.getCreatedAt())
-                    .updatedAt(entity.getUpdatedAt())
+                    .created_at(entity.getCreated_at())
+                    .updated_at(entity.getUpdated_at())
                     .build();
         }
     }
@@ -76,44 +73,41 @@ public class ProductDto {
         @NotBlank private String title;
 
         private String subtitle;
-        private String mainImageUrl;
-        private String detailImageUrl;
-        private String productUrl;
+        private String main_image_url;
+        private String detail_image_url;
         private String seller;
 
-        @NotNull private Integer price;
-        private Integer discountRate;
-        private Integer originalPrice;
+        private Integer discount_rate;
+        private Integer original_price;
 
         private String unit;
-        private String weightOrVolume;
-        private String expirationDate;
+        private String weight_or_volume;
+        private String expiration_date;
         private String origin;
         private String packaging;
-        private String shippingInfo;
+        private String shipping_info;
         private String notice;
         private String description;
 
-        public Product toEntity() {
+        public Product toEntity(User authUser) {
             return Product.builder()
-                    .category(category)
-                    .title(title)
-                    .subtitle(subtitle)
-                    .mainImageUrl(mainImageUrl)
-                    .detailImageUrl(detailImageUrl)
-                    .productUrl(productUrl)
-                    .seller(seller)
-                    .price(price)
-                    .discountRate(discountRate)
-                    .originalPrice(originalPrice)
-                    .unit(unit)
-                    .weightOrVolume(weightOrVolume)
-                    .expirationDate(expirationDate)
-                    .origin(origin)
-                    .packaging(packaging)
-                    .shippingInfo(shippingInfo)
-                    .notice(notice)
-                    .description(description)
+                    .category(this.category)
+                    .title(this.title)
+                    .subtitle(this.subtitle)
+                    .main_image_url(this.main_image_url)
+                    .detail_image_url(this.detail_image_url)
+                    .seller(this.seller)
+                    .discount_rate(this.discount_rate)
+                    .original_price(this.original_price)
+                    .unit(this.unit)
+                    .weight_or_volume(this.weight_or_volume)
+                    .expiration_date(this.expiration_date)
+                    .origin(this.origin)
+                    .packaging(this.packaging)
+                    .shipping_info(this.shipping_info)
+                    .notice(this.notice)
+                    .description(this.description)
+                    .user(authUser)
                     .build();
         }
     }
@@ -125,35 +119,31 @@ public class ProductDto {
     @Builder
     public static class Update {
         private String title;
-        private Integer price;
-        private Integer discountRate;
-        private Integer originalPrice;
-        private String mainImageUrl;
-        private String detailImageUrl;
-        private String productUrl;
+        private Integer discount_rate;
+        private Integer original_price;
+        private String main_image_url;
+        private String detail_image_url;
         private String unit;
-        private String weightOrVolume;
-        private String expirationDate;
+        private String weight_or_volume;
+        private String expiration_date;
         private String origin;
         private String packaging;
-        private String shippingInfo;
+        private String shipping_info;
         private String notice;
         private String description;
 
         public void apply(Product entity) {
             if (title != null) entity.setTitle(title);
-            if (price != null) entity.setPrice(price);
-            if (discountRate != null) entity.setDiscountRate(discountRate);
-            if (originalPrice != null) entity.setOriginalPrice(originalPrice);
-            if (mainImageUrl != null) entity.setMainImageUrl(mainImageUrl);
-            if (detailImageUrl != null) entity.setDetailImageUrl(detailImageUrl);
-            if (productUrl != null) entity.setProductUrl(productUrl);
+            if (discount_rate != null) entity.setDiscount_rate(discount_rate);
+            if (original_price != null) entity.setOriginal_price(original_price);
+            if (main_image_url != null) entity.setMain_image_url(main_image_url);
+            if (detail_image_url != null) entity.setDetail_image_url(detail_image_url);
             if (unit != null) entity.setUnit(unit);
-            if (weightOrVolume != null) entity.setWeightOrVolume(weightOrVolume);
-            if (expirationDate != null) entity.setExpirationDate(expirationDate);
+            if (weight_or_volume != null) entity.setWeight_or_volume(weight_or_volume);
+            if (expiration_date != null) entity.setExpiration_date(expiration_date);
             if (origin != null) entity.setOrigin(origin);
             if (packaging != null) entity.setPackaging(packaging);
-            if (shippingInfo != null) entity.setShippingInfo(shippingInfo);
+            if (shipping_info != null) entity.setShipping_info(shipping_info);
             if (notice != null) entity.setNotice(notice);
             if (description != null) entity.setDescription(description);
         }
