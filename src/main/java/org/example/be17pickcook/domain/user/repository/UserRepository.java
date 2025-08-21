@@ -9,8 +9,6 @@ import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Integer> {
     Optional<User> findByEmail(String email);
-    Optional<User> findByNickname(String nickname);
-    Optional<User> findByNameAndPhone(String name, String phone);
 
     // 🔧 추가: 탈퇴하지 않은 사용자만 조회
     @Query("SELECT u FROM User u WHERE u.email = :email AND (u.deleted IS NULL OR u.deleted = false)")
@@ -22,4 +20,12 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     @Query("SELECT u FROM User u WHERE u.name = :name AND u.phone = :phone AND (u.deleted IS NULL OR u.deleted = false)")
     Optional<User> findByNameAndPhoneAndNotDeleted(@Param("name") String name, @Param("phone") String phone);
+
+    // 🔧 추가: ID로 탈퇴하지 않은 사용자 조회
+    @Query("SELECT u FROM User u WHERE u.idx = :userId AND (u.deleted IS NULL OR u.deleted = false)")
+    Optional<User> findByIdAndNotDeleted(@Param("userId") Integer userId);
+
+    // 🔧 추가: ID로 탈퇴하지 않은 사용자 존재 확인
+    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.idx = :userId AND (u.deleted IS NULL OR u.deleted = false)")
+    boolean existsByIdAndNotDeleted(@Param("userId") Integer userId);
 }
