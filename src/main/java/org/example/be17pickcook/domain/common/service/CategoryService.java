@@ -57,46 +57,6 @@ public class CategoryService {
         return categoryMapper.entityToResponse(category);
     }
 
-    /**
-     * 사용자별 카테고리 통계 정보 조회
-     * - 각 카테고리별 아이템 개수
-     * - 유통기한 임박 아이템 개수 (3일 이내)
-     */
-    public List<CategoryDto.Summary> findCategorySummaryByUserId(Integer userId) {
-        validateUserExists(userId);
-
-        // 모든 카테고리 조회
-        List<Category> allCategories = categoryRepository.findAllByOrderById();
-
-        // 카테고리별 아이템 개수 조회
-        List<Object[]> categoryCountData = refrigeratorItemRepository.countItemsByCategoryForUser(userId);
-        Map<Long, Integer> categoryCountMap = categoryCountData.stream()
-                .collect(Collectors.toMap(
-                        row -> (Long) row[0],           // category_id
-                        row -> ((Number) row[2]).intValue()  // count
-                ));
-
-        // 카테고리별 유통기한 임박 아이템 개수 조회 (3일 이내)
-        LocalDate urgentDate = LocalDate.now().plusDays(3);
-        List<Object[]> urgentCountData = refrigeratorItemRepository.countExpiringItemsByCategoryForUser(userId, urgentDate);
-        Map<Long, Integer> urgentCountMap = urgentCountData.stream()
-                .collect(Collectors.toMap(
-                        row -> (Long) row[0],           // category_id
-                        row -> ((Number) row[1]).intValue()  // count
-                ));
-
-        // Summary DTO 생성
-        return allCategories.stream()
-                .map(category -> {
-                    CategoryDto.Summary summary = categoryMapper.entityToSummary(category);
-                    return summary.toBuilder()
-                            .itemCount(categoryCountMap.getOrDefault(category.getId(), 0))
-                            .expiringItemCount(urgentCountMap.getOrDefault(category.getId(), 0))
-                            .build();
-                })
-                .collect(Collectors.toList());
-    }
-
     // =================================================================
     // 검색 관련 API
     // =================================================================

@@ -139,27 +139,14 @@ public class RefrigeratorItemDto {
     @AllArgsConstructor
     public static class Filter {
 
-        /** 검색 키워드 (재료명 검색) */
-        @Size(max = 100, message = "검색어는 100자 이하여야 합니다.")
         private String keyword;
-
-        /** 카테고리 ID 필터 */
-        @Positive(message = "올바른 카테고리를 선택해주세요.")
         private Long categoryId;
-
-        /** 재고위치 필터 */
-        @Pattern(regexp = "^(실외저장소|냉장실|냉동실)$",
-                message = "재고위치는 실외저장소, 냉장실, 냉동실 중 하나여야 합니다.")
-        private String location;
-
-        /** 유통기한 상태 필터 */
+        // location 필드 삭제됨
         private ExpirationStatus expirationStatus;
 
-        /** 정렬 기준 */
         @Builder.Default
-        private SortType sortType = SortType.LOCATION_EXPIRATION;
+        private SortType sortType = SortType.EXPIRATION_DATE; // 기본값 변경
 
-        /** 정렬 방향 */
         @Builder.Default
         private SortDirection sortDirection = SortDirection.ASC;
     }
@@ -204,11 +191,8 @@ public class RefrigeratorItemDto {
 
     /** 정렬 기준 */
     public enum SortType {
-        LOCATION_EXPIRATION("위치별+유통기한순"),
         EXPIRATION_DATE("유통기한순"),
-        CREATED_DATE("등록일순"),
-        INGREDIENT_NAME("재료명순"),
-        CATEGORY("카테고리순");
+        CREATED_DATE("등록일순");
 
         private final String description;
 
@@ -235,5 +219,63 @@ public class RefrigeratorItemDto {
         public String getDescription() {
             return description;
         }
+    }
+
+    // =================================================================
+    // 통계 관련 DTO
+    // =================================================================
+
+    /**
+     * 카테고리별 통계 DTO
+     */
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CategoryStat {
+
+        /** 카테고리 ID */
+        private Long categoryId;
+
+        /** 카테고리명 */
+        private String categoryName;
+
+        /** 해당 카테고리의 아이템 개수 */
+        private Integer itemCount;
+    }
+
+    /**
+     * 위치별 통계 DTO
+     */
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class LocationStat {
+
+        /** 저장 위치 */
+        private String location;
+
+        /** 해당 위치의 아이템 개수 */
+        private Integer itemCount;
+    }
+
+    /**
+     * 유통기한 임박 통계 DTO (카테고리별)
+     */
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ExpiringCategoryStat {
+
+        /** 카테고리 ID */
+        private Long categoryId;
+
+        /** 임박한 아이템 개수 */
+        private Integer expiringCount;
+
+        /** 기준 일수 (예: 3일) */
+        private Integer targetDays;
     }
 }

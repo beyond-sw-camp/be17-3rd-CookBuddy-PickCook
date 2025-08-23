@@ -15,9 +15,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 냉장고 아이템 컨트롤러
+ * 냉장고 아이템 컨트롤러 (필터링 시스템 중심으로 정리됨)
  * - 식재료 CRUD API
- * - 검색, 필터링, 통계 API
+ * - 검색, 필터링 API
  * - 소프트 삭제 및 복원 API
  */
 @RestController
@@ -152,7 +152,8 @@ public class RefrigeratorItemController {
     }
 
     /**
-     * 복합 필터링 조회
+     * 복합 필터링 조회 (핵심 필터링 API)
+     * - 키워드 + 카테고리 + 유통기한 상태 + 정렬
      */
     @PostMapping("/filter")
     public ResponseEntity<BaseResponse<List<RefrigeratorItemDto.Response>>> filter(
@@ -175,20 +176,6 @@ public class RefrigeratorItemController {
     // =================================================================
     // 필터링 관련 API
     // =================================================================
-
-    /**
-     * 특정 위치의 아이템 조회
-     */
-    @GetMapping("/location/{location}")
-    public ResponseEntity<BaseResponse<List<RefrigeratorItemDto.Response>>> findByLocation(
-            @PathVariable String location,
-            Authentication authentication) {
-
-        Integer userId = getUserIdFromAuth(authentication);
-        List<RefrigeratorItemDto.Response> result = refrigeratorItemService.findByLocation(location, userId);
-
-        return ResponseEntity.ok(BaseResponse.success(result));
-    }
 
     /**
      * 특정 카테고리의 아이템 조회
