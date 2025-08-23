@@ -88,20 +88,20 @@ public interface RefrigeratorItemMapper {
      */
     default RefrigeratorItemDto.ExpirationStatus calculateExpirationStatus(LocalDate expirationDate) {
         if (expirationDate == null) {
-            return RefrigeratorItemDto.ExpirationStatus.FRESH;  // 유통기한 미설정 시 신선으로 처리
+            return RefrigeratorItemDto.ExpirationStatus.FRESH;
         }
 
         LocalDate today = LocalDate.now();
-        long daysUntilExpiration = ChronoUnit.DAYS.between(today, expirationDate);
+        long daysUntil = ChronoUnit.DAYS.between(today, expirationDate);
 
-        if (daysUntilExpiration < 0) {
-            return RefrigeratorItemDto.ExpirationStatus.EXPIRED;     // 만료됨
-        } else if (daysUntilExpiration <= 2) {
-            return RefrigeratorItemDto.ExpirationStatus.URGENT;      // 1-2일 남음 (긴급)
-        } else if (daysUntilExpiration <= 7) {
-            return RefrigeratorItemDto.ExpirationStatus.EXPIRING_SOON; // 3-7일 남음 (임박)
+        if (daysUntil < 0) {
+            return RefrigeratorItemDto.ExpirationStatus.EXPIRED;    // 유통기한 지남
+        } else if (daysUntil <= 1) {
+            return RefrigeratorItemDto.ExpirationStatus.URGENT;     // 1일 이하 남음
+        } else if (daysUntil <= 3) {
+            return RefrigeratorItemDto.ExpirationStatus.EXPIRING_SOON; // 2-3일 남음
         } else {
-            return RefrigeratorItemDto.ExpirationStatus.FRESH;       // 7일 이상 남음 (신선)
+            return RefrigeratorItemDto.ExpirationStatus.FRESH;      // 4일 이상 남음
         }
     }
 
