@@ -123,6 +123,12 @@ public enum BaseResponseStatus {
     IAMPORT_ERROR(false, 40101, "결제 금액이 잘못되었습니다."),
     ORDERS_NOT_ORDERED(false, 40102, "결제 정보가 없습니다. 구매 후 이용해주세요."),
 
+    // 필터링 관련 에러
+    INVALID_FILTER_CONDITION(false, 4901, "유효하지 않은 필터 조건입니다."),
+    INVALID_SORT_TYPE(false, 4902, "유효하지 않은 정렬 기준입니다."),
+    INVALID_EXPIRATION_STATUS(false, 4903, "유효하지 않은 유통기한 상태입니다."),
+    FILTER_PROCESSING_ERROR(false, 4904, "필터링 처리 중 오류가 발생했습니다."),
+
     // =================================================================
     // 50000번대: 데이터베이스 오류
     // =================================================================

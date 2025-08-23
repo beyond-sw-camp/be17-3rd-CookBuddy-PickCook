@@ -19,6 +19,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.apache.logging.log4j.Level.CATEGORY;
+
 /**
  * 냉장고 아이템 서비스
  * - 식재료 CRUD 관리
@@ -82,7 +84,9 @@ public class RefrigeratorItemService {
     /**
      * 특정 냉장고 아이템 조회
      */
+    @Transactional(readOnly = true)
     public RefrigeratorItemDto.Response findById(Long itemId, Integer userId) {
+        validateUserExists(userId);
         RefrigeratorItem item = findActiveItemByIdAndUserId(itemId, userId);
         return refrigeratorItemMapper.entityToResponse(item);
     }
@@ -170,55 +174,72 @@ public class RefrigeratorItemService {
             return findByUserId(userId);
         }
 
-        List<RefrigeratorItem> items = refrigeratorItemRepository
-                .findByUserIdAndIngredientNameContaining(userId, keyword.trim());
+        // 🆕 변경: 새로운 Repository 메서드 사용
+        List<RefrigeratorItem> items = refrigeratorItemRepository.findByComplexFilter(
+                userId,
+                keyword.trim(),
+                null,           // categoryId
+                null,           // expirationStatus
+                "EXPIRATION_DATE", // 기본 정렬
+                "ASC",          // 기본 방향
+                LocalDate.now(),
+                LocalDate.now().plusDays(4),
+                LocalDate.now().plusDays(2),
+                LocalDate.now().plusDays(4),
+                LocalDate.now(),
+                LocalDate.now().plusDays(2)
+        );
 
         return refrigeratorItemMapper.entityListToResponseList(items);
     }
 
     /**
-     * 복합 필터링 조회
+     * 복합 필터링으로 냉장고 아이템 조회 (완전히 새로 작성)
      */
     public List<RefrigeratorItemDto.Response> findByFilters(RefrigeratorItemDto.Filter filter, Integer userId) {
         validateUserExists(userId);
 
-        // 키워드 검색
-        if (filter.getKeyword() != null && !filter.getKeyword().trim().isEmpty()) {
-            return searchByKeyword(filter.getKeyword(), userId);
-        }
+        // 🆕 추가: 유통기한 상태별 날짜 계산
+        LocalDate today = LocalDate.now();
+        LocalDate freshDate = today.plusDays(4);        // 4일 이상
+        LocalDate soonStartDate = today.plusDays(2);    // 2-3일
+        LocalDate soonEndDate = today.plusDays(4);
+        LocalDate urgentStartDate = today;              // 0-1일
+        LocalDate urgentEndDate = today.plusDays(2);
 
-        // 카테고리 + 위치 필터링
-        List<RefrigeratorItem> items = refrigeratorItemRepository
-                .findByUserIdAndFilters(userId, filter.getCategoryId(), filter.getLocation());
+        // 🆕 추가: 필터 파라미터 준비
+        String keyword = (filter.getKeyword() != null && !filter.getKeyword().trim().isEmpty())
+                ? filter.getKeyword().trim() : null;
 
-        List<RefrigeratorItemDto.Response> responses = refrigeratorItemMapper.entityListToResponseList(items);
+        String expirationStatus = (filter.getExpirationStatus() != null)
+                ? filter.getExpirationStatus().name() : null;
 
-        // 유통기한 상태 필터링 (메모리에서 처리)
-        if (filter.getExpirationStatus() != null) {
-            responses = responses.stream()
-                    .filter(item -> filter.getExpirationStatus().equals(item.getExpirationStatus()))
-                    .collect(Collectors.toList());
-        }
+        String sortType = filter.getSortType().name();
+        String sortDirection = filter.getSortDirection().name();
 
-        // 정렬 적용
-        return applySorting(responses, filter.getSortType(), filter.getSortDirection());
+        // 🔄 변경: 새로운 Repository 메서드 사용 (기존 findByUserIdAndFilters 대신)
+        List<RefrigeratorItem> items = refrigeratorItemRepository.findByComplexFilter(
+                userId,
+                keyword,
+                filter.getCategoryId(),
+                expirationStatus,
+                sortType,
+                sortDirection,
+                today,
+                freshDate,
+                soonStartDate,
+                soonEndDate,
+                urgentStartDate,
+                urgentEndDate
+        );
+
+        // 🔄 변경: 바로 반환 (메모리 필터링 및 정렬 로직 제거)
+        return refrigeratorItemMapper.entityListToResponseList(items);
     }
 
     // =================================================================
     // 필터링 관련 API
     // =================================================================
-
-    /**
-     * 특정 위치의 아이템 조회
-     */
-    public List<RefrigeratorItemDto.Response> findByLocation(String location, Integer userId) {
-        validateUserExists(userId);
-
-        List<RefrigeratorItem> items = refrigeratorItemRepository
-                .findByUserIdxAndLocationAndIsDeletedFalseOrderByExpirationDateAsc(userId, location);
-
-        return refrigeratorItemMapper.entityListToResponseList(items);
-    }
 
     /**
      * 특정 카테고리의 아이템 조회
@@ -349,12 +370,6 @@ public class RefrigeratorItemService {
                     int comparison = switch (sortType) {
                         case EXPIRATION_DATE -> compareExpirationDate(a, b);
                         case CREATED_DATE -> a.getCreatedAt().compareTo(b.getCreatedAt());
-                        case INGREDIENT_NAME -> a.getIngredientName().compareTo(b.getIngredientName());
-                        case CATEGORY -> a.getCategory().getName().compareTo(b.getCategory().getName());
-                        case LOCATION_EXPIRATION -> {
-                            int locationComp = a.getLocation().compareTo(b.getLocation());
-                            yield locationComp != 0 ? locationComp : compareExpirationDate(a, b);
-                        }
                     };
 
                     return direction == RefrigeratorItemDto.SortDirection.DESC ? -comparison : comparison;

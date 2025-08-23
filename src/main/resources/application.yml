@@ -1,3 +1,12 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always
+
 spring:
   application:
     name: pickcook
