@@ -20,7 +20,6 @@ repositories {
 dependencies {
     // Spring
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-mail'
@@ -60,7 +59,16 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     implementation 'io.awspring.cloud:spring-cloud-aws-starter-s3:3.0.0'
 
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+
+    implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
+
+    // PortOne 결제 서비스 이용
+    implementation 'io.portone:server-sdk:0.19.2'
+    //	포트원 라이브러리
+    implementation 'com.github.iamport:iamport-rest-client-java:0.2.23'
 }
 
 tasks.named('test') {

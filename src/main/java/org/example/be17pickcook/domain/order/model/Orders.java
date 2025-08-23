@@ -16,13 +16,15 @@ import java.util.List;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-public class Order extends BaseEntity {
+public class Orders extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idx;
-    private String order_number;
+    @Column(unique = true, nullable = false)
+    private String paymentId;
     private Integer total_price;
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private OrderStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -31,4 +33,14 @@ public class Order extends BaseEntity {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> orderItems = new ArrayList<>();
 
+    public void addItems(OrderItem item) {
+        if (this.orderItems == null) this.orderItems = new ArrayList<>();
+
+        this.orderItems.add(item);
+        item.setOrder(this);
+    }
+
+    public void updateStatus(OrderStatus newStatus) {
+        this.status = newStatus;
+    }
 }
