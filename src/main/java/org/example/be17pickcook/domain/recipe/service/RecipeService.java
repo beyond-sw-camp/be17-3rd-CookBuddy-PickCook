@@ -2,12 +2,12 @@ package org.example.be17pickcook.domain.recipe.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.example.be17pickcook.common.service.S3UploadService;
 import org.example.be17pickcook.domain.likes.model.LikeTargetType;
-import org.example.be17pickcook.domain.likes.repository.LikesRepository;
-import org.example.be17pickcook.domain.likes.service.LikesService;
+import org.example.be17pickcook.domain.likes.repository.LikeRepository;
+import org.example.be17pickcook.domain.likes.service.LikeService;
 import org.example.be17pickcook.domain.recipe.model.Recipe;
 import org.example.be17pickcook.domain.recipe.model.RecipeDto;
-import org.example.be17pickcook.domain.recipe.model.RecipeIngredient;
 import org.example.be17pickcook.domain.recipe.model.RecipeStep;
 import org.example.be17pickcook.domain.scrap.model.ScrapTargetType;
 import org.example.be17pickcook.domain.scrap.service.ScrapService;
@@ -26,14 +26,14 @@ import java.util.List;
 public class RecipeService {
     private final RecipeRepository recipeRepository;
     private final S3UploadService s3UploadService;
-    private final LikesService likesService;
+    private final LikeService likesService;
     private final ScrapService scrapService;
 
     // 기본 이미지
     private static final String DEFAULT_SMALL_IMAGE = "https://example.com/default-small.jpg";
     private static final String DEFAULT_LARGE_IMAGE = "https://example.com/default-large.jpg";
     private static final String DEFAULT_STEP_IMAGE  = "https://example.com/default-step.jpg";
-    private final LikesRepository likesRepository;
+    private final LikeRepository likesRepository;
 
 
     // 레시피 등록
@@ -79,7 +79,7 @@ public class RecipeService {
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 레시피가 존재하지 않습니다. id=" + recipeId));
 
-        Integer likeCount = likesService.getLikesCount(LikeTargetType.RECIPE, recipeId);
+        Integer likeCount = likesService.getLikeCount(LikeTargetType.RECIPE, recipeId);
         Boolean likedByUser = userIdx != null &&
                 likesService.hasUserLiked(userIdx, LikeTargetType.RECIPE, recipeId);
 
@@ -99,7 +99,7 @@ public class RecipeService {
         List<Recipe> recipes = recipeRepository.findAll();
 
         return recipes.stream().map(recipe -> {
-            Integer likeCount = likesService.getLikesCount(LikeTargetType.RECIPE, recipe.getIdx());
+            Integer likeCount = likesService.getLikeCount(LikeTargetType.RECIPE, recipe.getIdx());
             Boolean likedByUser = userIdx != null &&
                     likesService.hasUserLiked(userIdx, LikeTargetType.RECIPE, recipe.getIdx());
 

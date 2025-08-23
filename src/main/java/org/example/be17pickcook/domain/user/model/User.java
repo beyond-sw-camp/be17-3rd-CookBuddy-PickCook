@@ -3,7 +3,7 @@ package org.example.be17pickcook.domain.user.model;
 import jakarta.persistence.*;
 import lombok.*;
 import org.example.be17pickcook.common.BaseEntity;
-import org.example.be17pickcook.domain.likes.model.Likes;
+import org.example.be17pickcook.domain.likes.model.Like;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -66,7 +66,7 @@ public class User extends BaseEntity {  // ✅ BaseEntity 상속 추가
     List<EmailVerify> emailVerifyList;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Likes> likes = new ArrayList<>();
+    private List<Like> likes = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PasswordReset> passwordResetList = new ArrayList<>();

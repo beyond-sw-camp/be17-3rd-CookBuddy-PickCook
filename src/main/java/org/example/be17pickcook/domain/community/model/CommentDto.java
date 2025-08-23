@@ -35,21 +35,28 @@ public class CommentDto {
     @NoArgsConstructor
     public static class Response {
         private Long id;
+        private Long postId;
         private String content;
         private String userName;
         private Long parentCommentId;           // 부모 댓글 ID
+        private boolean hasLiked;
+        private long likeCount;
         private List<Response> children;        // 대댓글 리스트
 
         // Entity → DTO 변환
-        public static Response fromEntity(Comment comment) {
+        public static Response fromEntity(Comment comment,
+                                          boolean hasLiked,
+                                          long likeCount,
+                                          List<Response> children) {
             return Response.builder()
                     .id(comment.getId())
+                    .postId(comment.getPost().getId())
                     .content(comment.getContent())
                     .userName(comment.getUser().getNickname())
                     .parentCommentId(comment.getParentComment() != null ? comment.getParentComment().getId() : null)
-                    .children(comment.getChildren().stream()
-                            .map(Response::fromEntity)
-                            .collect(Collectors.toList()))
+                    .hasLiked(hasLiked)
+                    .likeCount(likeCount)
+                    .children(children)
                     .build();
         }
     }
