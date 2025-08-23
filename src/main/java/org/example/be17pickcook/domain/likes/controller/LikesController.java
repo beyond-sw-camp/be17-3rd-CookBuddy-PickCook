@@ -1,37 +1,37 @@
 package org.example.be17pickcook.domain.likes.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.example.be17pickcook.common.BaseResponse;
+import org.example.be17pickcook.domain.likes.model.LikeDto;
 import org.example.be17pickcook.domain.user.model.UserDto;
-import org.example.be17pickcook.domain.likes.model.LikeTargetType;
-import org.example.be17pickcook.domain.likes.service.LikesService;
-import org.springframework.http.ResponseEntity;
+import org.example.be17pickcook.domain.likes.service.LikeService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/likes")
+@RequestMapping("/like")
 public class LikesController {
-    private final LikesService likesService;
+    private final LikeService likeService;
 
     /*
      * 좋아요 토글
      * @param authUser 로그인한 사용자 정보
-     * @param type 대상 타입 (FEED, RECIPE, COMMUNITY)
+     * @param type 대상 타입 (RECIPE, POST, COMMENT)
      * @param targetId 대상 ID
      */
 
-    // 요청 형식
-    // 레시피 좋아요 : POST likes?targetType=RECIPE&targetId=123
-    // 커뮤니티 좋아요 : POST likes?targetType=RECIPE&targetId=123
-
     @PostMapping
-    public ResponseEntity likes(
+    public BaseResponse<LikeDto.Response> like(
             @AuthenticationPrincipal UserDto.AuthUser authUser,
-            @RequestParam LikeTargetType targetType,
-            @RequestParam Long targetId) {
-        likesService.toggleLike(authUser, targetType, targetId);
+            @RequestBody LikeDto.Request request) {
 
-        return ResponseEntity.status(200).body("좋아요 기능 성공");
+        likeService.toggleLike(authUser, request.getTargetType(), request.getTargetId());
+        LikeDto.Response response = LikeDto.Response.builder()
+                .likeCount(likeService.getLikeCount(request.getTargetType(), request.getTargetId()))
+                .hasLiked(likeService.hasUserLiked(authUser.getIdx(), request.getTargetType(), request.getTargetId()))
+                .build();
+
+        return BaseResponse.success(response);
     }
 }

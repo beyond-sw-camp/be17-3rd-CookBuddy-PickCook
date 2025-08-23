@@ -21,16 +21,16 @@ public class PostController {
 
     @Operation(summary = "게시글 목록 조회", description = "전체 게시글 목록을 조회합니다.")
     @GetMapping
-    public BaseResponse<List<PostDto.Response>> getAllPosts() {
-        List<PostDto.Response> posts = postService.getAllPosts();
+    public BaseResponse<List<PostDto.ListResponse>> getAllPosts() {
+        List<PostDto.ListResponse> posts = postService.getAllPosts();
         return BaseResponse.success(posts);
     }
 
     @Operation(summary = "게시글 상세 조회", description = "게시글 ID로 게시글 상세 정보를 조회합니다.")
     @GetMapping("/{id}")
-    public BaseResponse<PostDto.Response> getPost(@PathVariable @Schema(description = "조회할 게시글 ID", example = "1") Long id) {
+    public BaseResponse<PostDto.DetailResponse> getPost(@AuthenticationPrincipal UserDto.AuthUser authUser, @PathVariable @Schema(description = "조회할 게시글 ID", example = "1") Long id) {
         try {
-            PostDto.Response post = postService.getPostById(id);
+            PostDto.DetailResponse post = postService.getPostById(authUser.getIdx(), id);
             return BaseResponse.success(post);
         } catch (RuntimeException e) {
             return BaseResponse.error(BaseResponseStatus.POST_NOT_FOUND);
@@ -39,7 +39,7 @@ public class PostController {
 
     @Operation(summary = "게시글 작성", description = "새 게시글을 작성합니다.")
     @PostMapping
-    public BaseResponse<PostDto.Response> createPost(
+    public BaseResponse<PostDto.DetailResponse> createPost(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "게시글 생성 DTO",
                     required = true,
@@ -49,7 +49,7 @@ public class PostController {
             )
             @RequestBody PostDto.Request postDto,
             @AuthenticationPrincipal UserDto.AuthUser authUser) {
-        PostDto.Response saved = postService.createPost(postDto, authUser);
+        PostDto.DetailResponse saved = postService.createPost(postDto, authUser);
         return BaseResponse.success(saved);
     }
 }

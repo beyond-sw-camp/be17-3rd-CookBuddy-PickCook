@@ -6,7 +6,7 @@ import org.example.be17pickcook.domain.product.model.Product;
 import org.example.be17pickcook.domain.product.model.ProductDto;
 import org.example.be17pickcook.domain.user.model.User;
 import org.example.be17pickcook.domain.user.model.UserDto;
-import org.example.be17pickcook.domain.recipe.service.S3UploadService;
+import org.example.be17pickcook.common.service.S3UploadService;
 import org.springframework.data.domain.Page;                          // [변경] 페이징
 import org.springframework.data.domain.Pageable;                    // [변경] 페이징
 import org.springframework.data.domain.Sort;                        // [변경] 정렬

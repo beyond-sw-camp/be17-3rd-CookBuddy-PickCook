@@ -24,7 +24,7 @@ public class Scrap {
     private Long idx;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false,  length = 50)
     private ScrapTargetType targetType;
 
     @Column(nullable = false)

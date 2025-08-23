@@ -1,4 +1,4 @@
-package org.example.be17pickcook.domain.recipe.service;
+package org.example.be17pickcook.common.service;
 
 import io.awspring.cloud.s3.S3Operations;
 import io.awspring.cloud.s3.S3Resource;

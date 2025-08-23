@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.be17pickcook.common.BaseResponse;
 import org.example.be17pickcook.domain.community.model.CommentDto;
 import org.example.be17pickcook.domain.community.service.CommentService;
+import org.example.be17pickcook.domain.likes.service.LikeService;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -34,9 +35,10 @@ public class CommentController {
     )
     @GetMapping
     public BaseResponse<List<CommentDto.Response>> getComments(
+            @AuthenticationPrincipal UserDto.AuthUser authUser,
             @Parameter(description = "댓글을 조회할 게시글 ID", required = true)
             @RequestParam Long postId) {
-        List<CommentDto.Response> comments = commentService.getCommentsByPost(postId);
+        List<CommentDto.Response> comments = commentService.getCommentsByPost(authUser.getIdx(), postId);
         return BaseResponse.success(comments);
     }
 

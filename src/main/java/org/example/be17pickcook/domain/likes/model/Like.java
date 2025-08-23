@@ -18,13 +18,13 @@ import org.example.be17pickcook.domain.user.model.User;
                 {@UniqueConstraint(columnNames =
                         {"user_id", "target_type", "target_id"})}
 )
-public class Likes {
+public class Like {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idx;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private LikeTargetType targetType;
 
     @Column(nullable = false)

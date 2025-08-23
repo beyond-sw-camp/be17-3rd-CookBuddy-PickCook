@@ -1,4 +1,4 @@
-package org.example.be17pickcook.domain.recipe.service;
+package org.example.be17pickcook.common.service;
 
 import org.springframework.web.multipart.MultipartFile;
 
