@@ -74,3 +74,12 @@ spring:
       enabled: true
       max-file-size: 20MB
       max-request-size: 20MB
+
+portone:
+  secret-key: ${PORTONE_SECRETE_KEY}
+  store-id: ${PORTONE_STORE_ID}
+
+logging:
+  level:
+    root: DEBUG
+    org.example.be17pickcook.domain.order.service: DEBUG
