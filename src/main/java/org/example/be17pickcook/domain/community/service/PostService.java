@@ -3,6 +3,8 @@ package org.example.be17pickcook.domain.community.service;
 import lombok.RequiredArgsConstructor;
 import org.example.be17pickcook.domain.community.model.Post;
 import org.example.be17pickcook.domain.community.model.PostDto;
+import org.example.be17pickcook.domain.community.model.PostImage;
+import org.example.be17pickcook.domain.community.repository.PostImageRepository;
 import org.example.be17pickcook.domain.community.repository.PostRepository;
 import org.example.be17pickcook.domain.likes.model.LikeTargetType;
 import org.example.be17pickcook.domain.likes.service.LikeService;
@@ -21,6 +23,7 @@ import java.util.stream.Collectors;
 public class PostService {
 
     private final PostRepository postRepository;
+    private final PostImageRepository postImageRepository;
     private final UserRepository userRepository;
     private final LikeService likesService;
     private final ScrapService scrapService;
@@ -61,9 +64,12 @@ public class PostService {
         Post post = dto.toEntity(user); // toEntity에서 User 객체 받도록 수정
 
         Post saved = postRepository.save(post);
-        int likesCount = likesService.getLikeCount(LikeTargetType.POST, post.getId());
-        int scrapsCount = scrapService.getScrapCount(ScrapTargetType.POST, post.getId());
-        return PostDto.DetailResponse.from(saved, likesCount, false, scrapsCount, false);
+        if(dto.getImageList() != null) {
+            for (String imageUrl : dto.getImageList()) {
+                postImageRepository.save(PostImage.of(post, imageUrl));
+            }
+        }
+        return PostDto.DetailResponse.from(saved, 0, false, 0, false);
     }
 
 }
