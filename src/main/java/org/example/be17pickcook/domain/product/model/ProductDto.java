@@ -58,8 +58,8 @@ public class ProductDto {
                     .shipping_info(entity.getShipping_info())
                     .notice(entity.getNotice())
                     .description(entity.getDescription())
-                    .created_at(entity.getCreated_at())
-                    .updated_at(entity.getUpdated_at())
+                    .created_at(entity.getCreatedAt())
+                    .updated_at(entity.getUpdatedAt())
                     .build();
         }
     }
@@ -108,7 +108,6 @@ public class ProductDto {
                     .shipping_info(this.shipping_info)
                     .notice(this.notice)
                     .description(this.description)
-                    .user(authUser)
                     .build();
         }
     }
