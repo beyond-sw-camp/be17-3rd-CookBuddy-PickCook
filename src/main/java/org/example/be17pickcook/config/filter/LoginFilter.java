@@ -1,5 +1,6 @@
 package org.example.be17pickcook.config.filter;
 
+import lombok.RequiredArgsConstructor;
 import org.example.be17pickcook.common.BaseResponse;
 import org.example.be17pickcook.common.BaseResponseStatus;
 import org.example.be17pickcook.domain.user.mapper.UserMapper;
@@ -8,7 +9,6 @@ import org.example.be17pickcook.utils.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -18,10 +18,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 
-//@RequiredArgsConstructor
 public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     private final AuthenticationManager authenticationManager;
     private final UserMapper userMapper;
@@ -29,7 +26,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     public LoginFilter(AuthenticationManager authenticationManager, UserMapper userMapper) {
         this.authenticationManager = authenticationManager;
         this.userMapper = userMapper;
-        setFilterProcessesUrl("/login"); // 경로 설정
+        super.setFilterProcessesUrl("/login"); // 경로 설정
     }
 
     // 원래는 form-data 형식으로 사용자 정보를 입력받았는데
@@ -70,7 +67,6 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
             );
 
             response.setHeader("Set-Cookie", cookieValue);
-            System.out.println("🍪 Set-Cookie 헤더 설정: " + cookieValue);
 
 
             // BaseResponse 형식으로 JSON 응답

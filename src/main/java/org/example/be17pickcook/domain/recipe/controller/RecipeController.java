@@ -19,7 +19,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/recipe")
+@RequestMapping("/api/recipe")
 @Tag(name = "레시피 기능", description = "레시피 등록, 조회, 목록 조회 기능을 제공합니다.")
 public class RecipeController {
     private final RecipeService recipeService;

@@ -55,21 +55,6 @@ public class CategoryController {
         return ResponseEntity.ok(BaseResponse.success(result));
     }
 
-    /**
-     * 사용자별 카테고리 통계 정보 조회
-     * - 각 카테고리별 아이템 개수
-     * - 유통기한 임박 아이템 개수
-     */
-    @GetMapping("/summary")
-    public ResponseEntity<BaseResponse<List<CategoryDto.Summary>>> findSummary(
-            Authentication authentication) {
-
-        Integer userId = getUserIdFromAuth(authentication);
-        List<CategoryDto.Summary> result = categoryService.findCategorySummaryByUserId(userId);
-
-        return ResponseEntity.ok(BaseResponse.success(result));
-    }
-
     // =================================================================
     // 검색 관련 API
     // =================================================================

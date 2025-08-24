@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.be17pickcook.domain.cart.model.Carts;
 import org.example.be17pickcook.domain.cart.model.CartsDto;
 import org.example.be17pickcook.domain.cart.repository.CartsRepository;
+import org.example.be17pickcook.domain.product.model.Product;
 import org.example.be17pickcook.domain.user.model.User;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.springframework.stereotype.Service;
@@ -21,13 +22,19 @@ public class CartsService {
                          CartsDto.CartsRequestDto dto) {
         Integer userIdx = authUser.getIdx();
 
-        Optional<Carts> existing = cartsRepository.findByUserIdxAndProductId(userIdx, dto.getProduct_id());
+        for (Long productId : dto.getProduct_ids()) {
+            Optional<Carts> existing = cartsRepository.findByUserIdxAndProductId(userIdx, productId);
 
-        if (existing.isPresent()) {
-            cartsRepository.delete(existing.get());
-        } else {
-            Carts item = dto.toEntity(User.builder().idx(authUser.getIdx()).build());
-            cartsRepository.save(item);
+            if (existing.isPresent()) {
+                cartsRepository.delete(existing.get());
+            } else {
+                Carts item = Carts.builder()
+                        .quantity(dto.getQuantity() != null ? dto.getQuantity() : 1)
+                        .product(Product.builder().id(productId).build())
+                        .user(User.builder().idx(authUser.getIdx()).build())
+                        .build();
+                cartsRepository.save(item);
+            }
         }
     }
 
