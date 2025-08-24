@@ -7,6 +7,7 @@ import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 public class PostDto {
 
@@ -18,6 +19,7 @@ public class PostDto {
     public static class Request {
         private String title;
         private String content;
+        private List<String> imageList;
 
         public Post toEntity(User user) {
             return Post.builder()
