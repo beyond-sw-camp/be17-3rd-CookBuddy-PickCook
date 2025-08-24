@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.example.be17pickcook.common.BaseEntity;
+import org.example.be17pickcook.domain.cart.model.Carts;
 import org.example.be17pickcook.domain.product.model.Product;
 
 @Getter
@@ -30,6 +31,10 @@ public class OrderItem extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
     private Product product;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cart_id")
+    private Carts cart;
 
     public void setOrder(Orders order) { this.order = order; }
 }

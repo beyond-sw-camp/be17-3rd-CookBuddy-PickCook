@@ -66,4 +66,10 @@ public class CartsDto {
                     .build();
         }
     }
+
+    @Getter
+    @Builder
+    public static class CartQuantityUpdateRequest {
+        private Integer quantity;
+    }
 }
