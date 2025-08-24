@@ -57,14 +57,12 @@ public class OrderDto {
                     .product_price(product_price)
                     .order(order)
                     .product(Product.builder().id(product_id).build())
-                    .cart(Carts.builder().idx(cart_id).build())
                     .build();
         }
 
         public static OrderItemDto fromEntity(OrderItem orderitem) {
             return OrderItemDto.builder()
                     .product_id(orderitem.getProduct().getId())
-                    .cart_id(orderitem.getCart().getIdx())
                     .product_name(orderitem.getProduct_name())
                     .product_price(orderitem.getProduct_price())
                     .quantity(orderitem.getQuantity())
