@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.example.be17pickcook.common.BaseEntity;
+import org.example.be17pickcook.domain.cart.model.Carts;
 import org.example.be17pickcook.domain.product.model.Product;
 
 @Getter

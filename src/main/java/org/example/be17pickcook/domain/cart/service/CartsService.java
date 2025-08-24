@@ -1,5 +1,6 @@
 package org.example.be17pickcook.domain.cart.service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.be17pickcook.domain.cart.model.Carts;
 import org.example.be17pickcook.domain.cart.model.CartsDto;
@@ -47,5 +48,20 @@ public class CartsService {
         return carts.stream()
                 .map(CartsDto.CartsResponseDto::fromEntity)
                 .toList();
+    }
+
+    // 장바구니 수량 변경
+    @Transactional
+    public void updateQuantity(UserDto.AuthUser authUser, Long cartItemId, Integer quantity) {
+        Carts cartItem = cartsRepository.findById(cartItemId)
+                .orElseThrow(() -> new IllegalArgumentException("장바구니 항목이 존재하지 않습니다."));
+
+        // 본인 장바구니인지 검증 (보안)
+        if (!cartItem.getUser().getIdx().equals(authUser.getIdx())) {
+            throw new SecurityException("본인의 장바구니만 수정할 수 있습니다.");
+        }
+
+        // 수량 변경
+        cartItem.updateQuantity(quantity);
     }
 }

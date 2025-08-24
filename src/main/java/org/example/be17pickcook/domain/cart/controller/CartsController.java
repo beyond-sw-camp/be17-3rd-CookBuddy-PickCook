@@ -15,7 +15,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/cart")
+@RequestMapping("api/cart")
 @Tag(name = "장바구니 기능", description = "장바구니 등록, 제거, 목록 조회 기능을 제공합니다.")
 public class CartsController {
     private final CartsService cartsService;
@@ -45,5 +45,16 @@ public class CartsController {
     }
 
 
-    // 장바구니 항목 제거
+    @PatchMapping("/{id}")
+    @Operation(
+            summary = "장바구니 수량 변경",
+            description = "특정 장바구니 항목의 수량을 변경합니다."
+    )
+    public BaseResponse updateQuantity(
+            @AuthenticationPrincipal UserDto.AuthUser authUser,
+            @PathVariable("id") Long cartItemId,
+            @RequestBody CartsDto.CartQuantityUpdateRequest dto) {
+        cartsService.updateQuantity(authUser, cartItemId, dto.getQuantity());
+        return BaseResponse.success("수량이 변경되었습니다.");
+    }
 }
