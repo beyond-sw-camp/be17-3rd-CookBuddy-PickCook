@@ -7,7 +7,6 @@ import java.util.UUID;
 
 public class FileUploadUtil {
     public static String makeUploadPath() {
-//        String basePath = "c:\\upload\\";
 
         String date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
         File dir = new File(date);
