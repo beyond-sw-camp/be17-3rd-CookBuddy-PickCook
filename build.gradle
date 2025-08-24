@@ -67,8 +67,6 @@ dependencies {
 
     // PortOne 결제 서비스 이용
     implementation 'io.portone:server-sdk:0.19.2'
-    //	포트원 라이브러리
-    implementation 'com.github.iamport:iamport-rest-client-java:0.2.23'
 }
 
 tasks.named('test') {

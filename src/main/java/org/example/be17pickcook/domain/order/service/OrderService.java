@@ -35,7 +35,7 @@ public class OrderService {
     // 주문 요청 기록 저장
     @Transactional
     public OrderDto.PaymentStartResDto startPayment(UserDto.AuthUser authUser,
-                             OrderDto.PaymentStartReqDto dto) {
+                                                    OrderDto.PaymentStartReqDto dto) {
 
         String paymentId = UUID.randomUUID().toString();
         User user = User.builder().idx(authUser.getIdx()).build();

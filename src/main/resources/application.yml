@@ -88,7 +88,7 @@ portone:
   secret-key: ${PORTONE_SECRETE_KEY}
   store-id: ${PORTONE_STORE_ID}
 
-logging:
-  level:
-    root: DEBUG
-    org.example.be17pickcook.domain.order.service: DEBUG
+#logging:
+#  level:
+#    root: DEBUG
+#    org.example.be17pickcook.domain.order.service: DEBUG
