@@ -4,9 +4,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.example.be17pickcook.common.BaseResponse;
+import org.example.be17pickcook.common.PageResponse;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.domain.recipe.model.RecipeDto;
 import org.example.be17pickcook.domain.recipe.service.RecipeService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -39,6 +43,24 @@ public class RecipeController {
         return ResponseEntity.status(200).body("레시피 작성 성공");
     }
 
+    @GetMapping
+    @Operation(
+            summary = "레시피 목록 조회 (페이징)",
+            description = "등록된 레시피 목록을 페이지 단위로 조회합니다.\n" +
+                    "- page: 0부터 시작하는 페이지 번호\n" +
+                    "- size: 페이지당 레코드 수"
+    )
+    public BaseResponse<PageResponse<RecipeDto.RecipeResponseDto>> getRecipeList(
+            @AuthenticationPrincipal UserDto.AuthUser authUser,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Integer userIdx = (authUser != null) ? authUser.getIdx() : null;
+        Pageable pageable = PageRequest.of(page, size);
+
+        return BaseResponse.success(recipeService.getRecipeList(userIdx, pageable));
+    }
+
     // 특정 레시피 조회
     @Operation(
             summary = "특정 레시피 조회",
@@ -50,15 +72,15 @@ public class RecipeController {
         return ResponseEntity.ok(recipeService.getRecipe(id, userIdx));
     }
 
-    // 레시피 목록 조회
-    @Operation(
-            summary = "레시피 목록 조회",
-            description = "등록된 모든 레시피 목록을 조회합니다."
-    )
-    @GetMapping
-    public BaseResponse<List<RecipeDto.RecipeResponseDto>> getRecipeList(@AuthenticationPrincipal UserDto.AuthUser authUser) {
-        Integer userIdx = (authUser != null) ? authUser.getIdx() : null;
-
-        return BaseResponse.success(recipeService.getRecipeList(userIdx));
-    }
+//    // 레시피 목록 조회
+//    @Operation(
+//            summary = "레시피 목록 조회",
+//            description = "등록된 모든 레시피 목록을 조회합니다."
+//    )
+//    @GetMapping
+//    public BaseResponse<List<RecipeDto.RecipeResponseDto>> getRecipeList(@AuthenticationPrincipal UserDto.AuthUser authUser) {
+//        Integer userIdx = (authUser != null) ? authUser.getIdx() : null;
+//
+//        return BaseResponse.success(recipeService.getRecipeList(userIdx));
+//    }
 }
