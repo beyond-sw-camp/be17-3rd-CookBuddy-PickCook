@@ -47,12 +47,11 @@ public class RefrigeratorItemDto {
         private String location;
 
         /** 수량: 필수, 양수 */
-        @NotNull(message = "수량은 필수입니다.")
-        @Positive(message = "수량은 1 이상이어야 합니다.")
-        private Integer quantity;
+        @NotBlank(message = "수량은 필수입니다.")
+        private String quantity;
 
         /** 유통기한: 선택사항, 미래 날짜만 허용 */
-        @Future(message = "유통기한은 오늘 이후의 날짜여야 합니다.")
+        @FutureOrPresent(message = "유통기한은 오늘 또는 미래 날짜여야 합니다.")
         private LocalDate expirationDate;
     }
 
@@ -79,7 +78,7 @@ public class RefrigeratorItemDto {
         private String location;
 
         /** 수량 */
-        private Integer quantity;
+        private String quantity;
 
         /** 유통기한 */
         private LocalDate expirationDate;
@@ -121,11 +120,11 @@ public class RefrigeratorItemDto {
         private String location;
 
         /** 수량: 선택사항, 양수만 허용 */
-        @Positive(message = "수량은 1 이상이어야 합니다.")
-        private Integer quantity;
+        @NotBlank(message = "수량은 필수입니다.")
+        private String quantity;
 
         /** 유통기한: 선택사항, 미래 날짜만 허용 */
-        @Future(message = "유통기한은 오늘 이후의 날짜여야 합니다.")
+        @FutureOrPresent(message = "유통기한은 오늘 또는 미래 날짜여야 합니다.")
         private LocalDate expirationDate;
     }
 
@@ -173,10 +172,10 @@ public class RefrigeratorItemDto {
 
     /** 유통기한 상태 */
     public enum ExpirationStatus {
-        FRESH("신선"),           // 7일 이상 남음
-        EXPIRING_SOON("임박"),   // 3-7일 남음
-        URGENT("긴급"),         // 1-2일 남음
-        EXPIRED("만료");        // 오늘 이후 또는 지남
+        FRESH("신선"),           // 4일 이상 남음
+        EXPIRING_SOON("임박"),   // 3일 남음
+        URGENT("긴급"),         // 오늘~2일 남음
+        EXPIRED("만료");        // 지남
 
         private final String description;
 
