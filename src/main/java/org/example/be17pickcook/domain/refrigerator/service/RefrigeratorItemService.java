@@ -5,6 +5,7 @@ import org.example.be17pickcook.common.exception.BaseException;
 import org.example.be17pickcook.common.BaseResponseStatus;
 import org.example.be17pickcook.domain.common.model.Category;
 import org.example.be17pickcook.domain.common.repository.CategoryRepository;
+import org.example.be17pickcook.domain.refrigerator.enums.SyncPromptMessage;
 import org.example.be17pickcook.domain.refrigerator.mapper.RefrigeratorItemMapper;
 import org.example.be17pickcook.domain.refrigerator.model.RefrigeratorItem;
 import org.example.be17pickcook.domain.refrigerator.model.RefrigeratorItemDto;
@@ -16,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -385,5 +388,94 @@ public class RefrigeratorItemService {
         if (a.getExpirationDate() == null) return 1;  // null은 뒤로
         if (b.getExpirationDate() == null) return -1;
         return a.getExpirationDate().compareTo(b.getExpirationDate());
+    }
+
+    // RefrigeratorItemService.java에 추가
+    public RefrigeratorItemDto.SyncPrompt getSyncPrompt(Integer userId) {
+        validateUserExists(userId);
+
+        // 상황 분석
+        List<RefrigeratorItem> allItems = refrigeratorItemRepository
+                .findByUserIdxAndIsDeletedFalseOrderByLocationAscExpirationDateAsc(userId);
+
+        List<RefrigeratorItem> expiredItems = allItems.stream()
+                .filter(item -> item.isExpired())
+                .collect(Collectors.toList());
+
+        List<RefrigeratorItem> urgentItems = allItems.stream()
+                .filter(item -> isUrgent(item.getExpirationDate()))
+                .collect(Collectors.toList());
+
+        List<RefrigeratorItem> expiringSoonItems = allItems.stream()
+                .filter(item -> isExpiringSoon(item.getExpirationDate()))
+                .collect(Collectors.toList());
+
+        return determineSyncMessage(allItems, expiredItems, urgentItems, expiringSoonItems);
+    }
+
+    private RefrigeratorItemDto.SyncPrompt determineSyncMessage(
+            List<RefrigeratorItem> allItems,
+            List<RefrigeratorItem> expiredItems,
+            List<RefrigeratorItem> urgentItems,
+            List<RefrigeratorItem> expiringSoonItems) {
+
+        List<String> messages = new ArrayList<>();
+        List<String> actions = new ArrayList<>();
+        RefrigeratorItemDto.SyncPrompt.PromptType messageType = RefrigeratorItemDto.SyncPrompt.PromptType.INFO;
+
+        // 만료된 아이템
+        if (!expiredItems.isEmpty()) {
+            messages.add(SyncPromptMessage.EXPIRED_ITEMS.format(expiredItems.size()));
+            actions.add("만료된 아이템 정리하기");
+            messageType = RefrigeratorItemDto.SyncPrompt.PromptType.WARNING;
+        }
+
+        // 긴급 아이템
+        if (!urgentItems.isEmpty()) {
+            messages.add(SyncPromptMessage.URGENT_ITEMS.format(urgentItems.size()));
+            actions.add("긴급 아이템 확인하기");
+            if (messageType != RefrigeratorItemDto.SyncPrompt.PromptType.WARNING) {
+                messageType = RefrigeratorItemDto.SyncPrompt.PromptType.ACTION;
+            }
+        }
+
+        // 임박 아이템
+        if (!expiringSoonItems.isEmpty()) {
+            messages.add(SyncPromptMessage.EXPIRING_ITEMS.format(expiringSoonItems.size()));
+            actions.add("임박 아이템 확인하기");
+        }
+
+        // 메시지 조합
+        if (!messages.isEmpty()) {
+            String combinedMessage = String.join("\n", messages);
+            String primaryAction = actions.get(0);
+
+            return RefrigeratorItemDto.SyncPrompt.builder()
+                    .baseMessage(SyncPromptMessage.BASE_MESSAGE.getTemplate())
+                    .contextMessage(combinedMessage)
+                    .messageType(messageType)
+                    .recommendedAction(primaryAction)
+                    .build();
+        }
+
+        // 정상 상태
+        return RefrigeratorItemDto.SyncPrompt.builder()
+                .baseMessage(SyncPromptMessage.BASE_MESSAGE.getTemplate())
+                .contextMessage(SyncPromptMessage.NORMAL_STATE.getTemplate())
+                .messageType(RefrigeratorItemDto.SyncPrompt.PromptType.INFO)
+                .recommendedAction("현재 상태 확인하기")
+                .build();
+    }
+
+    private boolean isUrgent(LocalDate expirationDate) {
+        if (expirationDate == null) return false;
+        long daysUntil = ChronoUnit.DAYS.between(LocalDate.now(), expirationDate);
+        return daysUntil <= 1 && daysUntil >= 0;
+    }
+
+    private boolean isExpiringSoon(LocalDate expirationDate) {
+        if (expirationDate == null) return false;
+        long daysUntil = ChronoUnit.DAYS.between(LocalDate.now(), expirationDate);
+        return daysUntil >= 2 && daysUntil <= 3;
     }
 }

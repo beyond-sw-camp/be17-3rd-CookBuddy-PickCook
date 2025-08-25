@@ -243,6 +243,19 @@ public class RefrigeratorItemController {
         return ResponseEntity.ok(BaseResponse.success(result));
     }
 
+    /**
+     * 냉장고 페이지 접속 시 동기화 안내 메시지 조회
+     */
+    @GetMapping("/sync-prompt")
+    public ResponseEntity<BaseResponse<RefrigeratorItemDto.SyncPrompt>> getSyncPrompt(
+            Authentication authentication) {
+
+        Integer userId = getUserIdFromAuth(authentication);
+        RefrigeratorItemDto.SyncPrompt result = refrigeratorItemService.getSyncPrompt(userId);
+
+        return ResponseEntity.ok(BaseResponse.success(result));
+    }
+
     // =================================================================
     // 유틸리티 메서드들
     // =================================================================
