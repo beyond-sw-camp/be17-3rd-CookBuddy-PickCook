@@ -20,16 +20,30 @@ import java.util.List;
 public class CartsController {
     private final CartsService cartsService;
 
+
     @Operation(
             summary = "장바구니 등록",
             description = "사용자가 상품을 장바구니에 등록합니다.\n"
     )
     @PostMapping("/register")
-    public ResponseEntity inCart(@AuthenticationPrincipal UserDto.AuthUser authUser,
-                                   @RequestBody CartsDto.CartsRequestDto dto) {
-        cartsService.toggleInCart(authUser, dto);
+    public BaseResponse register(@AuthenticationPrincipal UserDto.AuthUser authUser,
+                               @RequestBody CartsDto.CartsRequestDto dto) {
+        cartsService.register(authUser, dto);
 
-        return ResponseEntity.status(200).body("장바구니 기능 동작 성공");
+        return BaseResponse.success("장바구니 기능 동작 성공");
+    }
+
+
+    @Operation(
+            summary = "장바구니 삭제",
+            description = "사용자가 상품을 장바구니에서 삭제합니다.\n"
+    )
+    @PostMapping("/delete")
+    public BaseResponse delete(@AuthenticationPrincipal UserDto.AuthUser authUser,
+                               @RequestBody CartsDto.CartsRequestDto dto) {
+        cartsService.delete(authUser, dto);
+
+        return BaseResponse.success("장바구니 기능 동작 성공");
     }
 
 

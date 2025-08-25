@@ -19,25 +19,38 @@ public class CartsService {
     private final CartsRepository cartsRepository;
 
     // 장바구니 등록
-    public void toggleInCart(UserDto.AuthUser authUser,
-                         CartsDto.CartsRequestDto dto) {
-        Integer userIdx = authUser.getIdx();
+    public void register(UserDto.AuthUser authUser, CartsDto.CartsRequestDto dto) {
+        User user = User.builder().idx(authUser.getIdx()).build();
 
-        for (Long productId : dto.getProduct_ids()) {
-            Optional<Carts> existing = cartsRepository.findByUserIdxAndProductId(userIdx, productId);
+        for (Carts cartItem : dto.toEntity(user)) {
+            Long productId = cartItem.getProduct().getId();
 
-            if (existing.isPresent()) {
-                cartsRepository.delete(existing.get());
+            Optional<Carts> existingOpt = cartsRepository.findByUserIdxAndProductId(user.getIdx(), productId);
+
+            if (existingOpt.isPresent()) {
+                // 이미 장바구니에 등록된 상품이라면 수량 합산
+                Carts existing = existingOpt.get();
+                int newQuantity = existing.getQuantity() + (cartItem.getQuantity() != null ? cartItem.getQuantity() : 1);
+                existing.updateQuantity(newQuantity);
+                cartsRepository.save(existing);
             } else {
-                Carts item = Carts.builder()
-                        .quantity(dto.getQuantity() != null ? dto.getQuantity() : 1)
-                        .product(Product.builder().id(productId).build())
-                        .user(User.builder().idx(authUser.getIdx()).build())
-                        .build();
-                cartsRepository.save(item);
+                cartsRepository.save(cartItem);
             }
         }
     }
+
+
+    // 장바구니 삭제
+    public void delete(UserDto.AuthUser authUser, CartsDto.CartsRequestDto dto) {
+        User user = User.builder().idx(authUser.getIdx()).build();
+
+        for (Long procutId : dto.getProduct_ids()) {
+            Optional<Carts> existingOpt = cartsRepository.findByUserIdxAndProductId(user.getIdx(), procutId);
+
+            existingOpt.ifPresent(cartsRepository::delete);  // 있으면 삭제, 없으면 아무것도 안 함
+        }
+    }
+
 
     // 장바구니 목록 조회
     public List<CartsDto.CartsResponseDto> getCarts(Integer userIdx) {
