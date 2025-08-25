@@ -8,6 +8,7 @@ import org.example.be17pickcook.domain.user.model.User;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.common.service.S3UploadService;
 import org.springframework.data.domain.Page;                          // [변경] 페이징
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;                    // [변경] 페이징
 import org.springframework.data.domain.Sort;                        // [변경] 정렬
 import org.springframework.stereotype.Service;
@@ -51,6 +52,15 @@ public class ProductService {
         product.setDetailImageUrl(detail_image_url);
 
         productRepository.save(product);
+    }
+
+    public Page<ProductDto.Response> getPagedProductsWithReviewsDto(int page, int size, String sortBy) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy).ascending());
+
+        Page<Product> productPage = productRepository.findAll(pageable);
+
+        // DTO 변환
+        return productPage.map(ProductDto.Response::fromEntity);
     }
 
     // 전체 조회 (페이징 + 정렬)  // [변경] 시그니처 교체

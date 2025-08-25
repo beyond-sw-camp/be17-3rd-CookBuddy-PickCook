@@ -39,6 +39,19 @@ public class ProductController {
         return ResponseEntity.status(200).body("상품 등록 성공!");
     }
 
+    @GetMapping("list-with-reviews")
+    public ResponseEntity<Page<ProductDto.Response>> getProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "productId") String sortBy
+    ) {
+        Page<ProductDto.Response> productPage = productService.getPagedProductsWithReviewsDto(page, size, sortBy);
+        return ResponseEntity.ok(productPage);
+    }
+
+
+
+
     // ================== 전체 목록 조회 (페이징 + 정렬) ==================
     @GetMapping
     public ResponseEntity<Page<ProductDto.Res>> findAll(
