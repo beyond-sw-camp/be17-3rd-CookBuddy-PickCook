@@ -278,4 +278,32 @@ public class RefrigeratorItemDto {
         /** 기준 일수 (예: 3일) */
         private Integer targetDays;
     }
+
+    // RefrigeratorItemDto.java에 추가
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SyncPrompt {
+
+        /** 기본 환영 메시지 */
+        private String baseMessage;
+
+        /** 상황별 추가 메시지 */
+        private String contextMessage;
+
+        /** 메시지 타입 (정보성/경고성/액션유도) */
+        private PromptType messageType;
+
+        /** 추천 액션 (선택사항) */
+        private String recommendedAction;
+
+        public enum PromptType {
+            INFO("ℹ️"), WARNING("⚠️"), ACTION("🔥");
+
+            private final String icon;
+            PromptType(String icon) { this.icon = icon; }
+            public String getIcon() { return icon; }
+        }
+    }
 }
