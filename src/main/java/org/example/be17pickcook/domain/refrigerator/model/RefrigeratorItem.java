@@ -39,7 +39,7 @@ public class RefrigeratorItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "refrigerator_id")  // ✅ 실제 DB 컬럼명과 일치
+    @Column(name = "refrigerator_id")
     private Long id;
 
     // =================================================================
@@ -75,10 +75,10 @@ public class RefrigeratorItem {
     private String location;
 
     /** 수량: 정수형 */
-    @NotNull(message = "수량은 필수입니다.")
-    @Positive(message = "수량은 1 이상이어야 합니다.")
+    @NotBlank(message = "수량은 필수입니다.")
+    @Size(max = 20, message = "수량은 20자 이하여야 합니다.")
     @Column(name = "quantity", nullable = false)
-    private Integer quantity;
+    private String quantity;
 
     /** 유통기한: null 허용(미관리 시) 또는 오늘/미래 */
     @FutureOrPresent(message = "유통기한은 오늘 또는 미래여야 합니다.")
@@ -127,9 +127,12 @@ public class RefrigeratorItem {
     }
 
     /** 수량 변경 */
-    public void changeQuantity(Integer quantity) {
-        if (quantity == null || quantity <= 0) {
-            throw new IllegalArgumentException("수량은 1 이상이어야 합니다.");
+    public void changeQuantity(String quantity) {
+        if (quantity == null || quantity.isBlank()) {
+            throw new IllegalArgumentException("수량은 필수입니다.");
+        }
+        if (quantity.length() > 20) {
+            throw new IllegalArgumentException("수량은 20자 이하여야 합니다.");
         }
         this.quantity = quantity;
     }

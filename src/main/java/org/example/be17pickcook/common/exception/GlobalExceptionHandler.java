@@ -104,15 +104,14 @@ public class GlobalExceptionHandler {
 
     // 5. 일반적인 IllegalArgumentException 처리 (기존 코드 호환성)
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<BaseResponse<Void>> handleIllegalArgumentException(
-            IllegalArgumentException e) {
+    public ResponseEntity<BaseResponse<Void>> handleIllegalArgumentException(IllegalArgumentException e) {
+        log.info("도메인 로직 검증 실패: {}", e.getMessage());
 
-        log.info("잘못된 인자: {}", e.getMessage());
-
+        // BaseResponseStatus.REQUEST_ERROR 사용하되, 도메인 메시지 활용
         return ResponseEntity.badRequest()
                 .body(new BaseResponse<>(false,
                         BaseResponseStatus.REQUEST_ERROR.getCode(),
-                        e.getMessage(),
+                        e.getMessage(), // 도메인에서 온 명확한 메시지 사용
                         null));
     }
 

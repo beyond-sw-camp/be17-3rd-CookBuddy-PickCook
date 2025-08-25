@@ -96,10 +96,12 @@ public interface RefrigeratorItemMapper {
 
         if (daysUntil < 0) {
             return RefrigeratorItemDto.ExpirationStatus.EXPIRED;    // 유통기한 지남
-        } else if (daysUntil <= 1) {
-            return RefrigeratorItemDto.ExpirationStatus.URGENT;     // 1일 이하 남음
+        } else if (daysUntil == 0) {
+            return RefrigeratorItemDto.ExpirationStatus.URGENT;     // 오늘 (긴급)
+        } else if (daysUntil <= 2) {
+            return RefrigeratorItemDto.ExpirationStatus.URGENT;     // 1-2일 남음
         } else if (daysUntil <= 3) {
-            return RefrigeratorItemDto.ExpirationStatus.EXPIRING_SOON; // 2-3일 남음
+            return RefrigeratorItemDto.ExpirationStatus.EXPIRING_SOON; // 3일 남음
         } else {
             return RefrigeratorItemDto.ExpirationStatus.FRESH;      // 4일 이상 남음
         }
