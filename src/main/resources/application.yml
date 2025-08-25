@@ -87,3 +87,10 @@ spring:
 portone:
   secret-key: ${PORTONE_SECRETE_KEY}
   store-id: ${PORTONE_STORE_ID}
+  webhook-secret: ${PORTONE_WEBHOOK_SECRET}
+
+
+logging:
+  level:
+    root: INFO               # 전체 로그 기본 레벨
+    org.example.be17pickcook: DEBUG  # 우리 프로젝트 패키지 로그

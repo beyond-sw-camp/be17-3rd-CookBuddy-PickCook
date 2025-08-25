@@ -52,38 +52,6 @@ public class OrderService {
     }
 
     @Transactional
-    public void updateOrderStatus(String paymentId, OrderStatus newStatus) {
-        Orders order = orderRepository.findByPaymentId(paymentId)
-                .orElseThrow(() -> new RuntimeException("주문을 찾을 수 없습니다."));
-
-        // 상태 전환 규칙 적용 가능
-        switch (newStatus) {
-            case PAID:
-                if (order.getStatus() == OrderStatus.PENDING) {
-                    order.updateStatus(OrderStatus.PAID);
-                }
-                break;
-            case FAILED:
-                if (order.getStatus() == OrderStatus.PENDING) {
-                    order.updateStatus(OrderStatus.FAILED);
-                }
-                break;
-            case CANCELED:
-                if (order.getStatus() == OrderStatus.PENDING) {
-                    order.updateStatus(OrderStatus.CANCELED);
-                }
-                break;
-            case REFUNDED:
-                if (order.getStatus() == OrderStatus.PAID) {
-                    order.updateStatus(OrderStatus.REFUNDED);
-                }
-                break;
-            default:
-                break;
-        }
-    }
-
-    @Transactional
     public OrderDto.PaymentValidationResDto validation (OrderDto.PaymentValidationReqDto dto) {
         try {
             // paymentId로 포트원 결제 조회
@@ -162,5 +130,4 @@ public class OrderService {
             return new OrderDto.PaymentValidationResDto(null, OrderStatus.FAILED.name());
         }
     }
-
 }
