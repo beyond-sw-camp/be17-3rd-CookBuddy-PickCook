@@ -2,6 +2,7 @@ package org.example.be17pickcook.domain.recipe.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.example.be17pickcook.common.PageResponse;
 import org.example.be17pickcook.common.service.S3UploadService;
 import org.example.be17pickcook.domain.likes.model.LikeTargetType;
 import org.example.be17pickcook.domain.likes.repository.LikeRepository;
@@ -14,6 +15,8 @@ import org.example.be17pickcook.domain.scrap.service.ScrapService;
 import org.example.be17pickcook.domain.user.model.User;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.domain.recipe.repository.RecipeRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -95,23 +98,25 @@ public class RecipeService {
     }
 
     // 레시피 전체 목록 조회 + 좋아요 정보 + 스크랩 정보 포함
-    public List<RecipeDto.RecipeResponseDto> getRecipeList(Integer userIdx) {
-        List<Recipe> recipes = recipeRepository.findAll();
+    public PageResponse<RecipeDto.RecipeResponseDto> getRecipeList(Integer userIdx, Pageable pageable) {
+        Page<RecipeDto.RecipeResponseDto> recipePage = recipeRepository.findAll(pageable)
+                .map(recipe -> {
+                    Integer likeCount = likesService.getLikeCount(LikeTargetType.RECIPE, recipe.getIdx());
+                    Boolean likedByUser = userIdx != null &&
+                            likesService.hasUserLiked(userIdx, LikeTargetType.RECIPE, recipe.getIdx());
 
-        return recipes.stream().map(recipe -> {
-            Integer likeCount = likesService.getLikeCount(LikeTargetType.RECIPE, recipe.getIdx());
-            Boolean likedByUser = userIdx != null &&
-                    likesService.hasUserLiked(userIdx, LikeTargetType.RECIPE, recipe.getIdx());
+                    Integer scrapCount = scrapService.getScrapCount(ScrapTargetType.RECIPE, recipe.getIdx());
+                    Boolean scrapedByUser = userIdx != null &&
+                            scrapService.hasUserScrapped(userIdx, ScrapTargetType.RECIPE, recipe.getIdx());
 
-            Integer scrapCount = scrapService.getScrapCount(ScrapTargetType.RECIPE, recipe.getIdx());
-            Boolean scrapedByUser = userIdx != null &&
-                    scrapService.hasUserScrapped(userIdx, ScrapTargetType.RECIPE, recipe.getIdx());
+                    RecipeDto.RecipeResponseDto dto = RecipeDto.RecipeResponseDto.fromEntity(recipe);
+                    dto.setLikeInfo(likeCount, likedByUser);
+                    dto.setScrapInfo(scrapCount, scrapedByUser);
+                    return dto;
+                });
 
-            RecipeDto.RecipeResponseDto dto = RecipeDto.RecipeResponseDto.fromEntity(recipe);
-            dto.setLikeInfo(likeCount, likedByUser);
-            dto.setScrapInfo(scrapCount, scrapedByUser);
-            return dto;
-        }).toList();
+        return PageResponse.from(recipePage);
     }
+
 
 }
