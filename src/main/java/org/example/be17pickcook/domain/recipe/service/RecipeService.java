@@ -98,20 +98,19 @@ public class RecipeService {
     }
 
     // 레시피 전체 목록 조회 + 좋아요 정보 + 스크랩 정보 포함
-    public PageResponse<RecipeDto.RecipeListResponseDto> getRecipeList(Integer userIdx, Pageable pageable) {
-        Page<RecipeDto.RecipeListResponseDto> recipePage = recipeRepository.findAll(pageable)
+    public PageResponse<RecipeDto.RecipeResponseDto> getRecipeList(Integer userIdx, Pageable pageable) {
+        Page<RecipeDto.RecipeResponseDto> recipePage = recipeRepository.findAll(pageable)
                 .map(recipe -> {
                     Integer likeCount = likesService.getLikeCount(LikeTargetType.RECIPE, recipe.getIdx());
                     Boolean likedByUser = userIdx != null &&
                             likesService.hasUserLiked(userIdx, LikeTargetType.RECIPE, recipe.getIdx());
 
-                    Integer scrapCount = scrapService.getScrapCount(ScrapTargetType.RECIPE, recipe.getIdx());
                     Boolean scrapedByUser = userIdx != null &&
                             scrapService.hasUserScrapped(userIdx, ScrapTargetType.RECIPE, recipe.getIdx());
 
-                    RecipeDto.RecipeListResponseDto dto = RecipeDto.RecipeListResponseDto.fromEntity(recipe);
+                    RecipeDto.RecipeResponseDto dto = RecipeDto.RecipeResponseDto.fromEntity(recipe);
                     dto.setLikeInfo(likeCount, likedByUser);
-                    dto.setScrapInfo(scrapCount, scrapedByUser);
+                    dto.setScrapInfo(scrapedByUser);
                     return dto;
                 });
 
