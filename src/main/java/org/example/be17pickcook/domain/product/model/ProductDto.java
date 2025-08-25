@@ -1,17 +1,45 @@
 package org.example.be17pickcook.domain.product.model;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.example.be17pickcook.domain.user.model.User;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * Product DTOs (엔티티 변환을 DTO 내부에서 처리: from / toEntity / apply)
  */
 public class ProductDto {
+
+    @Builder
+    @Getter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class Response {
+
+        private Long productId;
+        private String title;
+        private String mainImageUrl;
+        private Integer reviewCount;   // 리뷰 수만 포함
+        private Integer originalPrice;
+        private Integer discountRate;
+
+        public static ProductDto.Response fromEntity(Product product) {
+            return ProductDto.Response.builder()
+                    .productId(product.getId())
+                    .title(product.getTitle())
+                    .mainImageUrl(product.getMain_image_url())
+                    .originalPrice(product.getOriginal_price())
+                    .discountRate(product.getDiscount_rate())
+                    // LAZY 접근 시 N+1 발생 가능
+                    .reviewCount(product.getReviews().size())
+                    .build();
+        }
+
+    }
 
     // ================== 응답 DTO ==================
     @Getter

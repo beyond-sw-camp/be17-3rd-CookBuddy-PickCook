@@ -3,11 +3,15 @@ package org.example.be17pickcook.domain.product.model;
 import jakarta.persistence.*;
 import lombok.*;
 import org.example.be17pickcook.common.BaseEntity;
+import org.example.be17pickcook.domain.review.model.Review;
 import org.example.be17pickcook.domain.user.model.User;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
 import jakarta.validation.constraints.*;
 
 @Getter
@@ -117,6 +121,10 @@ public class Product extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+    private List<Review> reviews = new ArrayList<>();
+
 
     public void setMainImageUrl(String url) { this.main_image_url = url; }
     public void setDetailImageUrl(String url) { this.detail_image_url = url; }
