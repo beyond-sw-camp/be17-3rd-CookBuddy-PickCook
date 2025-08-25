@@ -5,6 +5,7 @@ import lombok.*;
 import org.example.be17pickcook.common.BaseEntity;
 import org.example.be17pickcook.domain.review.model.Review;
 import org.example.be17pickcook.domain.user.model.User;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -123,6 +124,7 @@ public class Product extends BaseEntity {
     private User user;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+    @BatchSize(size = 20)
     private List<Review> reviews = new ArrayList<>();
 
 
