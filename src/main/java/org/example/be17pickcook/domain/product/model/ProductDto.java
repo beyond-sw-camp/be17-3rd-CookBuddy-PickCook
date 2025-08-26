@@ -1,5 +1,6 @@
 package org.example.be17pickcook.domain.product.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,19 +13,34 @@ import java.time.LocalDateTime;
 /**
  * Product DTOs (엔티티 변환을 DTO 내부에서 처리: from / toEntity / apply)
  */
+@Schema(description = "상품 관련 DTO 클래스들")
 public class ProductDto {
 
+    // ================== 리뷰 포함 응답 DTO ==================
+
+    @Schema(description = "리뷰 정보가 포함된 상품 응답")
     @Builder
     @Getter
     @AllArgsConstructor
     @NoArgsConstructor
     public static class Response {
 
+        @Schema(description = "상품 고유 ID", example = "1")
         private Long productId;
+
+        @Schema(description = "상품 제목", example = "신선한 유기농 상추 500g")
         private String title;
+
+        @Schema(description = "대표 이미지 URL", example = "https://example.com/product1.jpg")
         private String mainImageUrl;
-        private Integer reviewCount;   // 리뷰 수만 포함
+
+        @Schema(description = "리뷰 개수", example = "23")
+        private Integer reviewCount;    // 리뷰 수만 포함
+
+        @Schema(description = "정가 (원)", example = "5000")
         private Integer originalPrice;
+
+        @Schema(description = "할인율 (%)", example = "15")
         private Integer discountRate;
 
         public static ProductDto.Response fromEntity(Product product) {
@@ -41,30 +57,70 @@ public class ProductDto {
 
     }
 
-    // ================== 응답 DTO ==================
+    // ================== 기본 응답 DTO ==================
+
+    @Schema(description = "상품 상세 응답 정보")
     @Getter
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Res {
+
+        @Schema(description = "상품 고유 ID", example = "1")
         private Long id;
+
+        @Schema(description = "상품 카테고리", example = "채소")
         private String category;
+
+        @Schema(description = "상품 제목", example = "신선한 유기농 상추 500g")
         private String title;
+
+        @Schema(description = "상품 부제목", example = "아침에 따온 신선한 유기농 상추입니다")
         private String subtitle;
+
+        @Schema(description = "대표 이미지 URL", example = "https://example.com/product1.jpg")
         private String main_image_url;
+
+        @Schema(description = "상세 이미지 URL", example = "https://example.com/product1_detail.jpg")
         private String detail_image_url;
+
+        @Schema(description = "판매자 이름", example = "김농부")
         private String seller;
+
+        @Schema(description = "할인율 (%)", example = "15")
         private Integer discount_rate;
+
+        @Schema(description = "정가 (원)", example = "5000")
         private Integer original_price;
+
+        @Schema(description = "판매 단위", example = "1봉지")
         private String unit;
+
+        @Schema(description = "무게/용량", example = "500g")
         private String weight_or_volume;
+
+        @Schema(description = "유통기한", example = "2025-02-15")
         private String expiration_date; // DB가 varchar -> String 유지
+
+        @Schema(description = "원산지", example = "국내산")
         private String origin;
+
+        @Schema(description = "포장 방법", example = "비닐포장")
         private String packaging;
+
+        @Schema(description = "배송 정보", example = "냉장배송")
         private String shipping_info;
+
+        @Schema(description = "주의사항", example = "직사광선을 피해 보관하세요")
         private String notice;
+
+        @Schema(description = "상품 설명", example = "신선하고 맛있는 유기농 상추입니다.")
         private String description;
+
+        @Schema(description = "등록일시", example = "2025-01-15T10:30:00")
         private LocalDateTime created_at;
+
+        @Schema(description = "수정일시", example = "2025-01-15T15:45:00")
         private LocalDateTime updated_at;
 
         public static Res from(Product entity) {
@@ -93,29 +149,83 @@ public class ProductDto {
     }
 
     // ================== 등록 DTO ==================
+
+    @Schema(description = "상품 등록 요청 정보")
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
     public static class Register {
-        @NotBlank private String category;
-        @NotBlank private String title;
 
+        @Schema(description = "상품 카테고리 (필수)",
+                example = "채소",
+                requiredMode = Schema.RequiredMode.REQUIRED)
+        @NotBlank
+        private String category;
+
+        @Schema(description = "상품 제목 (필수)",
+                example = "신선한 유기농 상추 500g",
+                requiredMode = Schema.RequiredMode.REQUIRED)
+        @NotBlank
+        private String title;
+
+        @Schema(description = "상품 부제목 (선택사항)",
+                example = "아침에 따온 신선한 유기농 상추입니다")
         private String subtitle;
+
+        @Schema(description = "대표 이미지 URL (선택사항)",
+                example = "https://example.com/product1.jpg")
         private String main_image_url;
+
+        @Schema(description = "상세 이미지 URL (선택사항)",
+                example = "https://example.com/product1_detail.jpg")
         private String detail_image_url;
+
+        @Schema(description = "판매자 이름 (선택사항)",
+                example = "김농부")
         private String seller;
 
+        @Schema(description = "할인율 (%) (선택사항)",
+                example = "15",
+                minimum = "0",
+                maximum = "99")
         private Integer discount_rate;
+
+        @Schema(description = "정가 (원) (선택사항)",
+                example = "5000",
+                minimum = "0")
         private Integer original_price;
 
+        @Schema(description = "판매 단위 (선택사항)",
+                example = "1봉지")
         private String unit;
+
+        @Schema(description = "무게/용량 (선택사항)",
+                example = "500g")
         private String weight_or_volume;
+
+        @Schema(description = "유통기한 (선택사항)",
+                example = "2025-02-15")
         private String expiration_date;
+
+        @Schema(description = "원산지 (선택사항)",
+                example = "국내산")
         private String origin;
+
+        @Schema(description = "포장 방법 (선택사항)",
+                example = "비닐포장")
         private String packaging;
+
+        @Schema(description = "배송 정보 (선택사항)",
+                example = "냉장배송")
         private String shipping_info;
+
+        @Schema(description = "주의사항 (선택사항)",
+                example = "직사광선을 피해 보관하세요")
         private String notice;
+
+        @Schema(description = "상품 설명 (선택사항)",
+                example = "신선하고 맛있는 유기농 상추입니다.")
         private String description;
 
         public Product toEntity(User authUser) {
@@ -141,23 +251,67 @@ public class ProductDto {
     }
 
     // ================== 수정 DTO ==================
+
+    @Schema(description = "상품 수정 요청 정보 (모든 필드 선택사항)")
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
     public static class Update {
+
+        @Schema(description = "상품 제목 (선택사항)",
+                example = "프리미엄 유기농 상추 500g")
         private String title;
+
+        @Schema(description = "할인율 (%) (선택사항)",
+                example = "20",
+                minimum = "0",
+                maximum = "99")
         private Integer discount_rate;
+
+        @Schema(description = "정가 (원) (선택사항)",
+                example = "6000",
+                minimum = "0")
         private Integer original_price;
+
+        @Schema(description = "대표 이미지 URL (선택사항)",
+                example = "https://example.com/product1_new.jpg")
         private String main_image_url;
+
+        @Schema(description = "상세 이미지 URL (선택사항)",
+                example = "https://example.com/product1_detail_new.jpg")
         private String detail_image_url;
+
+        @Schema(description = "판매 단위 (선택사항)",
+                example = "2봉지")
         private String unit;
+
+        @Schema(description = "무게/용량 (선택사항)",
+                example = "750g")
         private String weight_or_volume;
+
+        @Schema(description = "유통기한 (선택사항)",
+                example = "2025-03-15")
         private String expiration_date;
+
+        @Schema(description = "원산지 (선택사항)",
+                example = "유기농 인증 국내산")
         private String origin;
+
+        @Schema(description = "포장 방법 (선택사항)",
+                example = "친환경 포장")
         private String packaging;
+
+        @Schema(description = "배송 정보 (선택사항)",
+                example = "당일배송 가능")
         private String shipping_info;
+
+        @Schema(description = "주의사항 (선택사항)",
+                example = "냉장고에 보관하세요")
         private String notice;
+
+        @Schema(description = "상품 설명 (선택사항)",
+                example = "더욱 신선하고 맛있는 프리미엄 유기농 상추")
         private String description;
 
         public void apply(Product entity) {
