@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.example.be17pickcook.common.BaseEntity;
 import org.example.be17pickcook.domain.likes.model.LikeCountable;
+import org.example.be17pickcook.domain.scrap.model.ScrapCountable;
 import org.example.be17pickcook.domain.user.model.User;
 
 import java.util.ArrayList;
@@ -17,7 +18,7 @@ import java.util.List;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-public class Recipe extends BaseEntity implements LikeCountable {
+public class Recipe extends BaseEntity implements LikeCountable, ScrapCountable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idx;
@@ -81,7 +82,7 @@ public class Recipe extends BaseEntity implements LikeCountable {
 
     // 반정규화 필드 제어 메서드
     @Override
-    public Long getIdx() { return this.idx; }
+    public Long getIdxLike() { return this.idx; }
     @Override
     public Long getLikeCount() { return this.likeCount; }
     @Override
@@ -97,6 +98,27 @@ public class Recipe extends BaseEntity implements LikeCountable {
             likeCount = 0L;
         } else {
             likeCount--;
+        }
+    }
+
+
+    @Override
+    public Long getIdxScrap() { return this.idx; }
+    @Override
+    public Long getScrapCount() { return this.scrapCount; }
+    @Override
+    public void increaseScrap() {
+        if (scrapCount == null) {
+            scrapCount = 0L;
+        }
+        scrapCount++;
+    }
+    @Override
+    public void decreaseScrap() {
+        if (scrapCount == null || scrapCount <= 0) {
+            scrapCount = 0L;
+        } else {
+            scrapCount--;
         }
     }
 }

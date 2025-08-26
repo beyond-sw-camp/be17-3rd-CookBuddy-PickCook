@@ -40,7 +40,7 @@ public class LikeService {
         Integer userIdx = authUser.getIdx();
         LikeCountable target = getTargetEntity(targetType, targetId);
 
-        Optional<Like> existing = likeRepository.findByUserIdxAndTargetTypeAndTargetId(userIdx, targetType, target.getIdx());
+        Optional<Like> existing = likeRepository.findByUserIdxAndTargetTypeAndTargetId(userIdx, targetType, target.getIdxLike());
 
         if (existing.isPresent()) {
             // 좋아요 삭제
@@ -51,7 +51,7 @@ public class LikeService {
             Like likes = Like.builder()
                     .user(User.builder().idx(userIdx).build())
                     .targetType(targetType)
-                    .targetId(target.getIdx())
+                    .targetId(target.getIdxLike())
                     .build();
             likeRepository.save(likes);
             target.increaseLike();

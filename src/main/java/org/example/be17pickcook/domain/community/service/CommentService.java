@@ -43,7 +43,7 @@ public class CommentService {
         Comment comment = request.toEntity(user, post, parentComment);
 
         Comment saved = commentRepository.save(comment);
-        return CommentDto.Response.fromEntity(saved, false, 0, null);
+        return CommentDto.Response.fromEntity(saved, false, null);
     }
 
     // 게시글의 댓글 목록 조회 (대댓글 포함)
@@ -57,14 +57,13 @@ public class CommentService {
 
     private CommentDto.Response convertToDtoWithChildren(Comment comment, int userId) {
         boolean hasLiked = likeService.hasUserLiked(userId, LikeTargetType.COMMENT, comment.getId());
-        long likeCount = likeService.getLikeCount(LikeTargetType.COMMENT, comment.getId());
 
         // 자식 댓글 재귀 변환
         List<CommentDto.Response> children = comment.getChildren().stream()
                 .map(child -> convertToDtoWithChildren(child, userId))
                 .collect(Collectors.toList());
 
-        return CommentDto.Response.fromEntity(comment, hasLiked, likeCount, children);
+        return CommentDto.Response.fromEntity(comment, hasLiked, children);
     }
 
     public int getCommentsCountByPost(Long postId) {

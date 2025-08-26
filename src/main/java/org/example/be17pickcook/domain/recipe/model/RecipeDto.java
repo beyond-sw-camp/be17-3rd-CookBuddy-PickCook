@@ -292,15 +292,22 @@ public class RecipeDto {
         @Schema(description = "로그인 사용자가 스크랩을 눌렀는지 여부", example = "true")
         private Boolean scrappedByUser;
 
-        // 좋아요 관련 값 세팅 메서드
-        public void setLikeInfo(Integer likeCount, Boolean likedByUser) {
-//            this.likeCount = likeCount;
+        // 좋아요 관련 값 세팅 메서드 (반정규화 전)
+//        public void setLikeInfo(Integer likeCount, Boolean likedByUser) {
+////            this.likeCount = likeCount;
+//            this.likedByUser = likedByUser;
+//        }
+
+        public void setLikeInfo(Boolean likedByUser) {
             this.likedByUser = likedByUser;
         }
 
-        // 스크랩 관련 값 세팅 메서드
-        public void setScrapInfo(Integer scrapCount, Boolean scrappedByUser) {
+        // 스크랩 관련 값 세팅 메서드 (반정규화 후)
+//        public void setScrapInfo(Integer scrapCount, Boolean scrappedByUser) {
 //            this.scrapCount = scrapCount;
+//            this.scrappedByUser = scrappedByUser;
+//        }
+        public void setScrapInfo(Boolean scrappedByUser) {
             this.scrappedByUser = scrappedByUser;
         }
 

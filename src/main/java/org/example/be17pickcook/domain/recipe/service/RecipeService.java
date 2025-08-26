@@ -85,17 +85,17 @@ public class RecipeService {
         Recipe recipe = recipeRepository.findDetailById(recipeId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 레시피가 존재하지 않습니다. id=" + recipeId));
 
-        Integer likeCount = likesService.getLikeCount(LikeTargetType.RECIPE, recipeId);
+//        Integer likeCount = likesService.getLikeCount(LikeTargetType.RECIPE, recipeId);
         Boolean likedByUser = userIdx != null &&
                 likesService.hasUserLiked(userIdx, LikeTargetType.RECIPE, recipeId);
 
-        Integer scrapCount = scrapService.getScrapCount(ScrapTargetType.RECIPE, recipeId);
+//        Integer scrapCount = scrapService.getScrapCount(ScrapTargetType.RECIPE, recipeId);
         Boolean scrapedByUser = userIdx != null &&
                 scrapService.hasUserScrapped(userIdx, ScrapTargetType.RECIPE, recipeId);
 
         RecipeDto.RecipeResponseDto dto = RecipeDto.RecipeResponseDto.fromEntity(recipe);
-        dto.setLikeInfo(likeCount, likedByUser);
-        dto.setScrapInfo(scrapCount, scrapedByUser);
+        dto.setLikeInfo(likedByUser);
+        dto.setScrapInfo(scrapedByUser);
 
         return dto;
     }

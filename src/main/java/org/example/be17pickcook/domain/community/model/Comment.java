@@ -47,7 +47,7 @@ public class Comment extends BaseEntity implements LikeCountable {
     private List<Comment> children = new ArrayList<>();
 
     @Override
-    public Long getIdx() { return this.id; }
+    public Long getIdxLike() { return this.id; }
     @Override
     public Long getLikeCount() { return this.likeCount; }
     @Override

@@ -34,10 +34,8 @@ public class PostService {
         List<Post> postList = postRepository.findAll();
         return postList.stream()
                 .map(post -> {
-                    int likesCount = likesService.getLikeCount(LikeTargetType.POST, post.getId());
-                    int scrapsCount = scrapService.getScrapCount(ScrapTargetType.POST, post.getId());
                     int commentCount = commentService.getCommentsCountByPost(post.getId());
-                    return PostDto.ListResponse.from(post, likesCount, scrapsCount, commentCount);
+                    return PostDto.ListResponse.from(post, commentCount);
                 })
                 .collect(Collectors.toList());
     }
@@ -46,12 +44,10 @@ public class PostService {
     public PostDto.DetailResponse getPostById(int userId, Long postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글이 존재하지 않습니다."));
-        int likesCount = likesService.getLikeCount(LikeTargetType.POST, post.getId());
         boolean hasLiked = likesService.hasUserLiked(userId, LikeTargetType.POST, postId);
-        int scrapsCount = scrapService.getScrapCount(ScrapTargetType.POST, post.getId());
         boolean hasScrapped = likesService.hasUserLiked(userId, LikeTargetType.POST, postId);
 
-        return PostDto.DetailResponse.from(post, likesCount, hasLiked, scrapsCount, hasScrapped);
+        return PostDto.DetailResponse.from(post, hasLiked, hasScrapped);
     }
 
     // 게시글 작성
@@ -69,7 +65,7 @@ public class PostService {
                 postImageRepository.save(PostImage.of(post, imageUrl));
             }
         }
-        return PostDto.DetailResponse.from(saved, 0, false, 0, false);
+        return PostDto.DetailResponse.from(saved, false, false);
     }
 
 }

@@ -38,19 +38,19 @@ public class PostDto {
         private String authorName;
         private String contentPreview; // 내용 요약 (최대 2줄)
         private String createdAgo;     // "n시간 전", "n일 전"
-        private int likes;
-        private int scraps;
+        private Long likeCount;
+        private Long scrapCount;
         private int comments;
 
-        public static ListResponse from(Post post, int likes, int scraps, int comments) {
+        public static ListResponse from(Post post, int comments) {
             return ListResponse.builder()
                     .id(post.getId())
                     .title(post.getTitle())
                     .authorName(post.getUser().getNickname())
                     .contentPreview(generatePreview(post.getContent()))
                     .createdAgo(generateCreatedAgo(post.getCreatedAt()))
-                    .likes(likes)
-                    .scraps(scraps)
+                    .likeCount(post.getLikeCount())
+                    .scrapCount(post.getScrapCount())
                     .comments(comments)
                     .build();
         }
@@ -95,22 +95,22 @@ public class PostDto {
         private String title;
         private String content;
         private String authorName;
-        private Integer likes;
+        private Long likeCount;
         private boolean hasLiked;
-        private Integer scraps;
+        private Long scrapCount;
         private boolean hasScrapped;
         private String updatedAt;
 
-        public static DetailResponse from(Post post, int likes, boolean hasLiked, int scraps, boolean hasScrapped) {
+        public static DetailResponse from(Post post, boolean hasLiked, boolean hasScrapped) {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy년 M월 d일");
             return DetailResponse.builder()
                     .id(post.getId())
                     .title(post.getTitle())
                     .content(post.getContent())
                     .authorName(post.getUser().getNickname())
-                    .likes(likes)
+                    .likeCount(post.getLikeCount())
                     .hasLiked(hasLiked)
-                    .scraps(scraps)
+                    .scrapCount(post.getScrapCount())
                     .hasScrapped(hasScrapped)
                     .updatedAt(post.getUpdatedAt().format(formatter))
                     .build();
