@@ -35,6 +35,8 @@ public class RecipeDto {
         private String image_large_url;
         @Schema(description = "팁/노하우")
         private String tip;
+        @Schema(description = "좋아요 수")
+        private Long likeCount = 0L;
 
         @ArraySchema(schema = @Schema(implementation = RecipeStepDto.class), arraySchema = @Schema(description = "조리 단계 리스트"))
         private List<RecipeStepDto> steps;
@@ -57,6 +59,7 @@ public class RecipeDto {
                     .tip(this.tip)
                     .image_small_url(this.image_small_url)
                     .image_large_url(this.image_large_url)
+                    .likeCount(this.likeCount)
                     .user(authUser)
                     .build();
 
@@ -203,15 +206,18 @@ public class RecipeDto {
         @Schema(description = "큰 이미지 URL")
         private String image_large_url;
         @Schema(description = "좋아요 수", example = "12")
-        private Integer likeCount;
+        private Long likeCount;
         @Schema(description = "로그인 사용자가 좋아요를 눌렀는지 여부", example = "true")
         private Boolean likedByUser;
         @Schema(description = "로그인 사용자가 스크랩을 눌렀는지 여부", example = "true")
         private Boolean scrappedByUser;
 
-        // 좋아요 관련 값 세팅 메서드
-        public void setLikeInfo(Integer likeCount, Boolean likedByUser) {
-            this.likeCount = likeCount;
+        // 좋아요 관련 값 세팅 메서드 (반 정규화 전)
+//        public void setLikeInfo(Integer likeCount, Boolean likedByUser) {
+//            this.likeCount = likeCount;
+//            this.likedByUser = likedByUser;
+//        }
+        public void setLikedByUser(Boolean likedByUser) {
             this.likedByUser = likedByUser;
         }
 
@@ -231,6 +237,7 @@ public class RecipeDto {
                     .serving_size(recipe.getServing_size())
                     .hashtags(recipe.getHashtags())
                     .image_large_url(recipe.getImage_large_url())
+                    .likeCount(recipe.getLikeCount())
                     .build();
         }
     }
@@ -277,23 +284,30 @@ public class RecipeDto {
         @Schema(description = "수정일")
         private LocalDateTime updatedAt;
         @Schema(description = "좋아요 수", example = "12")
-        private Integer likeCount;
+        private Long likeCount;
         @Schema(description = "로그인 사용자가 좋아요를 눌렀는지 여부", example = "true")
         private Boolean likedByUser;
         @Schema(description = "스크랩 수", example = "12")
-        private Integer scrapCount;
+        private Long scrapCount;
         @Schema(description = "로그인 사용자가 스크랩을 눌렀는지 여부", example = "true")
         private Boolean scrappedByUser;
 
-        // 좋아요 관련 값 세팅 메서드
-        public void setLikeInfo(Integer likeCount, Boolean likedByUser) {
-            this.likeCount = likeCount;
+        // 좋아요 관련 값 세팅 메서드 (반정규화 전)
+//        public void setLikeInfo(Integer likeCount, Boolean likedByUser) {
+////            this.likeCount = likeCount;
+//            this.likedByUser = likedByUser;
+//        }
+
+        public void setLikeInfo(Boolean likedByUser) {
             this.likedByUser = likedByUser;
         }
 
-        // 스크랩 관련 값 세팅 메서드
-        public void setScrapInfo(Integer scrapCount, Boolean scrappedByUser) {
-            this.scrapCount = scrapCount;
+        // 스크랩 관련 값 세팅 메서드 (반정규화 후)
+//        public void setScrapInfo(Integer scrapCount, Boolean scrappedByUser) {
+//            this.scrapCount = scrapCount;
+//            this.scrappedByUser = scrappedByUser;
+//        }
+        public void setScrapInfo(Boolean scrappedByUser) {
             this.scrappedByUser = scrappedByUser;
         }
 
@@ -318,6 +332,8 @@ public class RecipeDto {
                     .nutrition(recipe.getNutrition() != null ? RecipeNutritionDto.fromEntity(recipe.getNutrition()) : null)
                     .createdAt(recipe.getCreatedAt())
                     .updatedAt(recipe.getUpdatedAt())
+                    .likeCount(recipe.getLikeCount())
+                    .scrapCount(recipe.getScrapCount())
                     .build();
         }
     }

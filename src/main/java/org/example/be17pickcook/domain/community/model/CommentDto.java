@@ -4,7 +4,6 @@ import lombok.*;
 import org.example.be17pickcook.domain.user.model.User;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class CommentDto {
 
@@ -40,13 +39,12 @@ public class CommentDto {
         private String userName;
         private Long parentCommentId;           // 부모 댓글 ID
         private boolean hasLiked;
-        private long likeCount;
+        private Long likeCount;
         private List<Response> children;        // 대댓글 리스트
 
         // Entity → DTO 변환
         public static Response fromEntity(Comment comment,
                                           boolean hasLiked,
-                                          long likeCount,
                                           List<Response> children) {
             return Response.builder()
                     .id(comment.getId())
@@ -55,7 +53,7 @@ public class CommentDto {
                     .userName(comment.getUser().getNickname())
                     .parentCommentId(comment.getParentComment() != null ? comment.getParentComment().getId() : null)
                     .hasLiked(hasLiked)
-                    .likeCount(likeCount)
+                    .likeCount(comment.getLikeCount())
                     .children(children)
                     .build();
         }
