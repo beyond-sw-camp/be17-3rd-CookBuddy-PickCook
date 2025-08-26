@@ -140,14 +140,15 @@ public class RecipeService {
                     .serving_size((String) arr[6])
                     .hashtags((String) arr[7])
                     .image_large_url((String) arr[8])
+                    .likeCount((Long) arr[9])
                     .build();
         });
 
         // 3. 좋아요 개수 한 번에 조회
-        Map<Long, Long> likeCounts = recipeIds.isEmpty() ? Collections.emptyMap() :
-                likesRepository.countLikesByRecipeIds(LikeTargetType.RECIPE, recipeIds)
-                        .stream()
-                        .collect(Collectors.toMap(arr -> (Long) arr[0], arr -> (Long) arr[1]));
+//        Map<Long, Long> likeCounts = recipeIds.isEmpty() ? Collections.emptyMap() :
+//                likesRepository.countLikesByRecipeIds(LikeTargetType.RECIPE, recipeIds)
+//                        .stream()
+//                        .collect(Collectors.toMap(arr -> (Long) arr[0], arr -> (Long) arr[1]));
 
         // 4. 로그인 사용자 기준 좋아요 여부
         Set<Long> likedByUser = (userIdx == null || recipeIds.isEmpty()) ? Collections.emptySet() :
@@ -159,7 +160,8 @@ public class RecipeService {
 
         // 6. 좋아요/스크랩 정보 DTO에 세팅
         dtoPage.forEach(dto -> {
-            dto.setLikeInfo(likeCounts.getOrDefault(dto.getIdx(), 0L).intValue(),
+            dto.setLikedByUser(
+//                    likeCounts.getOrDefault(dto.getIdx(), 0L).intValue(),
                     likedByUser.contains(dto.getIdx()));
             dto.setScrapInfo(scrappedByUser.contains(dto.getIdx()));
         });

@@ -20,7 +20,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
     Optional<Recipe> findDetailById(@Param("id") Long id);
 
     @Query("SELECT r.idx, r.title, r.cooking_method, r.category, r.time_taken, " +
-            "r.difficulty_level, r.serving_size, r.hashtags, r.image_large_url FROM Recipe r")
+            "r.difficulty_level, r.serving_size, r.hashtags, r.image_large_url, r.likeCount FROM Recipe r")
     Page<Object[]> findAllOnlyRecipe(Pageable pageable);
 }
 

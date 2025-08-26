@@ -8,6 +8,7 @@ import org.example.be17pickcook.domain.user.model.User;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.Check;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -34,7 +35,7 @@ import java.time.LocalDateTime;
         }
 )
 /** 유통기한은 null이거나(today 포함) 미래여야 한다는 DB 체크 */
-@Check(constraints = "expiration_date IS NULL OR expiration_date >= CURRENT_DATE")
+//@Check(constraints = "expiration_date IS NULL OR expiration_date >= CURRENT_DATE")
 public class RefrigeratorItem {
 
     @Id

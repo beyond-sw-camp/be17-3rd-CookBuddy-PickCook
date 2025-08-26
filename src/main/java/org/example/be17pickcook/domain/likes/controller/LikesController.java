@@ -3,6 +3,7 @@ package org.example.be17pickcook.domain.likes.controller;
 import lombok.RequiredArgsConstructor;
 import org.example.be17pickcook.common.BaseResponse;
 import org.example.be17pickcook.domain.likes.model.LikeDto;
+import org.example.be17pickcook.domain.likes.model.LikeTargetType;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.domain.likes.service.LikeService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -22,16 +23,13 @@ public class LikesController {
      */
 
     @PostMapping
-    public BaseResponse<LikeDto.Response> like(
+    public BaseResponse like(
             @AuthenticationPrincipal UserDto.AuthUser authUser,
-            @RequestBody LikeDto.Request request) {
+            @RequestParam LikeTargetType targetType,
+            @RequestParam Long targetId) {
 
-        likeService.toggleLike(authUser, request.getTargetType(), request.getTargetId());
-        LikeDto.Response response = LikeDto.Response.builder()
-                .likeCount(likeService.getLikeCount(request.getTargetType(), request.getTargetId()))
-                .hasLiked(likeService.hasUserLiked(authUser.getIdx(), request.getTargetType(), request.getTargetId()))
-                .build();
+        likeService.toggleLike(authUser, targetType, targetId);
 
-        return BaseResponse.success(response);
+        return BaseResponse.success("좋아요 기능 성공");
     }
 }
