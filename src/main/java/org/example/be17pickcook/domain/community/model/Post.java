@@ -20,6 +20,8 @@ public class Post extends BaseEntity {
     @Column(name = "post_id")
     private Long id;
     private String title;
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String content;
 
     @ManyToOne
