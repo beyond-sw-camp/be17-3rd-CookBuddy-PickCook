@@ -2,8 +2,7 @@ package org.example.be17pickcook.domain.scrap.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.example.be17pickcook.common.BaseResponse;
-import org.example.be17pickcook.domain.likes.model.LikeTargetType;
-import org.example.be17pickcook.domain.scrap.model.ScrapDto;
+import org.example.be17pickcook.domain.scrap.model.ScrapTargetType;
 import org.example.be17pickcook.domain.scrap.service.ScrapService;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,7 +17,7 @@ public class ScrapController {
     @PostMapping
     public BaseResponse scrap(
             @AuthenticationPrincipal UserDto.AuthUser authUser,
-            @RequestParam LikeTargetType targetType,
+            @RequestParam ScrapTargetType targetType,
             @RequestParam Long targetId) {
         scrapService.toggleScrap(authUser, targetType, targetId);
 

@@ -3,7 +3,6 @@ package org.example.be17pickcook.domain.community.model;
 import lombok.*;
 import org.example.be17pickcook.domain.user.model.User;
 
-import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;

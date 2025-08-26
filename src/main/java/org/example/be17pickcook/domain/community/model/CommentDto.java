@@ -4,7 +4,6 @@ import lombok.*;
 import org.example.be17pickcook.domain.user.model.User;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class CommentDto {
 

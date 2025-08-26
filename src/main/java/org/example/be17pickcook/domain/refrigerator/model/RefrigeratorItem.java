@@ -7,8 +7,6 @@ import org.example.be17pickcook.domain.common.model.Category;
 import org.example.be17pickcook.domain.user.model.User;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.annotations.Check;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

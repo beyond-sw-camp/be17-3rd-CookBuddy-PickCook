@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.example.be17pickcook.domain.community.repository.CommentRepository;
 import org.example.be17pickcook.domain.community.repository.PostRepository;
 import org.example.be17pickcook.domain.likes.model.LikeCountable;
-import org.example.be17pickcook.domain.recipe.model.Recipe;
 import org.example.be17pickcook.domain.recipe.repository.RecipeRepository;
 import org.example.be17pickcook.domain.user.model.User;
 import org.example.be17pickcook.domain.user.model.UserDto;
@@ -58,7 +57,7 @@ public class LikeService {
         }
     }
 
-    // 좋아요 개수 가져오기
+    // 좋아요 개수 가져오기 (반정규화 전)
     public int getLikeCount(LikeTargetType targetType, Long targetId) {
         return likeRepository.countByTargetTypeAndTargetId(targetType, targetId);
     }

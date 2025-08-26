@@ -45,7 +45,7 @@ public class PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글이 존재하지 않습니다."));
         boolean hasLiked = likesService.hasUserLiked(userId, LikeTargetType.POST, postId);
-        boolean hasScrapped = likesService.hasUserLiked(userId, LikeTargetType.POST, postId);
+        boolean hasScrapped = scrapService.hasUserScrapped(userId, ScrapTargetType.POST, postId);
 
         return PostDto.DetailResponse.from(post, hasLiked, hasScrapped);
     }

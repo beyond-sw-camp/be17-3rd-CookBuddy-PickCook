@@ -4,8 +4,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.be17pickcook.domain.community.repository.CommentRepository;
 import org.example.be17pickcook.domain.community.repository.PostRepository;
-import org.example.be17pickcook.domain.likes.model.LikeCountable;
-import org.example.be17pickcook.domain.likes.model.LikeTargetType;
 import org.example.be17pickcook.domain.recipe.repository.RecipeRepository;
 import org.example.be17pickcook.domain.scrap.model.ScrapCountable;
 import org.example.be17pickcook.domain.scrap.model.ScrapTargetType;
@@ -23,7 +21,6 @@ public class ScrapService {
     private final ScrapRepository scrapRepository;
     private final RecipeRepository recipeRepository;
     private final PostRepository postRepository;
-    private final CommentRepository commentRepository;
 
     private ScrapCountable getTargetEntity(ScrapTargetType targetType, Long targetId) {
         return switch (targetType) {
@@ -57,10 +54,10 @@ public class ScrapService {
         }
     }
 
-    // 스크랩 개수 가져오기
-    public int getScrapCount(ScrapTargetType targetType, Long targetId) {
-        return scrapRepository.countByTargetTypeAndTargetId(targetType, targetId);
-    }
+    // 스크랩 개수 가져오기 (반정규화 전)
+//    public int getScrapCount(ScrapTargetType targetType, Long targetId) {
+//        return scrapRepository.countByTargetTypeAndTargetId(targetType, targetId);
+//    }
 
     // 사용자가 스크랩 눌렀는지 확인
     public boolean hasUserScrapped(Integer userIdx, ScrapTargetType targetType, Long targetId) {

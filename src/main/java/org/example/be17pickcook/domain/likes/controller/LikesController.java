@@ -2,7 +2,6 @@ package org.example.be17pickcook.domain.likes.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.example.be17pickcook.common.BaseResponse;
-import org.example.be17pickcook.domain.likes.model.LikeDto;
 import org.example.be17pickcook.domain.likes.model.LikeTargetType;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.domain.likes.service.LikeService;

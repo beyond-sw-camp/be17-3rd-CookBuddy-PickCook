@@ -7,7 +7,6 @@ import org.example.be17pickcook.domain.community.model.Post;
 import org.example.be17pickcook.domain.community.repository.CommentRepository;
 import org.example.be17pickcook.domain.community.repository.PostRepository;
 import org.example.be17pickcook.domain.likes.model.LikeTargetType;
-import org.example.be17pickcook.domain.likes.repository.LikeRepository;
 import org.example.be17pickcook.domain.likes.service.LikeService;
 import org.example.be17pickcook.domain.user.model.User;
 import org.example.be17pickcook.domain.user.repository.UserRepository;
