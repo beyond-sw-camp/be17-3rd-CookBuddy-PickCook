@@ -50,7 +50,7 @@ public class RecipeController {
                     "- page: 0부터 시작하는 페이지 번호\n" +
                     "- size: 페이지당 레코드 수"
     )
-    public BaseResponse<PageResponse<RecipeDto.RecipeResponseDto>> getRecipeList(
+    public BaseResponse<PageResponse<RecipeDto.RecipeListResponseDto>> getRecipeList(
             @AuthenticationPrincipal UserDto.AuthUser authUser,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
@@ -67,7 +67,7 @@ public class RecipeController {
             description = "레시피 ID를 기반으로 레시피 상세 정보를 조회합니다."
     )
     @GetMapping("/{id}")
-    public ResponseEntity<RecipeDto.RecipeListResponseDto> getRecipe(@AuthenticationPrincipal UserDto.AuthUser authUser, @PathVariable Long id) {
+    public ResponseEntity<RecipeDto.RecipeResponseDto> getRecipe(@AuthenticationPrincipal UserDto.AuthUser authUser, @PathVariable Long id) {
         Integer userIdx = (authUser != null) ? authUser.getIdx() : null;
         return ResponseEntity.ok(recipeService.getRecipe(id, userIdx));
     }

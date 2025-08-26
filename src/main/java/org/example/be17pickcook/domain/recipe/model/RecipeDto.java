@@ -183,7 +183,7 @@ public class RecipeDto {
 
     @Getter
     @Builder
-    public static class RecipeResponseDto {
+    public static class RecipeListResponseDto {
         @Schema(description = "레시피 ID", example = "1")
         private Long idx;
         @Schema(description = "레시피 제목", example = "김치찌개")
@@ -224,8 +224,8 @@ public class RecipeDto {
             this.scrappedByUser = scrappedByUser;
         }
 
-        public static RecipeResponseDto fromEntity(Recipe recipe) {
-            return RecipeResponseDto.builder()
+        public static RecipeListResponseDto fromEntity(Recipe recipe) {
+            return RecipeListResponseDto.builder()
                     .idx(recipe.getIdx())
                     .title(recipe.getTitle())
                     .cooking_method(recipe.getCooking_method())
@@ -247,7 +247,7 @@ public class RecipeDto {
     @Getter
     @Builder
     @Schema(description = "레시피 상세 조회 응답 DTO")
-    public static class RecipeListResponseDto {
+    public static class RecipeResponseDto {
         @Schema(description = "레시피 ID", example = "1")
         private Long idx;
         @Schema(description = "레시피 제목", example = "김치찌개")
@@ -303,8 +303,8 @@ public class RecipeDto {
             this.scrappedByUser = scrappedByUser;
         }
 
-        public static RecipeListResponseDto fromEntity(Recipe recipe) {
-            return RecipeListResponseDto.builder()
+        public static RecipeResponseDto fromEntity(Recipe recipe) {
+            return RecipeResponseDto.builder()
                     .idx(recipe.getIdx())
                     .title(recipe.getTitle())
                     .cooking_method(recipe.getCooking_method())

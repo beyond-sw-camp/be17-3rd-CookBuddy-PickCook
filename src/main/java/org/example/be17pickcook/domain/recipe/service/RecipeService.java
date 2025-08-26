@@ -81,7 +81,7 @@ public class RecipeService {
 
 
     // 특정 레시피 조회 + 좋아요 정보 + 스크랩 정보 포함
-    public RecipeDto.RecipeListResponseDto getRecipe(Long recipeId, Integer userIdx) {
+    public RecipeDto.RecipeResponseDto getRecipe(Long recipeId, Integer userIdx) {
         Recipe recipe = recipeRepository.findDetailById(recipeId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 레시피가 존재하지 않습니다. id=" + recipeId));
 
@@ -93,7 +93,7 @@ public class RecipeService {
         Boolean scrapedByUser = userIdx != null &&
                 scrapService.hasUserScrapped(userIdx, ScrapTargetType.RECIPE, recipeId);
 
-        RecipeDto.RecipeListResponseDto dto = RecipeDto.RecipeListResponseDto.fromEntity(recipe);
+        RecipeDto.RecipeResponseDto dto = RecipeDto.RecipeResponseDto.fromEntity(recipe);
         dto.setLikeInfo(likeCount, likedByUser);
         dto.setScrapInfo(scrapCount, scrapedByUser);
 
@@ -120,7 +120,7 @@ public class RecipeService {
 //        return PageResponse.from(recipePage);
 //    }
 
-    public PageResponse<RecipeDto.RecipeResponseDto> getRecipeList(Integer userIdx, Pageable pageable) {
+    public PageResponse<RecipeDto.RecipeListResponseDto> getRecipeList(Integer userIdx, Pageable pageable) {
         // 1. 레시피 페이징 조회
         Page<Recipe> recipePage = recipeRepository.findAll(pageable);
         List<Long> recipeIds = recipePage.stream()
@@ -141,8 +141,8 @@ public class RecipeService {
                 new HashSet<>(scrapRepository.findScrappedRecipeIdsByUser(ScrapTargetType.RECIPE, userIdx, recipeIds));
 
         // 5. DTO 변환
-        Page<RecipeDto.RecipeResponseDto> dtoPage = recipePage.map(recipe -> {
-            RecipeDto.RecipeResponseDto dto = RecipeDto.RecipeResponseDto.fromEntity(recipe);
+        Page<RecipeDto.RecipeListResponseDto> dtoPage = recipePage.map(recipe -> {
+            RecipeDto.RecipeListResponseDto dto = RecipeDto.RecipeListResponseDto.fromEntity(recipe);
             dto.setLikeInfo(likeCounts.getOrDefault(recipe.getIdx(), 0L).intValue(),
                     likedByUser.contains(recipe.getIdx()));
             dto.setScrapInfo(scrappedByUser.contains(recipe.getIdx()));

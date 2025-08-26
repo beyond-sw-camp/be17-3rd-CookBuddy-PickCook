@@ -21,8 +21,8 @@ public class RecipeNutrition {
     private Integer fat;
     private Integer sodium;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "recipe_id")
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "recipe_id", nullable = false)
     private Recipe recipe;
 
     public void setRecipe(Recipe recipe) { this.recipe = recipe; }
