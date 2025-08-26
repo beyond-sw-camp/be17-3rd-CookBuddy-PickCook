@@ -121,35 +121,51 @@ public class RecipeService {
 //    }
 
     public PageResponse<RecipeDto.RecipeListResponseDto> getRecipeList(Integer userIdx, Pageable pageable) {
-        // 1. 레시피 페이징 조회
-        Page<Recipe> recipePage = recipeRepository.findAll(pageable);
-        List<Long> recipeIds = recipePage.stream()
-                .map(Recipe::getIdx)
-                .collect(Collectors.toList());
+        // 1. 레시피 페이징 조회 (부분 컬럼만 Object[]로)
+        Page<Object[]> recipePage = recipeRepository.findAllOnlyRecipe(pageable);
 
-        // 2. 좋아요 개수 한 번에 조회
-        Map<Long, Long> likeCounts = likesRepository.countLikesByRecipeIds(LikeTargetType.RECIPE, recipeIds)
-                .stream()
-                .collect(Collectors.toMap(arr -> (Long) arr[0], arr -> (Long) arr[1]));
+        // 2. DTO 변환 및 recipeIds 추출
+        List<Long> recipeIds = new ArrayList<>();
+        Page<RecipeDto.RecipeListResponseDto> dtoPage = recipePage.map(arr -> {
+            Long idx = (Long) arr[0];
+            recipeIds.add(idx); // 좋아요/스크랩 조회용
 
-        // 3. 로그인 사용자 기준 좋아요 여부
-        Set<Long> likedByUser = userIdx == null ? Collections.emptySet() :
+            return RecipeDto.RecipeListResponseDto.builder()
+                    .idx(idx)
+                    .title((String) arr[1])
+                    .cooking_method((String) arr[2])
+                    .category((String) arr[3])
+                    .time_taken((String) arr[4])
+                    .difficulty_level((String) arr[5])
+                    .serving_size((String) arr[6])
+                    .hashtags((String) arr[7])
+                    .image_large_url((String) arr[8])
+                    .build();
+        });
+
+        // 3. 좋아요 개수 한 번에 조회
+        Map<Long, Long> likeCounts = recipeIds.isEmpty() ? Collections.emptyMap() :
+                likesRepository.countLikesByRecipeIds(LikeTargetType.RECIPE, recipeIds)
+                        .stream()
+                        .collect(Collectors.toMap(arr -> (Long) arr[0], arr -> (Long) arr[1]));
+
+        // 4. 로그인 사용자 기준 좋아요 여부
+        Set<Long> likedByUser = (userIdx == null || recipeIds.isEmpty()) ? Collections.emptySet() :
                 new HashSet<>(likesRepository.findLikedRecipeIdsByUser(LikeTargetType.RECIPE, userIdx, recipeIds));
 
-        // 4. 로그인 사용자 기준 스크랩 여부
-        Set<Long> scrappedByUser = userIdx == null ? Collections.emptySet() :
+        // 5. 로그인 사용자 기준 스크랩 여부
+        Set<Long> scrappedByUser = (userIdx == null || recipeIds.isEmpty()) ? Collections.emptySet() :
                 new HashSet<>(scrapRepository.findScrappedRecipeIdsByUser(ScrapTargetType.RECIPE, userIdx, recipeIds));
 
-        // 5. DTO 변환
-        Page<RecipeDto.RecipeListResponseDto> dtoPage = recipePage.map(recipe -> {
-            RecipeDto.RecipeListResponseDto dto = RecipeDto.RecipeListResponseDto.fromEntity(recipe);
-            dto.setLikeInfo(likeCounts.getOrDefault(recipe.getIdx(), 0L).intValue(),
-                    likedByUser.contains(recipe.getIdx()));
-            dto.setScrapInfo(scrappedByUser.contains(recipe.getIdx()));
-            return dto;
+        // 6. 좋아요/스크랩 정보 DTO에 세팅
+        dtoPage.forEach(dto -> {
+            dto.setLikeInfo(likeCounts.getOrDefault(dto.getIdx(), 0L).intValue(),
+                    likedByUser.contains(dto.getIdx()));
+            dto.setScrapInfo(scrappedByUser.contains(dto.getIdx()));
         });
 
         return PageResponse.from(dtoPage);
     }
+
 
 }

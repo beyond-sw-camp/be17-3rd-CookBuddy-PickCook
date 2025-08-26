@@ -200,12 +200,8 @@ public class RecipeDto {
         private String serving_size;
         @Schema(description = "해시태그", example = "#매운 #한식")
         private String hashtags;
-        @Schema(description = "작은 이미지 URL")
-        private String image_small_url;
         @Schema(description = "큰 이미지 URL")
         private String image_large_url;
-        @Schema(description = "팁/노하우")
-        private String tip;
         @Schema(description = "좋아요 수", example = "12")
         private Integer likeCount;
         @Schema(description = "로그인 사용자가 좋아요를 눌렀는지 여부", example = "true")
@@ -234,9 +230,7 @@ public class RecipeDto {
                     .difficulty_level(recipe.getDifficulty_level())
                     .serving_size(recipe.getServing_size())
                     .hashtags(recipe.getHashtags())
-                    .image_small_url(recipe.getImage_small_url())
                     .image_large_url(recipe.getImage_large_url())
-                    .tip(recipe.getTip())
                     .build();
         }
     }
