@@ -191,26 +191,6 @@ public class RefrigeratorItemController {
     // 검색 관련 API
     // =================================================================
 
-    @Operation(
-            summary = "식재료명 키워드 검색",
-            description = "식재료명으로 냉장고 아이템을 검색합니다. 한글 초성 검색도 지원합니다.",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "검색 성공"),
-                    @ApiResponse(responseCode = "401", description = "인증 필요")
-            }
-    )
-    @GetMapping("/search")
-    public ResponseEntity<BaseResponse<List<RefrigeratorItemDto.Response>>> search(
-            @Parameter(description = "검색할 키워드", example = "상추")
-            @RequestParam String keyword,
-            @Parameter(description = "인증된 사용자 정보", hidden = true)
-            Authentication authentication) {
-
-        Integer userId = getUserIdFromAuth(authentication);
-        List<RefrigeratorItemDto.Response> result = refrigeratorItemService.searchByKeyword(keyword, userId);
-
-        return ResponseEntity.ok(BaseResponse.success(result));
-    }
 
     @Operation(
             summary = "복합 필터링 조회",

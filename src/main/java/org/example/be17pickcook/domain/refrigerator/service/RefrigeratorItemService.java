@@ -168,75 +168,21 @@ public class RefrigeratorItemService {
     // =================================================================
 
     /**
-     * 재료명 키워드 검색
-     */
-    public List<RefrigeratorItemDto.Response> searchByKeyword(String keyword, Integer userId) {
-        validateUserExists(userId);
-
-        if (keyword == null || keyword.trim().isEmpty()) {
-            return findByUserId(userId);
-        }
-
-        // 🆕 변경: 새로운 Repository 메서드 사용
-        List<RefrigeratorItem> items = refrigeratorItemRepository.findByComplexFilter(
-                userId,
-                keyword.trim(),
-                null,           // categoryId
-                null,           // expirationStatus
-                "EXPIRATION_DATE", // 기본 정렬
-                "ASC",          // 기본 방향
-                LocalDate.now(),
-                LocalDate.now().plusDays(4),
-                LocalDate.now().plusDays(2),
-                LocalDate.now().plusDays(4),
-                LocalDate.now(),
-                LocalDate.now().plusDays(2)
-        );
-
-        return refrigeratorItemMapper.entityListToResponseList(items);
-    }
-
-    /**
-     * 복합 필터링으로 냉장고 아이템 조회 (완전히 새로 작성)
+     * 복합 필터링으로 냉장고 아이템 조회 (QueryDSL 버전으로 리팩토링)
      */
     public List<RefrigeratorItemDto.Response> findByFilters(RefrigeratorItemDto.Filter filter, Integer userId) {
         validateUserExists(userId);
 
-        // 🆕 추가: 유통기한 상태별 날짜 계산
-        LocalDate today = LocalDate.now();
-        LocalDate freshDate = today.plusDays(4);        // 4일 이상
-        LocalDate soonStartDate = today.plusDays(2);    // 2-3일
-        LocalDate soonEndDate = today.plusDays(4);
-        LocalDate urgentStartDate = today;              // 0-1일
-        LocalDate urgentEndDate = today.plusDays(2);
-
-        // 🆕 추가: 필터 파라미터 준비
-        String keyword = (filter.getKeyword() != null && !filter.getKeyword().trim().isEmpty())
-                ? filter.getKeyword().trim() : null;
-
-        String expirationStatus = (filter.getExpirationStatus() != null)
-                ? filter.getExpirationStatus().name() : null;
-
-        String sortType = filter.getSortType().name();
-        String sortDirection = filter.getSortDirection().name();
-
-        // 🔄 변경: 새로운 Repository 메서드 사용 (기존 findByUserIdAndFilters 대신)
-        List<RefrigeratorItem> items = refrigeratorItemRepository.findByComplexFilter(
+        // QueryDSL을 사용한 단순한 Repository 호출
+        List<RefrigeratorItem> items = refrigeratorItemRepository.findByComplexFilterWithQueryDsl(
                 userId,
-                keyword,
+                filter.getKeyword(),
                 filter.getCategoryId(),
-                expirationStatus,
-                sortType,
-                sortDirection,
-                today,
-                freshDate,
-                soonStartDate,
-                soonEndDate,
-                urgentStartDate,
-                urgentEndDate
+                filter.getExpirationStatus(),
+                filter.getSortType(),
+                filter.getSortDirection()
         );
 
-        // 🔄 변경: 바로 반환 (메모리 필터링 및 정렬 로직 제거)
         return refrigeratorItemMapper.entityListToResponseList(items);
     }
 
@@ -354,40 +300,6 @@ public class RefrigeratorItemService {
         return refrigeratorItemRepository.findByIdAndIsDeletedFalse(itemId)
                 .filter(item -> item.getUser().getIdx().equals(userId))
                 .orElseThrow(() -> BaseException.from(BaseResponseStatus.RESOURCE_NOT_FOUND));
-    }
-
-    /**
-     * 정렬 적용
-     */
-    private List<RefrigeratorItemDto.Response> applySorting(
-            List<RefrigeratorItemDto.Response> items,
-            RefrigeratorItemDto.SortType sortType,
-            RefrigeratorItemDto.SortDirection direction) {
-
-        if (sortType == null) {
-            return items;
-        }
-
-        return items.stream()
-                .sorted((a, b) -> {
-                    int comparison = switch (sortType) {
-                        case EXPIRATION_DATE -> compareExpirationDate(a, b);
-                        case CREATED_DATE -> a.getCreatedAt().compareTo(b.getCreatedAt());
-                    };
-
-                    return direction == RefrigeratorItemDto.SortDirection.DESC ? -comparison : comparison;
-                })
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * 유통기한 비교 (null 처리 포함)
-     */
-    private int compareExpirationDate(RefrigeratorItemDto.Response a, RefrigeratorItemDto.Response b) {
-        if (a.getExpirationDate() == null && b.getExpirationDate() == null) return 0;
-        if (a.getExpirationDate() == null) return 1;  // null은 뒤로
-        if (b.getExpirationDate() == null) return -1;
-        return a.getExpirationDate().compareTo(b.getExpirationDate());
     }
 
     // RefrigeratorItemService.java에 추가
