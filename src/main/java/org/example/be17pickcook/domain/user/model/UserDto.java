@@ -353,6 +353,16 @@ public class UserDto {
         }
     }
 
+    @Schema(description = "비밀번호 재설정 이메일 발송 요청 정보")
+    @Getter
+    public static class PasswordResetEmailRequest {
+        @Schema(description = "비밀번호를 재설정할 이메일 (필수)",
+                example = "user@example.com")
+        @NotBlank(message = "이메일을 입력해주세요")
+        @Email(message = "올바른 이메일 형식이 아닙니다")
+        private String email;
+    }
+
     // =================================================================
     // 토큰 관련 DTO
     // =================================================================

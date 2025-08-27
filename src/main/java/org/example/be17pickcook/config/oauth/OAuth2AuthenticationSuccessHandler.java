@@ -41,7 +41,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             // 닉네임을 URL 파라미터로 전달 (한글 인코딩 처리)
             String encodedNickname = URLEncoder.encode(authUser.getNickname(), StandardCharsets.UTF_8);
             String redirectUrl = String.format(
-                    "http://localhost:5174/?loginSuccess=true&nickname=%s&loginType=social",
+                    "http://localhost:*/?loginSuccess=true&nickname=%s&loginType=social",
                     encodedNickname
             );
 
@@ -52,7 +52,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             System.out.println("OAuth2 리다이렉트 완료");
         } else {
             System.out.println("JWT 생성 실패");
-            response.sendRedirect("http://localhost:5174/login?error=true");
+            response.sendRedirect("http://localhost:*/login?error=true");
         }
     }
 }

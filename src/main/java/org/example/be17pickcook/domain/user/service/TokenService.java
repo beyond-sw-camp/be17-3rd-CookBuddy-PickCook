@@ -35,34 +35,78 @@ public class TokenService {
     private final EmailVerifyRepository emailVerifyRepository;
 
     // =================================================================
+    // 토큰 타입 정의
+    // =================================================================
+
+    /**
+     * 비밀번호 재설정 토큰 타입별 만료시간 정의
+     */
+    public enum TokenType {
+        EMAIL_RESET(30),      // 이메일 발송용 - 30분
+        INTERNAL_RESET(10);   // 마이페이지용 - 10분
+
+        private final int expirationMinutes;
+
+        TokenType(int expirationMinutes) {
+            this.expirationMinutes = expirationMinutes;
+        }
+
+        public int getExpirationMinutes() {
+            return expirationMinutes;
+        }
+    }
+
+    // =================================================================
     // 비밀번호 재설정 토큰 관련
     // =================================================================
 
     /**
-     * 비밀번호 재설정 토큰 생성 (공통 메서드)
+     * 비밀번호 재설정 토큰 생성 (타입별 만료시간 적용)
      * @param user 대상 사용자
+     * @param tokenType 토큰 타입 (EMAIL_RESET | INTERNAL_RESET)
      * @return 생성된 토큰
      */
     @Transactional
-    public String createPasswordResetToken(User user) {
+    public String createPasswordResetToken(User user, TokenType tokenType) {
         // 기존 미사용 토큰들 무효화
         passwordResetRepository.markAllAsUsedByUser(user);
 
         // 새 토큰 생성
         String token = UUID.randomUUID().toString();
 
+        // 토큰 타입별 만료시간 계산
+        LocalDateTime expirationTime = LocalDateTime.now()
+                .plusMinutes(tokenType.getExpirationMinutes());
+
         PasswordReset passwordReset = PasswordReset.builder()
                 .email(user.getEmail())
                 .token(token)
                 .user(user)
-                .expiresAt(LocalDateTime.now().plusMinutes(30)) // 30분 후 만료
+                .expiresAt(expirationTime)
                 .build();
 
         passwordResetRepository.save(passwordReset);
 
-        log.info("비밀번호 재설정 토큰 생성: 사용자 = {}, 만료시간 = 30분", user.getEmail());
+        log.info("비밀번호 재설정 토큰 생성: 사용자 = {}, 타입 = {}, 만료시간 = {}분",
+                user.getEmail(), tokenType, tokenType.getExpirationMinutes());
 
         return token;
+    }
+
+    /**
+     * 이메일 발송용 비밀번호 재설정 토큰 생성 (편의 메서드)
+     */
+    @Transactional
+    public String createEmailPasswordResetToken(User user) {
+        return createPasswordResetToken(user, TokenType.EMAIL_RESET);
+    }
+
+    /**
+     * 마이페이지용 비밀번호 재설정 토큰 생성 (편의 메서드)
+     */
+    @Transactional
+    public String createInternalPasswordResetToken(User user) {
+        return createPasswordResetToken(user, TokenType.INTERNAL_RESET);
     }
 
     /**
