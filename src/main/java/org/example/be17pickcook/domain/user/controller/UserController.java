@@ -2,7 +2,6 @@ package org.example.be17pickcook.domain.user.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -11,9 +10,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.be17pickcook.common.BaseResponse;
 import org.example.be17pickcook.common.BaseResponseStatus;
+import org.example.be17pickcook.common.exception.BaseException;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.domain.user.service.AuthService;
 import org.example.be17pickcook.domain.user.service.UserService;
+import org.example.be17pickcook.template.EmailTemplates;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
@@ -41,6 +43,7 @@ public class UserController {
 
     private final UserService userService;
     private final AuthService authService;
+    private final EmailTemplates emailTemplates;
 
     // =================================================================
     // 회원가입 관련 API
@@ -48,40 +51,40 @@ public class UserController {
 
     @Operation(
             summary = "회원가입",
-            description = "새로운 사용자 계정을 생성하고 이메일 인증을 위한 메일을 발송합니다.",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "회원가입 성공"),
-                    @ApiResponse(responseCode = "400", description = "입력값 오류 또는 이메일 중복")
-            }
+            description = "새로운 사용자 계정을 생성하고 이메일 인증을 위한 메일을 발송합니다."
     )
     @PostMapping("/signup")
     public ResponseEntity<BaseResponse<Void>> signup(
             @Valid @RequestBody UserDto.Register dto,
-            BindingResult bindingResult) throws Exception {
+            BindingResult bindingResult) {
 
-        // Validation 오류 처리
         if (bindingResult.hasErrors()) {
             String errorMessage = bindingResult.getFieldErrors().get(0).getDefaultMessage();
             return ResponseEntity.badRequest()
                     .body(BaseResponse.error(BaseResponseStatus.REQUEST_ERROR, errorMessage));
         }
 
-        // GlobalExceptionHandler가 예외 처리
-        userService.signup(dto);
-        return ResponseEntity.ok(BaseResponse.success(null, BaseResponseStatus.SIGNUP_SUCCESS));
+        // ✅ 메서드명 변경: signup() → register()
+        userService.register(dto);
+
+        // ✅ 201 Created 상태코드로 응답 (All or Nothing 성공)
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(BaseResponse.success(null, BaseResponseStatus.SIGNUP_SUCCESS));
     }
 
-    @Operation(
-            summary = "이메일 인증",
-            description = "회원가입 시 발송된 이메일의 인증 링크를 통해 계정을 활성화합니다."
-    )
+    @Operation(summary = "이메일 인증", description = "이메일 인증 토큰을 검증합니다.")
     @GetMapping("/verify")
-    public ResponseEntity<BaseResponse<Void>> verify(
-            @Parameter(description = "이메일 인증 UUID", required = true) @RequestParam String uuid) {
-
-        // GlobalExceptionHandler가 예외 처리
-        userService.verify(uuid);
-        return ResponseEntity.ok(BaseResponse.success(null, BaseResponseStatus.EMAIL_VERIFICATION_SUCCESS));
+    public ResponseEntity<String> verifyEmail(@RequestParam String uuid) {
+        try {
+            userService.verify(uuid);
+            return ResponseEntity.ok()
+                    .header("Content-Type", "text/html; charset=UTF-8")
+                    .body(emailTemplates.getEmailVerificationCompletePage());
+        } catch (BaseException e) {
+            return ResponseEntity.badRequest()
+                    .header("Content-Type", "text/html; charset=UTF-8")
+                    .body(emailTemplates.getEmailVerificationErrorPage(e.getMessage()));
+        }
     }
 
     // =================================================================
@@ -146,18 +149,13 @@ public class UserController {
         return ResponseEntity.ok(BaseResponse.success(userResponse));
     }
 
-    @Operation(
-            summary = "사용자 로그아웃",
-            description = "현재 로그인된 사용자를 로그아웃 처리하고 JWT 쿠키를 삭제합니다."
-    )
+    @Operation(summary = "로그아웃", description = "사용자 로그아웃을 처리합니다.")
     @PostMapping("/logout")
     public ResponseEntity<BaseResponse<Void>> logout(
             HttpServletRequest request,
             HttpServletResponse response) {
 
-        // 로그아웃 로직을 서비스로 분리
-        userService.logout(request, response);
-
+        userService.logout(request, response, authService);  // 필드 사용
         return ResponseEntity.ok(BaseResponse.success(null, BaseResponseStatus.LOGOUT_SUCCESS));
     }
 
@@ -221,24 +219,21 @@ public class UserController {
     // 비밀번호 재설정 API (리팩토링됨)
     // =================================================================
 
-    @Operation(
-            summary = "비밀번호 재설정 요청 (이메일 발송)",
-            description = "입력한 이메일로 비밀번호 재설정 링크를 발송합니다. 존재하지 않는 이메일도 보안상 동일하게 처리됩니다."
-    )
+    @Operation(summary = "비밀번호 재설정 이메일 발송", description = "비밀번호 재설정을 위한 이메일을 발송합니다.")
     @PostMapping("/request-password-reset")
     public ResponseEntity<BaseResponse<Void>> requestPasswordReset(
-            @Valid @RequestBody UserDto.PasswordResetRequest dto,
-            BindingResult bindingResult) throws Exception {
+            @Valid @RequestBody UserDto.PasswordResetEmailRequest dto,
+            BindingResult bindingResult) {
 
-        // Validation 오류 처리
         if (bindingResult.hasErrors()) {
             String errorMessage = bindingResult.getFieldErrors().get(0).getDefaultMessage();
             return ResponseEntity.badRequest()
                     .body(BaseResponse.error(BaseResponseStatus.REQUEST_ERROR, errorMessage));
         }
 
-        // GlobalExceptionHandler가 예외 처리
+        // ✅ All or Nothing 패턴 - try-catch 제거 (GlobalExceptionHandler가 처리)
         userService.requestPasswordReset(dto.getEmail());
+
         return ResponseEntity.ok(BaseResponse.success(null, BaseResponseStatus.PASSWORD_RESET_EMAIL_SENT));
     }
 
@@ -283,25 +278,21 @@ public class UserController {
         return ResponseEntity.ok(BaseResponse.success(result, status));
     }
 
-    @Operation(
-            summary = "새 비밀번호로 재설정",
-            description = "검증된 토큰을 사용하여 새 비밀번호로 재설정합니다. 모든 기존 JWT 토큰이 무효화됩니다."
-    )
+    @Operation(summary = "비밀번호 재설정", description = "토큰을 사용하여 새로운 비밀번호로 재설정합니다.")
     @PostMapping("/reset-password")
     public ResponseEntity<BaseResponse<Void>> resetPassword(
             @Valid @RequestBody UserDto.ResetPasswordRequest dto,
             BindingResult bindingResult,
             HttpServletResponse response) {
 
-        // Validation 오류 처리
         if (bindingResult.hasErrors()) {
             String errorMessage = bindingResult.getFieldErrors().get(0).getDefaultMessage();
             return ResponseEntity.badRequest()
                     .body(BaseResponse.error(BaseResponseStatus.REQUEST_ERROR, errorMessage));
         }
 
-        // GlobalExceptionHandler가 예외 처리
-        userService.resetPassword(dto.getToken(), dto.getNewPassword(), response);
+        // ✅ AuthService를 매개변수로 전달
+        userService.resetPassword(dto.getToken(), dto.getNewPassword(), response, authService);
 
         return ResponseEntity.ok(BaseResponse.success(null, BaseResponseStatus.PASSWORD_RESET_SUCCESS));
     }
@@ -342,10 +333,7 @@ public class UserController {
     // 회원탈퇴 API
     // =================================================================
 
-    @Operation(
-            summary = "회원탈퇴",
-            description = "현재 로그인된 사용자의 계정을 탈퇴 처리합니다."
-    )
+    @Operation(summary = "회원탈퇴", description = "사용자 계정을 탈퇴 처리합니다.")
     @PostMapping("/withdraw")
     public ResponseEntity<BaseResponse<UserDto.WithdrawResponse>> withdrawUser(
             @AuthenticationPrincipal UserDto.AuthUser authUser,
@@ -353,23 +341,16 @@ public class UserController {
             BindingResult bindingResult,
             HttpServletResponse response) {
 
-        if (authUser == null) {
-            return ResponseEntity.status(401)
-                    .body(BaseResponse.error(BaseResponseStatus.UNAUTHORIZED));
-        }
-
-        // Validation 오류 처리
         if (bindingResult.hasErrors()) {
             String errorMessage = bindingResult.getFieldErrors().get(0).getDefaultMessage();
             return ResponseEntity.badRequest()
                     .body(BaseResponse.error(BaseResponseStatus.REQUEST_ERROR, errorMessage));
         }
 
-        // GlobalExceptionHandler가 예외 처리
         UserDto.WithdrawResponse result = userService.withdrawUser(authUser.getIdx(), dto);
 
-        // 탈퇴 후 쿠키 삭제도 서비스에서 처리
-        userService.clearAuthenticationCookies(response);
+        // ✅ 회원탈퇴 성공 시 인증 쿠키 삭제
+        userService.clearAuthenticationCookies(response, authService);
 
         return ResponseEntity.ok(BaseResponse.success(result, BaseResponseStatus.WITHDRAW_SUCCESS));
     }

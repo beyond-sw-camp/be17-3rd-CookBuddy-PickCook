@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Integer> {
@@ -28,4 +29,8 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     // 🔧 추가: ID로 탈퇴하지 않은 사용자 존재 확인
     @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.idx = :userId AND (u.deleted IS NULL OR u.deleted = false)")
     boolean existsByIdAndNotDeleted(@Param("userId") Integer userId);
+
+    // 전화번호 중복 검증용 메서드 추가
+    @Query("SELECT u FROM User u WHERE u.phone = :phone AND (u.deleted IS NULL OR u.deleted = false)")
+    List<User> findByPhoneAndNotDeleted(@Param("phone") String phone);
 }

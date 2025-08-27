@@ -94,3 +94,9 @@ logging:
   level:
     root: INFO               # 전체 로그 기본 레벨
     org.example.be17pickcook: DEBUG  # 우리 프로젝트 패키지 로그
+
+  app:
+    frontend:
+      url: ${FRONTEND_URL}
+    backend:
+      url: ${BACKEND_URL}

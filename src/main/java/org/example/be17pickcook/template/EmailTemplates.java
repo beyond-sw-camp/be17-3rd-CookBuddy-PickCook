@@ -6,10 +6,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class EmailTemplates {
 
-    @Value("${app.frontend.url:http://localhost:5174}")
+    @Value("${FRONTEND_URL}")
     private String frontendUrl;
 
-    @Value("${app.backend.url:http://localhost:8080}")
+    @Value("${BACKEND_URL}")
     private String backendUrl;
 
     // =================================================================
@@ -157,5 +157,35 @@ public class EmailTemplates {
             </body>
             </html>
             """;
+    }
+
+    public String getEmailVerificationErrorPage(String errorMessage) {
+        return """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>이메일 인증 오류 - PickCook</title>
+        </head>
+        <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 500px; margin: 50px auto; padding: 30px; background-color: #f8f9fa;">
+            <div style="background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center;">
+                <div style="color: #E14345; font-size: 24px; font-weight: bold; margin-bottom: 30px;">PickCook</div>
+                <div style="font-size: 64px; margin-bottom: 20px;">❌</div>
+                <h2 style="color: #dc3545; margin-bottom: 20px;">이메일 인증에 실패했습니다</h2>
+                <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">
+                    %s
+                </p>
+                <p style="color: #333; line-height: 1.6; margin-bottom: 30px;">
+                    인증 링크가 만료되었거나 이미 사용된 링크일 수 있습니다.<br>
+                    회원가입을 다시 진행해주세요.
+                </p>
+                <button onclick="window.close()" 
+                        style="background-color: #6c757d; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: 600;">
+                    창 닫기
+                </button>
+            </div>
+        </body>
+        </html>
+        """.formatted(errorMessage);
     }
 }
