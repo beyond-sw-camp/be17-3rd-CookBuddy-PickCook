@@ -8,7 +8,9 @@ import org.example.be17pickcook.domain.common.repository.CategoryRepository;
 import org.example.be17pickcook.domain.refrigerator.enums.SyncPromptMessage;
 import org.example.be17pickcook.domain.refrigerator.mapper.RefrigeratorItemMapper;
 import org.example.be17pickcook.domain.refrigerator.model.RefrigeratorItem;
+import org.example.be17pickcook.domain.refrigerator.model.RefrigeratorItemDeleteLog;
 import org.example.be17pickcook.domain.refrigerator.model.RefrigeratorItemDto;
+import org.example.be17pickcook.domain.refrigerator.repository.RefrigeratorItemDeleteLogRepository;
 import org.example.be17pickcook.domain.refrigerator.repository.RefrigeratorItemRepository;
 import org.example.be17pickcook.domain.user.model.User;
 import org.example.be17pickcook.domain.user.repository.UserRepository;
@@ -43,6 +45,8 @@ public class RefrigeratorItemService {
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final RefrigeratorItemMapper refrigeratorItemMapper;
+    private final RefrigeratorItemDeleteLogRepository deleteLogRepository;
+
 
     // =================================================================
     // 기본 CRUD 관련 API
@@ -134,15 +138,21 @@ public class RefrigeratorItemService {
     }
 
     /**
-     * 냉장고 아이템 삭제 (소프트 삭제)
+     * 냉장고 아이템 삭제 (소프트 삭제 + 로그 저장)
      */
     @Transactional
     public void delete(Long itemId, Integer userId) {
         RefrigeratorItem item = findActiveItemByIdAndUserId(itemId, userId);
 
+        // 삭제 로그 저장 (소프트 삭제 전에)
+        RefrigeratorItemDeleteLog deleteLog = RefrigeratorItemDeleteLog.from(
+                item,
+                RefrigeratorItemDeleteLog.DeleteReason.OTHER // 기본값, 추후 사용자 선택 가능
+        );
+        deleteLogRepository.save(deleteLog);
+
         // 소프트 삭제 처리
         item.markAsDeleted();
-
         refrigeratorItemRepository.save(item);
     }
 
