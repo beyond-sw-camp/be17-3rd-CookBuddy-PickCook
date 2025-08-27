@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.example.be17pickcook.domain.cart.model.Carts;
 import org.example.be17pickcook.domain.cart.model.CartsDto;
 import org.example.be17pickcook.domain.cart.repository.CartsRepository;
-import org.example.be17pickcook.domain.product.model.Product;
 import org.example.be17pickcook.domain.user.model.User;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.springframework.stereotype.Service;
@@ -19,6 +18,7 @@ public class CartsService {
     private final CartsRepository cartsRepository;
 
     // 장바구니 등록
+    @Transactional
     public void register(UserDto.AuthUser authUser, CartsDto.CartsRequestDto dto) {
         User user = User.builder().idx(authUser.getIdx()).build();
 
@@ -41,7 +41,8 @@ public class CartsService {
 
 
     // 장바구니 삭제
-    public void delete(UserDto.AuthUser authUser, CartsDto.CartsRequestDto dto) {
+    @Transactional
+    public void delete(UserDto.AuthUser authUser, CartsDto.CartsDeleteDto dto) {
         User user = User.builder().idx(authUser.getIdx()).build();
 
         for (Long procutId : dto.getProduct_ids()) {
@@ -76,5 +77,10 @@ public class CartsService {
 
         // 수량 변경
         cartItem.updateQuantity(quantity);
+    }
+
+    // 사용자가 장바구니 담았는지 확인
+    public boolean isInCart(Integer userId, Long productId) {
+        return cartsRepository.existsByUserIdxAndProductId(userId, productId);
     }
 }

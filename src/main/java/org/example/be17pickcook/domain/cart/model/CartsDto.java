@@ -37,6 +37,29 @@ public class CartsDto {
 
     @Getter
     @Builder
+    @Schema(description = "장바구니 삭제 요청 DTO")
+    public static class CartsDeleteDto {
+
+        @Schema(description = "상품 고유 ID", example = "[3, 5, 7]")
+        private List<Long> product_ids;  // 여러 상품 삭제 가능
+
+
+        public List<Carts> toEntity(User authUser) {
+            if (product_ids == null || product_ids.isEmpty()) return Collections.emptyList();
+
+            return product_ids.stream()
+                    .map(productId -> Carts.builder()
+                            .product(Product.builder().id(productId).build())
+                            .user(authUser)
+                            .build())
+                    .collect(Collectors.toList());
+        }
+    }
+
+
+
+    @Getter
+    @Builder
     @Schema(description = "장바구니 응답 DTO")
     public static class CartsResponseDto {
         @Schema(description = "장바구니 상품 ID", example = "1")

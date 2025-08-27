@@ -17,4 +17,13 @@ public interface CartsRepository extends JpaRepository<Carts, Long> {
     @Modifying
     @Query("DELETE FROM Carts c WHERE c.user.idx = :userId AND c.product.id = :productId")
     void deleteByUserAndProduct(@Param("userId") Integer userId, @Param("productId") Long productId);
+
+    // 사용자별 장바구니 담았는지 여부 (하나)
+    boolean existsByUserIdxAndProductId(Integer userId, Long productId);
+
+    // 사용자별 장바구니 담았는지 여부 (여러개)
+    @Query("SELECT c.product.id FROM Carts c WHERE c.user.idx = :userId AND c.product.id IN :productIds")
+    List<Long> findCartsProductIdsByUser(@Param("userId") Integer userId,
+                                         @Param("productIds") List<Long> productIds);
+
 }

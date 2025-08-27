@@ -30,7 +30,7 @@ public class CartsController {
                                @RequestBody CartsDto.CartsRequestDto dto) {
         cartsService.register(authUser, dto);
 
-        return BaseResponse.success("장바구니 기능 동작 성공");
+        return BaseResponse.success("장바구니에 상품 등록 성공");
     }
 
 
@@ -40,10 +40,10 @@ public class CartsController {
     )
     @PostMapping("/delete")
     public BaseResponse delete(@AuthenticationPrincipal UserDto.AuthUser authUser,
-                               @RequestBody CartsDto.CartsRequestDto dto) {
+                               @RequestBody CartsDto.CartsDeleteDto dto) {
         cartsService.delete(authUser, dto);
 
-        return BaseResponse.success("장바구니 기능 동작 성공");
+        return BaseResponse.success("장바구니에 상품 삭제 성공");
     }
 
 

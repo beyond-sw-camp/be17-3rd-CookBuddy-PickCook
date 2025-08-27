@@ -225,21 +225,6 @@ public class RecipeDto {
         public void setScrapInfo(Boolean scrappedByUser) {
             this.scrappedByUser = scrappedByUser;
         }
-
-        public static RecipeListResponseDto fromEntity(Recipe recipe) {
-            return RecipeListResponseDto.builder()
-                    .idx(recipe.getIdx())
-                    .title(recipe.getTitle())
-                    .cooking_method(recipe.getCooking_method())
-                    .category(recipe.getCategory())
-                    .time_taken(recipe.getTime_taken())
-                    .difficulty_level(recipe.getDifficulty_level())
-                    .serving_size(recipe.getServing_size())
-                    .hashtags(recipe.getHashtags())
-                    .image_large_url(recipe.getImage_large_url())
-                    .likeCount(recipe.getLikeCount())
-                    .build();
-        }
     }
 
 

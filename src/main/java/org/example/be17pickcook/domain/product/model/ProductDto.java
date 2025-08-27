@@ -58,6 +58,45 @@ public class ProductDto {
     }
 
     // ================== 기본 응답 DTO ==================
+    @Schema(description = "상품 목록 응답 정보")
+    @Getter
+    @Builder
+    public static class ProductListResponse {
+        @Schema(description = "상품 고유 ID", example = "1")
+        private Long id;
+
+        @Schema(description = "상품 제목", example = "신선한 유기농 상추 500g")
+        private String title;
+
+        @Schema(description = "대표 이미지 URL", example = "https://example.com/product1.jpg")
+        private String main_image_url;
+
+        @Schema(description = "할인율 (%)", example = "15")
+        private Integer discount_rate;
+
+        @Schema(description = "정가 (원)", example = "5000")
+        private Integer original_price;
+
+        @Schema(description = "장바구니 담았는지 여부", example = "true")
+        private Boolean isInCart;
+
+        @Schema(description = "상품 평점", example = "5.4")
+        private Integer rating;
+
+        @Schema(description = "리뷰 수", example = "23")
+        private Long review_count;
+
+        // 장바구니 담았는지 여부
+        public void setIsInCart(Boolean isInCart) {
+            this.isInCart = isInCart;
+        }
+
+//        public static ProductListResponse fromEntity(Product product) {
+//
+//        }
+    }
+
+
 
     @Schema(description = "상품 상세 응답 정보")
     @Getter

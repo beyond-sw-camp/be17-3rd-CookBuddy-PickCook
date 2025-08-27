@@ -9,6 +9,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.example.be17pickcook.common.BaseResponse;
+import org.example.be17pickcook.common.PageResponse;
 import org.example.be17pickcook.domain.product.model.ProductDto;
 import org.example.be17pickcook.domain.product.service.ProductService;
 import org.example.be17pickcook.domain.user.model.UserDto;
@@ -85,7 +86,8 @@ public class ProductController {
             }
     )
     @GetMapping
-    public ResponseEntity<Page<ProductDto.Res>> findAll(
+    public BaseResponse<PageResponse<ProductDto.ProductListResponse>> getProductList(
+            @AuthenticationPrincipal UserDto.AuthUser authUser,
             @Parameter(description = "페이지 번호", example = "0")
             @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "페이지 크기", example = "10")
@@ -95,33 +97,15 @@ public class ProductController {
             @Parameter(description = "정렬 방향 (ASC/DESC)", example = "ASC")
             @RequestParam(defaultValue = "ASC") String dir    // [변경] 기본 정렬 방향을 DESC → ASC
     ) {
+        Integer userIdx = (authUser != null) ? authUser.getIdx() : null;
         Sort s = dir.equalsIgnoreCase("DESC")
                 ? Sort.by(sort).descending()
                 : Sort.by(sort).ascending();
         Pageable pageable = PageRequest.of(page, size, s);
-        return ResponseEntity.ok(productService.findAll(pageable));
+        return BaseResponse.success(productService.getProductList(userIdx, pageable));
     }
 
-    // ================== 전체 목록 조회 (전부 반환 + 정렬만) ==================
-    @Operation(
-            summary = "전체 상품 목록 조회",
-            description = "모든 상품을 정렬 옵션과 함께 조회합니다. (페이징 없음)",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "조회 성공")
-            }
-    )
-    @GetMapping("/list")
-    public BaseResponse<List<ProductDto.Res>> findAllNoPaging(
-            @Parameter(description = "정렬 기준 필드", example = "id")
-            @RequestParam(defaultValue = "id") String sort,   // [변경] createdAt → id
-            @Parameter(description = "정렬 방향 (ASC/DESC)", example = "ASC")
-            @RequestParam(defaultValue = "ASC") String dir    // [변경] DESC → ASC
-    ) {
-        Sort s = dir.equalsIgnoreCase("DESC")
-                ? Sort.by(sort).descending()
-                : Sort.by(sort).ascending();
-        return BaseResponse.success(productService.findAllNoPaging(s));
-    }
+
 
     // ================== 단건 조회 ==================
     @Operation(

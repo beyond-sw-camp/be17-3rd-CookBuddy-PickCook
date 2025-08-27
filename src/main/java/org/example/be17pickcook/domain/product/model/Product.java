@@ -119,6 +119,8 @@ public class Product extends BaseEntity {
     @Column(name = "description", length = 2000, nullable = false)
     private String description;
 
+    private Long review_count;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
