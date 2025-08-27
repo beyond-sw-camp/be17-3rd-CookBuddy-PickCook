@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.example.be17pickcook.common.QBaseEntity;
 import org.example.be17pickcook.domain.common.model.CategoryDto;
 
 import java.time.LocalDate;

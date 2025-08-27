@@ -6,16 +6,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 /**
  * 냉장고 아이템 리포지토리
  * - 소프트 삭제 지원
- * - 검색, 필터링, 정렬 기능
+ * - 검색, 필터링, 정렬 기능 (QueryDSL 확장)
  */
-public interface RefrigeratorItemRepository extends JpaRepository<RefrigeratorItem, Long> {
+public interface RefrigeratorItemRepository extends JpaRepository<RefrigeratorItem, Long>, RefrigeratorItemRepositoryCustom {
 
     // =================================================================
     // 기본 CRUD (소프트 삭제 고려)
@@ -55,45 +54,4 @@ public interface RefrigeratorItemRepository extends JpaRepository<RefrigeratorIt
         ORDER BY ri.expirationDate DESC
     """)
     List<RefrigeratorItem> findExpiredItems(@Param("userId") Integer userId);
-
-    // =================================================================
-    // 개선된 복합 필터링 (유통기한 상태를 DB에서 처리) - 새로 추가
-    // =================================================================
-
-    /**
-     * 복합 필터링 쿼리 (키워드 + 카테고리 + 유통기한 상태 + 동적 정렬)
-     */
-    @Query(value = """
-    SELECT ri FROM RefrigeratorItem ri 
-    WHERE ri.user.idx = :userId 
-    AND ri.isDeleted = false
-    AND (:keyword IS NULL OR ri.ingredientName LIKE %:keyword%)
-    AND (:categoryId IS NULL OR ri.category.id = :categoryId)
-    AND (
-        :expirationStatus IS NULL OR
-        (:expirationStatus = 'FRESH' AND ri.expirationDate >= :freshDate) OR
-        (:expirationStatus = 'EXPIRING_SOON' AND ri.expirationDate >= :soonStartDate AND ri.expirationDate < :soonEndDate) OR
-        (:expirationStatus = 'URGENT' AND ri.expirationDate >= :urgentStartDate AND ri.expirationDate < :urgentEndDate) OR
-        (:expirationStatus = 'EXPIRED' AND ri.expirationDate < :today)
-    )
-    ORDER BY 
-        CASE WHEN :sortType = 'EXPIRATION_DATE' AND :sortDirection = 'ASC' THEN ri.expirationDate END ASC,
-        CASE WHEN :sortType = 'EXPIRATION_DATE' AND :sortDirection = 'DESC' THEN ri.expirationDate END DESC,
-        CASE WHEN :sortType = 'CREATED_DATE' AND :sortDirection = 'ASC' THEN ri.createdAt END ASC,
-        CASE WHEN :sortType = 'CREATED_DATE' AND :sortDirection = 'DESC' THEN ri.createdAt END DESC
-    """)
-    List<RefrigeratorItem> findByComplexFilter(
-            @Param("userId") Integer userId,
-            @Param("keyword") String keyword,
-            @Param("categoryId") Long categoryId,
-            @Param("expirationStatus") String expirationStatus,
-            @Param("sortType") String sortType,
-            @Param("sortDirection") String sortDirection,
-            @Param("today") LocalDate today,
-            @Param("freshDate") LocalDate freshDate,
-            @Param("soonStartDate") LocalDate soonStartDate,
-            @Param("soonEndDate") LocalDate soonEndDate,
-            @Param("urgentStartDate") LocalDate urgentStartDate,
-            @Param("urgentEndDate") LocalDate urgentEndDate
-    );
 }
