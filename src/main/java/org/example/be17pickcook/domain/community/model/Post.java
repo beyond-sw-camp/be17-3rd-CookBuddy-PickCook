@@ -21,8 +21,8 @@ public class Post extends BaseEntity implements LikeCountable, ScrapCountable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "post_id")
     private Long id;
+    @Column(columnDefinition = "TEXT")
     private String title;
-    @Lob
     @Column(columnDefinition = "TEXT")
     private String content;
     private Long likeCount;

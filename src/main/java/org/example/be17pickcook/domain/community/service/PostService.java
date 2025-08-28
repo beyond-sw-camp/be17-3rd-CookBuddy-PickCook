@@ -5,6 +5,7 @@ import org.example.be17pickcook.domain.community.model.Post;
 import org.example.be17pickcook.domain.community.model.PostDto;
 import org.example.be17pickcook.domain.community.model.PostImage;
 import org.example.be17pickcook.domain.community.repository.PostImageRepository;
+import org.example.be17pickcook.domain.community.repository.PostQueryRepository;
 import org.example.be17pickcook.domain.community.repository.PostRepository;
 import org.example.be17pickcook.domain.likes.model.LikeTargetType;
 import org.example.be17pickcook.domain.likes.service.LikeService;
@@ -13,6 +14,10 @@ import org.example.be17pickcook.domain.scrap.service.ScrapService;
 import org.example.be17pickcook.domain.user.model.User;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.domain.user.repository.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,6 +29,7 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final PostImageRepository postImageRepository;
+    private final PostQueryRepository postQueryRepository;
     private final UserRepository userRepository;
     private final LikeService likesService;
     private final ScrapService scrapService;
@@ -66,6 +72,10 @@ public class PostService {
             }
         }
         return PostDto.DetailResponse.from(saved, false, false);
+    }
+
+    public Page<PostDto.ListResponse> getPostsWithPaging(String keyword, int page, int size, String dir) {
+        return postQueryRepository.findPostsWithPaging(keyword, page, size, dir);
     }
 
 }
