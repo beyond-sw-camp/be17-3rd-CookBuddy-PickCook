@@ -27,7 +27,6 @@ public enum BaseResponseStatus {
     // 회원가입 관련 성공
     SIGNUP_SUCCESS(true, 20100, "회원가입이 완료되었습니다. 이메일을 확인해주세요."),
     EMAIL_VERIFY_SUCCESS(true, 20101, "이메일 인증이 완료되었습니다."),
-    EMAIL_VERIFICATION_SUCCESS(true, 20101, "이메일 인증이 완료되었습니다."), // 별칭 추가
     EMAIL_AVAILABLE(true, 20102, "사용 가능한 이메일입니다."),
     NICKNAME_AVAILABLE(true, 20103, "사용 가능한 닉네임입니다."),
     EMAIL_FOUND_SUCCESS(true, 20104, "이메일을 찾았습니다."), // 🆕 새로 추가
@@ -62,7 +61,6 @@ public enum BaseResponseStatus {
     UNAUTHORIZED(false, 30004, "인증이 필요합니다."),
 
     // 회원가입 관련 오류
-    DUPLICATE_EMAIL(false, 30100, "이미 사용 중인 이메일입니다."),
     EMAIL_NOT_AVAILABLE(false, 30101, "이미 사용 중인 이메일입니다."),
     INVALID_EMAIL_TOKEN(false, 30102, "유효하지 않은 인증 코드입니다."),
     EXPIRED_EMAIL_TOKEN(false, 30103, "인증 코드가 만료되었습니다."),
@@ -129,6 +127,43 @@ public enum BaseResponseStatus {
     INVALID_SORT_TYPE(false, 4902, "유효하지 않은 정렬 기준입니다."),
     INVALID_EXPIRATION_STATUS(false, 4903, "유효하지 않은 유통기한 상태입니다."),
     FILTER_PROCESSING_ERROR(false, 4904, "필터링 처리 중 오류가 발생했습니다."),
+
+    // =================================================================
+    // 41000번대: 리뷰 관련 오류
+    // =================================================================
+
+    // 리뷰 기본 오류 (41000-41099)
+    REVIEW_NOT_FOUND(false, 41000, "요청한 리뷰를 찾을 수 없습니다."),
+    REVIEW_ACCESS_DENIED(false, 41001, "해당 리뷰에 대한 접근 권한이 없습니다."),
+    REVIEW_ALREADY_DELETED(false, 41002, "이미 삭제된 리뷰입니다."),
+    REVIEW_CREATION_FAILED(false, 41003, "리뷰 작성에 실패했습니다."),
+    REVIEW_UPDATE_FAILED(false, 41004, "리뷰 수정에 실패했습니다."),
+    REVIEW_DELETE_FAILED(false, 41005, "리뷰 삭제에 실패했습니다."),
+
+    // 리뷰 권한 관련 (41100-41199)
+    REVIEW_NO_PURCHASE_HISTORY(false, 41100, "해당 상품을 구매한 이력이 없어 리뷰를 작성할 수 없습니다."),
+    REVIEW_DUPLICATE_NOT_ALLOWED(false, 41101, "이미 해당 상품에 리뷰를 작성하셨습니다."),
+    REVIEW_AUTHOR_MISMATCH(false, 41102, "본인이 작성한 리뷰만 수정/삭제할 수 있습니다."),
+    REVIEW_MODIFICATION_PERIOD_EXPIRED(false, 41103, "리뷰 수정 기간이 만료되었습니다. (작성 후 7일 이내만 수정 가능)"),
+    REVIEW_PURCHASE_DATE_INVALID(false, 41104, "구매일로부터 6개월이 지나 리뷰를 작성할 수 없습니다."),
+
+    // 리뷰 내용 검증 관련 (41200-41299)
+    REVIEW_TITLE_TOO_LONG(false, 41200, "리뷰 제목은 100자 이하로 작성해주세요."),
+    REVIEW_TITLE_REQUIRED(false, 41201, "리뷰 제목을 입력해주세요."),
+    REVIEW_CONTENT_TOO_LONG(false, 41202, "리뷰 내용은 2000자 이하로 작성해주세요."),
+    REVIEW_CONTENT_REQUIRED(false, 41203, "리뷰 내용을 입력해주세요."),
+    REVIEW_RATING_INVALID(false, 41204, "별점은 1점부터 5점까지 선택할 수 있습니다."),
+    REVIEW_RATING_REQUIRED(false, 41205, "별점을 선택해주세요."),
+
+    // 리뷰 이미지 관련 (41300-41399)
+    REVIEW_IMAGE_NOT_FOUND(false, 41300, "요청한 리뷰 이미지를 찾을 수 없습니다."),
+    REVIEW_IMAGE_COUNT_EXCEEDED(false, 41301, "리뷰 이미지는 최대 5개까지 업로드할 수 있습니다."),
+    REVIEW_IMAGE_SIZE_EXCEEDED(false, 41302, "이미지 파일 크기는 10MB 이하여야 합니다."),
+    REVIEW_IMAGE_FORMAT_UNSUPPORTED(false, 41303, "지원하지 않는 이미지 형식입니다. (JPEG, PNG, WebP만 가능)"),
+    REVIEW_IMAGE_UPLOAD_FAILED(false, 41304, "이미지 업로드에 실패했습니다. 다시 시도해주세요."),
+    REVIEW_IMAGE_DELETE_FAILED(false, 41305, "이미지 삭제에 실패했습니다."),
+    REVIEW_IMAGE_URL_INVALID(false, 41306, "올바르지 않은 이미지 URL입니다."),
+    REVIEW_IMAGE_ORDER_INVALID(false, 41307, "이미지 순서는 1부터 5까지 설정할 수 있습니다."),
 
     // =================================================================
     // 50000번대: 데이터베이스 오류

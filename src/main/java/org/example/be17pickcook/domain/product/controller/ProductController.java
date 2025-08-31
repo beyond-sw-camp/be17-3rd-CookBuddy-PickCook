@@ -107,20 +107,25 @@ public class ProductController {
 
 
 
-    // ================== 단건 조회 ==================
-    @Operation(
-            summary = "상품 상세 조회",
-            description = "상품 ID로 특정 상품의 상세 정보를 조회합니다.",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "조회 성공"),
-                    @ApiResponse(responseCode = "404", description = "상품을 찾을 수 없음")
-            }
-    )
+    // ================== 단건 조회 (리뷰 포함) ==================
+    // 🔄 임시로 기존 방식으로 되돌림
     @GetMapping("/{id}")
     public ProductDto.Res findById(
             @Parameter(description = "조회할 상품 ID", example = "1")
             @PathVariable Long id) {
         return productService.findById(id);
+    }
+
+    // 🆕 새 기능은 별도 엔드포인트로
+    @GetMapping("/{id}/with-reviews")
+    public ResponseEntity<BaseResponse<ProductDto.DetailWithReview>> getProductDetailWithReview(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDto.AuthUser authUser) {
+
+        Integer currentUserId = authUser != null ? authUser.getIdx() : null;
+        ProductDto.DetailWithReview result = productService.getProductDetailWithReview(id, currentUserId);
+
+        return ResponseEntity.ok(BaseResponse.success(result));
     }
 
     // ================== 수정 ==================

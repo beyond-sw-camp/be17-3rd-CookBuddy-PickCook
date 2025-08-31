@@ -111,7 +111,7 @@ public class UserService implements UserDetailsService {
                 reactivateWithdrawnAccount(user, dto);
                 return;
             } else {
-                throw BaseException.from(BaseResponseStatus.DUPLICATE_EMAIL);
+                throw BaseException.from(BaseResponseStatus.EMAIL_NOT_AVAILABLE);
             }
         }
 
@@ -201,7 +201,7 @@ public class UserService implements UserDetailsService {
      */
     @Transactional(readOnly = true)
     public UserDto.Response getCurrentUserInfo(Integer userId) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdAndNotDeleted(userId)
                 .orElseThrow(() -> BaseException.from(BaseResponseStatus.USER_NOT_FOUND));
 
         return userMapper.entityToResponse(user);

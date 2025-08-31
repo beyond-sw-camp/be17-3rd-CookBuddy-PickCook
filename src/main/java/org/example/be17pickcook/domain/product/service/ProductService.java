@@ -7,6 +7,9 @@ import org.example.be17pickcook.domain.cart.service.CartsService;
 import org.example.be17pickcook.domain.product.repository.ProductRepository;
 import org.example.be17pickcook.domain.product.model.Product;
 import org.example.be17pickcook.domain.product.model.ProductDto;
+import org.example.be17pickcook.domain.review.model.Review;
+import org.example.be17pickcook.domain.review.model.ReviewDto;
+import org.example.be17pickcook.domain.review.repository.ReviewRepository;
 import org.example.be17pickcook.domain.user.model.User;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.common.service.S3UploadService;
@@ -29,7 +32,7 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final S3UploadService s3UploadService;
-    private final CartsService cartsService;
+    private final ReviewRepository reviewRepository;
 
     private static final String MAIN_IMAGE_URL = "https://example.com/default-small.jpg";
     private static final String DETAIL_IMAGE_URL = "https://example.com/default-large.jpg";
@@ -57,6 +60,48 @@ public class ProductService {
         product.setDetailImageUrl(detail_image_url);
 
         productRepository.save(product);
+    }
+
+    // =================================================================
+// 리뷰 포함 상품 상세 조회 (추가 필요)
+// =================================================================
+
+    @Transactional(readOnly = true)
+    public ProductDto.DetailWithReview getProductDetailWithReview(Long productId, Integer currentUserId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다: id=" + productId));
+
+        // 리뷰 섹션 구성
+        ProductDto.ReviewSection reviewSection = buildReviewSection(productId, currentUserId);
+
+        return ProductDto.DetailWithReview.fromEntity(product, reviewSection);
+    }
+
+    private ProductDto.ReviewSection buildReviewSection(Long productId, Integer currentUserId) {
+        // 리뷰 통계
+        var statistics = reviewRepository.getReviewStatistics(productId);
+
+        // 최근 리뷰 10개
+        List<Review> recentReviews = reviewRepository.findByComplexFilter(
+                productId, null, null, null, "latest", currentUserId);
+
+        // 내 리뷰 찾기
+        ReviewDto.Response myReview = null;
+        if (currentUserId != null) {
+            Optional<Review> myReviewEntity = reviewRepository.findByProductIdAndUserIdxAndIsDeletedFalse(productId, currentUserId);
+            if (myReviewEntity.isPresent()) {
+                myReview = ReviewDto.Response.fromEntity(myReviewEntity.get(), currentUserId);
+            }
+        }
+
+        return ProductDto.ReviewSection.builder()
+                .statistics(ReviewDto.StatisticsResponse.fromRepositoryResult(statistics))
+                .recentReviews(recentReviews.stream()
+                        .limit(10)
+                        .map(review -> ReviewDto.Response.fromEntity(review, currentUserId))
+                        .toList())
+                .myReview(myReview)
+                .build();
     }
 
     public Page<ProductDto.Response> getPagedProductsWithReviewsDto(int page, int size, String sortBy) {

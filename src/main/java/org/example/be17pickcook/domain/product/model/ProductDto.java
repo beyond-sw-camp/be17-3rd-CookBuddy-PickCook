@@ -6,9 +6,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.example.be17pickcook.domain.review.model.ReviewDto;
 import org.example.be17pickcook.domain.user.model.User;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Product DTOs (엔티티 변환을 DTO 내부에서 처리: from / toEntity / apply)
@@ -185,6 +187,120 @@ public class ProductDto {
                     .updated_at(entity.getUpdatedAt())
                     .build();
         }
+    }
+
+    // =================================================================
+    // 리뷰 포함 상품 상세 응답 DTO (🆕 새로 추가)
+    // =================================================================
+
+    @Schema(description = "리뷰가 포함된 상품 상세 응답")
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DetailWithReview {
+
+        // 기존 상품 정보
+        @Schema(description = "상품 고유 ID", example = "1")
+        private Long productId;
+
+        @Schema(description = "카테고리", example = "채소")
+        private String category;
+
+        @Schema(description = "상품 제목", example = "신선한 유기농 상추 500g")
+        private String title;
+
+        @Schema(description = "상품 부제목", example = "아침에 수확한 신선한 상추")
+        private String subtitle;
+
+        @Schema(description = "대표 이미지 URL", example = "https://example.com/product1.jpg")
+        private String mainImageUrl;
+
+        @Schema(description = "상세 이미지 URL", example = "https://example.com/product1_detail.jpg")
+        private String detailImageUrl;
+
+        @Schema(description = "판매자", example = "농부마켓")
+        private String seller;
+
+        @Schema(description = "할인율 (%)", example = "15")
+        private Integer discountRate;
+
+        @Schema(description = "정가 (원)", example = "5000")
+        private Integer originalPrice;
+
+        @Schema(description = "할인된 가격 (원)", example = "4250")
+        private Integer discountedPrice;
+
+        @Schema(description = "단위", example = "1봉지")
+        private String unit;
+
+        @Schema(description = "무게/용량", example = "500g")
+        private String weightOrVolume;
+
+        @Schema(description = "유통기한", example = "수령일로부터 3일")
+        private String expirationDate;
+
+        @Schema(description = "원산지", example = "국내산")
+        private String origin;
+
+        @Schema(description = "포장타입", example = "친환경 포장")
+        private String packaging;
+
+        @Schema(description = "배송안내", example = "새벽배송 가능")
+        private String shippingInfo;
+
+        @Schema(description = "소비자안내", example = "냉장보관")
+        private String notice;
+
+        @Schema(description = "상세설명", example = "신선한 유기농 상추입니다.")
+        private String description;
+
+        @Schema(description = "리뷰 섹션")
+        private ReviewSection reviewSection;
+
+        public static DetailWithReview fromEntity(Product product, ReviewSection reviewSection) {
+            Integer discountedPrice = product.getOriginal_price() -
+                    (product.getOriginal_price() * product.getDiscount_rate() / 100);
+
+            return DetailWithReview.builder()
+                    .productId(product.getId())
+                    .category(product.getCategory())
+                    .title(product.getTitle())
+                    .subtitle(product.getSubtitle())
+                    .mainImageUrl(product.getMain_image_url())
+                    .detailImageUrl(product.getDetail_image_url())
+                    .seller(product.getSeller())
+                    .discountRate(product.getDiscount_rate())
+                    .originalPrice(product.getOriginal_price())
+                    .discountedPrice(discountedPrice)
+                    .unit(product.getUnit())
+                    .weightOrVolume(product.getWeight_or_volume())
+                    .expirationDate(product.getExpiration_date())
+                    .origin(product.getOrigin())
+                    .packaging(product.getPackaging())
+                    .shippingInfo(product.getShipping_info())
+                    .notice(product.getNotice())
+                    .description(product.getDescription())
+                    .reviewSection(reviewSection)
+                    .build();
+        }
+    }
+
+    @Schema(description = "상품의 리뷰 섹션")
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ReviewSection {
+
+        @Schema(description = "리뷰 통계")
+        private org.example.be17pickcook.domain.review.model.ReviewDto.StatisticsResponse statistics;
+
+        @Schema(description = "리뷰 목록 (기본 10개)")
+        private List<org.example.be17pickcook.domain.review.model.ReviewDto.Response> recentReviews;
+
+        @Schema(description = "내 리뷰 (있는 경우)")
+        private org.example.be17pickcook.domain.review.model.ReviewDto.Response myReview;
     }
 
     // ================== 등록 DTO ==================
