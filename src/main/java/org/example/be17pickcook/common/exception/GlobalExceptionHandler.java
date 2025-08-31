@@ -91,7 +91,7 @@ public class GlobalExceptionHandler {
         if (message != null) {
             if (message.contains("email")) {
                 return ResponseEntity.badRequest()
-                        .body(BaseResponse.error(BaseResponseStatus.DUPLICATE_EMAIL));
+                        .body(BaseResponse.error(BaseResponseStatus.EMAIL_NOT_AVAILABLE));
             } else if (message.contains("nickname")) {
                 return ResponseEntity.badRequest()
                         .body(BaseResponse.error(BaseResponseStatus.NICKNAME_NOT_AVAILABLE));
