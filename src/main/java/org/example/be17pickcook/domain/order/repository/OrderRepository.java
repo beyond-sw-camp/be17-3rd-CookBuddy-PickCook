@@ -2,14 +2,11 @@ package org.example.be17pickcook.domain.order.repository;
 
 import org.example.be17pickcook.domain.order.model.OrderItem;
 import org.example.be17pickcook.domain.order.model.Orders;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,14 +36,4 @@ public interface OrderRepository extends JpaRepository<Orders, Long> {
             "AND o.status = 'COMPLETED' " +
             "ORDER BY o.createdAt DESC")
     List<Orders> findCompletedOrdersByUser(@Param("userId") Integer userId);
-
-
-    @Query(
-            value = "SELECT DISTINCT o FROM Orders o " +
-                    "LEFT JOIN FETCH o.orderItems oi " +
-                    "LEFT JOIN FETCH oi.product " +
-                    "WHERE o.createdAt BETWEEN :start AND :end",
-            countQuery = "SELECT COUNT(o) FROM Orders o WHERE o.createdAt BETWEEN :start AND :end"
-    )
-    Page<Orders> findAllWithItemsByCreatedAtBetween(LocalDateTime start, LocalDateTime end, Pageable pageable);
 }
