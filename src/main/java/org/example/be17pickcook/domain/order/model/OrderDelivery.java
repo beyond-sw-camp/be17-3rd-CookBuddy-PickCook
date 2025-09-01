@@ -20,5 +20,12 @@ public class OrderDelivery {
     private Integer zipCode;
     private String address;
     private String detailAddress;
+    private String deliveryPlace;
     private String requestMessage;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id")
+    private Orders order;
+
+    public void setOrder(Orders order) { this.order = order; }
 }

@@ -23,6 +23,7 @@ public class OrderDto {
         private Integer total_price;
         private String orderType;
         private List<OrderItemDto> orderItems;
+        private OrderDeliveryDto orderDelivery;
 
         public Orders toEntity(User authUser, String paymentId) {
             Orders order = Orders.builder()
@@ -40,6 +41,11 @@ public class OrderDto {
                 }
             }
 
+            if (orderDelivery != null) {
+                OrderDelivery orderDeliveryEntity = orderDelivery.toEntity(order);
+                order.addOrderDelivery(orderDeliveryEntity);
+            }
+
             return order;
         }
     }
@@ -54,12 +60,14 @@ public class OrderDto {
         private String product_name;
         private Integer product_price;
         private Integer quantity;
+        private DeliveryStatus deliveryStatus;
 
         public OrderItem toEntity(Orders order) {
             return OrderItem.builder()
                     .quantity(quantity)
                     .product_name(product_name)
                     .product_price(product_price)
+                    .deliveryStatus(DeliveryStatus.READY)
                     .order(order)
                     .product(Product.builder().id(product_id).build())
                     .build();
@@ -75,77 +83,80 @@ public class OrderDto {
         }
     }
 
-    // 주문내역 리스트에서 상품 단일 컴포넌트에 필요한 데이터들
+
+    @Getter
+    @Builder
+    public static class OrderDeliveryDto {
+        private String receiverName;
+        private String receiverPhone;
+        private Integer zipCode;
+        private String address;
+        private String detailAddress;
+        private String deliveryPlace;
+        private String requestMessage;
+
+        public OrderDelivery toEntity(Orders order) {
+            return OrderDelivery.builder()
+                    .receiverName(receiverName)
+                    .receiverPhone(receiverPhone)
+                    .zipCode(zipCode)
+                    .address(address)
+                    .detailAddress(detailAddress)
+                    .deliveryPlace(deliveryPlace)
+                    .requestMessage(requestMessage)
+                    .order(order)
+                    .build();
+        }
+    }
+
+
+    // 주문 내역 조회용
     @Getter
     @Builder
     public static class OrderInfoDto {
         private Long product_id;
         private String product_name;
-        private Integer product_price;
+        private Integer original_price;
+        private Integer discount_rate;
         private Integer quantity;
         private String product_image;
         private String product_amount;
         private String status;
 
-        public static OrderInfoDto fromEntity(OrderItem orderitem) {
-            OrderItemDto itemDto = OrderItemDto.fromEntity(orderitem);
-
+        public static OrderInfoDto fromEntity(OrderItem orderItem) {
             return OrderInfoDto.builder()
-                    .product_id(itemDto.getProduct_id())
-                    .product_name(itemDto.getProduct_name())
-                    .product_price(itemDto.getProduct_price())
-                    .quantity(itemDto.getQuantity())
-                    .product_image(orderitem.getProduct().getMain_image_url())
-                    .product_amount(orderitem.getProduct().getWeight_or_volume())
-                    .status(orderitem.getOrder().getStatus().name())
+                    .product_id(orderItem.getProduct().getId())
+                    .product_name(orderItem.getProduct().getTitle())
+                    .original_price(orderItem.getProduct().getOriginal_price())
+                    .discount_rate(orderItem.getProduct().getDiscount_rate())
+                    .quantity(orderItem.getQuantity())
+                    .product_image(orderItem.getProduct().getMain_image_url())
+                    .product_amount(orderItem.getProduct().getWeight_or_volume())
+                    .status(orderItem.getDeliveryStatus().name())
                     .build();
         }
     }
 
 
-    // 주문내역 리스트에서 한 날짜/시간에 포함되는 주문내역에 들어가는 데이터들
-    @Getter
-    @Builder
-    public static class DayOrderInfoDto {
-        private Long order_id;
-        private LocalDateTime date;
-        private List<OrderItemDto> orderItems;
-    }
 
-
-    // 주문내역 리스트에 필요한 데이터들
     @Getter
     @Builder
     public static class OrderInfoListDto {
-        private List<DayOrderInfoDto> orderItems;
+        private Long orderId;
+        private LocalDateTime date;
+        private List<OrderInfoDto> items; // 기존 OrderInfoDto 사용
 
-        public static OrderInfoListDto fromEntities(List<OrderItem> orderItems) {
-            // order_id별로 그룹핑
-            Map<Long, List<OrderItem>> groupedByOrder = orderItems.stream()
-                    .collect(Collectors.groupingBy(item -> item.getOrder().getIdx()));
-
-            List<DayOrderInfoDto> dayOrderDtos = groupedByOrder.entrySet().stream()
-                    .map(entry -> {
-                        List<OrderItem> items = entry.getValue();
-                        Orders order = items.get(0).getOrder(); // 같은 order_id이므로 첫 번째로 대표
-                        List<OrderItemDto> itemDtos = items.stream()
-                                .map(OrderItemDto::fromEntity) // 기존 fromEntity 재사용
-                                .collect(Collectors.toList());
-
-                        return DayOrderInfoDto.builder()
-                                .order_id(order.getIdx())
-                                .date(order.getCreatedAt())
-                                .orderItems(itemDtos)
-                                .build();
-                    })
-                    .collect(Collectors.toList());
-
+        public static OrderInfoListDto fromEntity(Orders order) {
             return OrderInfoListDto.builder()
-                    .orderItems(dayOrderDtos)
+                    .orderId(order.getIdx())
+                    .date(order.getCreatedAt())
+                    .items(order.getOrderItems().stream()
+                            .map(OrderInfoDto::fromEntity) // 여기서 OrderInfoDto 사용
+                            .toList())
                     .build();
         }
-
     }
+
 
 
     @Getter

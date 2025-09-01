@@ -7,32 +7,41 @@ import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.be17pickcook.common.PageResponse;
 import org.example.be17pickcook.domain.cart.repository.CartsRepository;
 import org.example.be17pickcook.domain.order.model.OrderItem;
 import org.example.be17pickcook.domain.order.model.OrderStatus;
 import org.example.be17pickcook.domain.order.model.Orders;
 import org.example.be17pickcook.domain.order.model.OrderDto;
+import org.example.be17pickcook.domain.order.repository.OrderItemRepository;
 import org.example.be17pickcook.domain.order.repository.OrderRepository;
+import org.example.be17pickcook.domain.product.model.Product;
+import org.example.be17pickcook.domain.product.model.ProductDto;
 import org.example.be17pickcook.domain.user.model.User;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderService {
     private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
     private final CartsRepository cartsRepository;
     private final EntityManager entityManager;
 
@@ -46,7 +55,7 @@ public class OrderService {
     private String generateOrderNumber() {
         LocalDate today = LocalDate.now();
         String datePart = today.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        String randomPart = String.format("%04d", new Random().nextInt(10000));
+        String randomPart = String.format("%05d", new Random().nextInt(100000));
         return "ORD" + datePart + "-" + randomPart;
     }
 
@@ -183,4 +192,35 @@ public class OrderService {
             return new OrderDto.PaymentValidationResDto(null, OrderStatus.FAILED.name());
         }
     }
+
+
+    // 주문 목록
+    public PageResponse<OrderDto.OrderInfoListDto> getOrdersByPeriodPaged(String period, int page, int size) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime start;
+
+        switch (period) {
+            case "3M": start = now.minusMonths(3); break;
+            case "6M": start = now.minusMonths(6); break;
+            case "1Y": start = now.minusYears(1); break;
+            case "3Y": start = now.minusYears(3); break;
+            default: start = now.minusMonths(3);
+        }
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<Orders> ordersPage = orderRepository.findAllWithItemsByCreatedAtBetween(start, now, pageable);
+
+        // DTO 변환
+        List<OrderDto.OrderInfoListDto> pageList = ordersPage.stream()
+                .map(OrderDto.OrderInfoListDto::fromEntity) // 여기서 OrderInfoListDto 생성
+                .toList();
+
+        Page<OrderDto.OrderInfoListDto> dtoPage = new PageImpl<>(pageList, pageable, ordersPage.getTotalElements());
+
+        return PageResponse.from(dtoPage);
+    }
+
+
+    // 주문 하나
 }
