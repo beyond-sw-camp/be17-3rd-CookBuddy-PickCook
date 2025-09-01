@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.example.be17pickcook.common.BaseEntity;
 import org.example.be17pickcook.domain.user.model.User;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,9 +23,13 @@ public class Orders extends BaseEntity {
     private Long idx;
     @Column(unique = true, nullable = false)
     private String paymentId;
+    private String orderNumber; // 고객에게 보여줄 주문 아이디
     private Integer total_price;
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
+    private String paymentMethod;
+    private LocalDateTime approvedAt; // 결제 완료 시간
+    private String orderType; // 결제 요청 온 경로 (장바구니, 바로구매)
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -40,7 +45,10 @@ public class Orders extends BaseEntity {
         item.setOrder(this);
     }
 
-    public void updateStatus(OrderStatus newStatus) {
-        this.status = newStatus;
+    public void updateOrderNumber(String newOrderNumber) {this.orderNumber = newOrderNumber;}
+    public void updateStatus(OrderStatus newStatus) { this.status = newStatus; }
+    public void updatePaymentMethod(String newPaymentMethod) {
+        this.paymentMethod = newPaymentMethod;
     }
+    public void updateApproveAt(LocalDateTime newApproveAt) { this.approvedAt = newApproveAt; }
 }

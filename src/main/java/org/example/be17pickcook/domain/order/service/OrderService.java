@@ -1,8 +1,8 @@
 package org.example.be17pickcook.domain.order.service;
 
-import io.portone.sdk.server.payment.PaidPayment;
-import io.portone.sdk.server.payment.Payment;
-import io.portone.sdk.server.payment.PaymentClient;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.portone.sdk.server.payment.*;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +18,11 @@ import org.example.be17pickcook.domain.user.model.UserDto;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -37,15 +42,25 @@ public class OrderService {
     @Value("${portone.store-id}")
     private String portoneStoreId;
 
+    // 고객용 주문번호 만드는 함수
+    private String generateOrderNumber() {
+        LocalDate today = LocalDate.now();
+        String datePart = today.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String randomPart = String.format("%04d", new Random().nextInt(10000));
+        return "ORD" + datePart + "-" + randomPart;
+    }
+
     // 주문 요청 기록 저장
     @Transactional
     public OrderDto.PaymentStartResDto startPayment(UserDto.AuthUser authUser,
                                                     OrderDto.PaymentStartReqDto dto) {
 
         String paymentId = UUID.randomUUID().toString();
+        String orderNumber = generateOrderNumber();
         User user = User.builder().idx(authUser.getIdx()).build();
 
         Orders order = dto.toEntity(user, paymentId);
+        order.updateOrderNumber(orderNumber);
         orderRepository.save(order);
 
         return new OrderDto.PaymentStartResDto(paymentId, order.getStatus().name());
@@ -96,7 +111,7 @@ public class OrderService {
                 order.updateStatus(OrderStatus.PAID);
 
                 // 장바구니 항목 삭제
-                if (order.getOrderItems() != null && !order.getOrderItems().isEmpty()) {
+                if ("CART".equals(order.getOrderType()) && order.getOrderItems() != null && !order.getOrderItems().isEmpty()) {
                     for (OrderItem item : order.getOrderItems()) {
                         if (item.getProduct() != null && order.getUser() != null) {
                             // Cart 삭제: userId + productId 기준
@@ -106,7 +121,45 @@ public class OrderService {
                     }
                 }
 
-                log.debug("결제 금액 검증 완료 ✅ DB: {}, PortOne: {}", totalPrice, paidAmount);
+                // 결제수단 가져오기
+                PaymentMethod method = paidPayment.getMethod();
+                String paymentProvider = "Unknown";
+                ObjectMapper objectMapper = new ObjectMapper();
+
+                // 간편 결제일 경우
+                try {
+                    String pgResponseJson = paidPayment.getPgResponse(); // pgResponse JSON 문자열
+                    if (pgResponseJson != null) {
+                        JsonNode root = objectMapper.readTree(pgResponseJson);
+                        JsonNode easyPayNode = root.path("easyPay");
+                        if (!easyPayNode.isMissingNode()) {
+                            JsonNode providerNode = easyPayNode.path("provider");
+                            if (!providerNode.isMissingNode()) {
+                                paymentProvider = providerNode.asText(); // 여기서 "카카오페이" 가져옴
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    log.error("결제수단 조회 실패", e);
+                }
+
+                // 카드 결제일 경우
+                if (method instanceof PaymentMethodCard) {
+                    PaymentMethodCard cardMethod = (PaymentMethodCard) method;
+                    if (cardMethod.getCard() != null && cardMethod.getCard().getName() != null) {
+                        paymentProvider = cardMethod.getCard().getName(); // 카드사 이름
+                    }
+                }
+
+                // 결제 완료 시간 타입 변환하기
+                LocalDateTime paidAtKst = paidPayment.getPaidAt()
+                        .atZone(ZoneId.of("UTC"))
+                        .withZoneSameInstant(ZoneId.of("Asia/Seoul"))
+                        .toLocalDateTime();
+
+                order.updatePaymentMethod(paymentProvider);
+                order.updateApproveAt(paidAtKst);
+
                 return new OrderDto.PaymentValidationResDto(order.getIdx(), OrderStatus.PAID.name());
             } else {
                 // 금액 불일치 → 실패

@@ -37,7 +37,7 @@ public class PortOneWebhookService {
         // 2. Payload 파싱
         PortOneWebhookReqDto webhookReqDTO = parsePayload(payload);
 
-        // 3. 취소 이벤트만 처리
+        // 3. 취소 이벤트만 처리 (결제가 완전 취소되었을 때)
         if ("Transaction.Cancelled".equals(webhookReqDTO.getType())) {
             String paymentId = webhookReqDTO.getData().getPaymentId();
             orderRepository.findByPaymentId(paymentId).ifPresent(order -> {
