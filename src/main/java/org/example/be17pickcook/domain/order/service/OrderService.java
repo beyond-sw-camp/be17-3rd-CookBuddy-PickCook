@@ -222,5 +222,16 @@ public class OrderService {
     }
 
 
-    // 주문 하나
+    // 주문 상세 조회
+    public OrderDto.OrderDetailDto getOrderDetail(Integer userIdx, Long orderId) {
+        Orders order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("주문을 찾을 수 없습니다."));
+
+        // 주문한 사용자와 현재 로그인한 사용자 비교
+        if (!order.getUser().getIdx().equals(userIdx)) {
+            throw new RuntimeException("본인 주문만 조회할 수 있습니다.");
+        }
+
+        return OrderDto.OrderDetailDto.fromEntity(order);
+    }
 }

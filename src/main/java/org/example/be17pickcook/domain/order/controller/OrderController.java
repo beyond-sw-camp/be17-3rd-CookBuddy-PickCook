@@ -53,4 +53,13 @@ public class OrderController {
         PageResponse<OrderDto.OrderInfoListDto> result = orderService.getOrdersByPeriodPaged(period, page, size);
         return BaseResponse.success(result);
     }
+
+    @GetMapping("/details")
+    public BaseResponse<OrderDto.OrderDetailDto> getOrderDetail(@AuthenticationPrincipal UserDto.AuthUser authUser,
+                                                              @RequestParam Long orderId) {
+        Integer userIdx = (authUser != null) ? authUser.getIdx() : null;
+        OrderDto.OrderDetailDto result = orderService.getOrderDetail(userIdx, orderId);
+
+        return BaseResponse.success(result);
+    }
 }

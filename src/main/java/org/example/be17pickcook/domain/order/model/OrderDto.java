@@ -107,6 +107,18 @@ public class OrderDto {
                     .order(order)
                     .build();
         }
+
+        public static OrderDeliveryDto fromEntity(OrderDelivery orderdelivery) {
+            return OrderDeliveryDto.builder()
+                    .receiverName(orderdelivery.getReceiverName())
+                    .receiverPhone(orderdelivery.getReceiverPhone())
+                    .zipCode(orderdelivery.getZipCode())
+                    .address(orderdelivery.getAddress())
+                    .detailAddress(orderdelivery.getDetailAddress())
+                    .deliveryPlace(orderdelivery.getDeliveryPlace())
+                    .requestMessage(orderdelivery.getRequestMessage())
+                    .build();
+        }
     }
 
 
@@ -138,25 +150,51 @@ public class OrderDto {
     }
 
 
-
+    // 주문 내역 목록 조회
     @Getter
     @Builder
     public static class OrderInfoListDto {
         private Long orderId;
         private LocalDateTime date;
-        private List<OrderInfoDto> items; // 기존 OrderInfoDto 사용
+        private List<OrderInfoDto> orderItems; // 기존 OrderInfoDto 사용
 
         public static OrderInfoListDto fromEntity(Orders order) {
             return OrderInfoListDto.builder()
                     .orderId(order.getIdx())
                     .date(order.getCreatedAt())
-                    .items(order.getOrderItems().stream()
+                    .orderItems(order.getOrderItems().stream()
                             .map(OrderInfoDto::fromEntity) // 여기서 OrderInfoDto 사용
                             .toList())
                     .build();
         }
     }
 
+
+    @Getter
+    @Builder
+    public static class OrderDetailDto {
+        private String orderNumber;
+        private Integer total_price;
+        private LocalDateTime approvedAt;
+        private String paymentMethod;
+
+        private OrderDeliveryDto orderDelivery; // 배송 정보
+        private List<OrderInfoDto> orderItems; // 상품 목록
+
+        public static OrderDetailDto fromEntity(Orders order) {
+            return OrderDetailDto.builder()
+                    .orderNumber(order.getOrderNumber())
+                    .total_price(order.getTotal_price())
+                    .approvedAt(order.getApprovedAt())
+                    .paymentMethod(order.getPaymentMethod())
+                    .orderDelivery(OrderDeliveryDto.fromEntity(order.getOrderDelivery()))
+                    .orderItems(order.getOrderItems().stream()
+                            .map(OrderInfoDto::fromEntity)
+                            .toList()
+                    )
+                    .build();
+        }
+    }
 
 
     @Getter
