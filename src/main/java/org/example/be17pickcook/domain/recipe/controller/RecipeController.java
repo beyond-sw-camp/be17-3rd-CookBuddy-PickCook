@@ -11,6 +11,7 @@ import org.example.be17pickcook.domain.recipe.service.RecipeService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -53,10 +54,20 @@ public class RecipeController {
     public BaseResponse<PageResponse<RecipeDto.RecipeListResponseDto>> getRecipeList(
             @AuthenticationPrincipal UserDto.AuthUser authUser,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "latest") String sortType
     ) {
         Integer userIdx = (authUser != null) ? authUser.getIdx() : null;
-        Pageable pageable = PageRequest.of(page, size);
+
+        Sort sort = switch (sortType) {
+            case "oldest" -> Sort.by(Sort.Direction.ASC, "createdAt");
+            case "likes" -> Sort.by(Sort.Direction.DESC, "likeCount");
+            case "scraps" -> Sort.by(Sort.Direction.DESC, "scrapCount");
+            default -> Sort.by(Sort.Direction.DESC, "createdAt"); // latest
+        };
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+//        Pageable pageable = PageRequest.of(page, size);
 
         return BaseResponse.success(recipeService.getRecipeList(userIdx, pageable));
     }
