@@ -64,12 +64,12 @@ public class RecipeDto {
                     .build();
 
             // Step 엔티티 변환
-            if (steps != null) {
-                for (RecipeDto.RecipeStepDto stepDto : steps) {
-                    RecipeStep stepEntity = stepDto.toEntity(recipe);
-                    recipe.addSteps(stepEntity); // 하나씩 추가
-                }
-            }
+//            if (steps != null) {
+//                for (RecipeDto.RecipeStepDto stepDto : steps) {
+//                    RecipeStep stepEntity = stepDto.toEntity(recipe);
+//                    recipe.addSteps(stepEntity); // 하나씩 추가
+//                }
+//            }
 
             // Ingredient 엔티티 변환
             if (ingredients != null) {
@@ -207,6 +207,8 @@ public class RecipeDto {
         private String image_large_url;
         @Schema(description = "좋아요 수", example = "12")
         private Long likeCount;
+        @Schema(description = "스크랩 수", example = "12")
+        private Long scrapCount;
         @Schema(description = "로그인 사용자가 좋아요를 눌렀는지 여부", example = "true")
         private Boolean likedByUser;
         @Schema(description = "로그인 사용자가 스크랩을 눌렀는지 여부", example = "true")

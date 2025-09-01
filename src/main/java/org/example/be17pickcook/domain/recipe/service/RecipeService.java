@@ -68,9 +68,10 @@ public class RecipeService {
                 RecipeDto.RecipeStepDto stepDto = dto.getSteps().get(i);
                 String stepImageUrl = (files.size() > i + 2 && !files.get(i + 2).isEmpty()) ?
                         s3UploadService.upload(files.get(i + 2)) : DEFAULT_STEP_IMAGE;
-
                 RecipeStep step = stepDto.toEntity(recipe);
                 step.setImage_url(stepImageUrl);
+
+                recipe.addSteps(step);
             }
         }
 
@@ -140,6 +141,7 @@ public class RecipeService {
                     .hashtags((String) arr[7])
                     .image_large_url((String) arr[8])
                     .likeCount((Long) arr[9])
+                    .scrapCount((Long) arr[10])
                     .build();
         });
 
