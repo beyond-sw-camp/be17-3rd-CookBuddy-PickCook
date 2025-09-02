@@ -19,6 +19,7 @@ import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.domain.user.repository.UserRepository;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -26,7 +27,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class PostService {
-
     private final PostRepository postRepository;
     private final PostQueryRepository postQueryRepository;
     private final LikeService likesService;
@@ -47,12 +47,20 @@ public class PostService {
     }
 
     // 게시글 상세 조회
+    @Transactional
     public PostDto.DetailResponse getPostById(int userId, Long postId) {
-        Post post = postRepository.findById(postId)
+        // 1. 뷰 카운트 증가
+        postRepository.incrementViewCount(postId);
+
+        // 2. 상세 조회 (캐시 클리어 후 fresh select)
+        Post post = postRepository.findPostWithDetails(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글이 존재하지 않습니다."));
+
+        // 3. 좋아요/스크랩 여부
         boolean hasLiked = likesService.hasUserLiked(userId, LikeTargetType.POST, postId);
         boolean hasScrapped = scrapService.hasUserScrapped(userId, ScrapTargetType.POST, postId);
 
+        // 4. DTO 변환
         return PostDto.DetailResponse.from(post, hasLiked, hasScrapped);
     }
 

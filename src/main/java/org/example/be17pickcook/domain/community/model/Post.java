@@ -47,6 +47,13 @@ public class Post extends BaseEntity implements LikeCountable, ScrapCountable {
         image.setPost(this);
     }
 
+    public void incrementViewCount() {
+        if (this.viewCount == null) {
+            this.viewCount = 0L;
+        }
+        this.viewCount++;
+    }
+
     // 좋아요
     @Override
     public Long getIdxLike() { return this.id; }
