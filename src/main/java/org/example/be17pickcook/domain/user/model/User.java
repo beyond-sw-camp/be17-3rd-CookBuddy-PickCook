@@ -39,15 +39,6 @@ public class User extends BaseEntity {  // ✅ BaseEntity 상속 추가
     @Column(length = 500)
     private String profileImage;
 
-    @Column(length = 10)
-    private String zipCode;
-
-    @Column(length = 200)
-    private String address;
-
-    @Column(length = 200)
-    private String detailAddress;
-
     @Column(nullable = false, length = 10)
     @Builder.Default
     private String role = "USER";

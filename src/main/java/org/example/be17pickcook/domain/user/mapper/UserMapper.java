@@ -49,9 +49,6 @@ public interface UserMapper {
     @Mapping(target = "profileImage", ignore = true)
     @Mapping(target = "emailVerifyList", ignore = true)
     @Mapping(target = "passwordResetList", ignore = true)
-    @Mapping(target = "zipCode", ignore = true)
-    @Mapping(target = "address", ignore = true)
-    @Mapping(target = "detailAddress", ignore = true)
     User createOAuth2User(String email, String nickname);
 
     // OAuth2 전용 매핑 (default 메서드로 구현)

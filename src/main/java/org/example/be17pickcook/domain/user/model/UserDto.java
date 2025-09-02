@@ -59,15 +59,6 @@ public class UserDto {
         @Schema(description = "프로필 이미지 URL", example = "https://example.com/profile.jpg")
         private String profileImage;
 
-        @Schema(description = "우편번호", example = "12345")
-        private String zipCode;
-
-        @Schema(description = "기본 주소", example = "서울시 강남구 테헤란로")
-        private String address;
-
-        @Schema(description = "상세 주소", example = "123번지 456호")
-        private String detailAddress;
-
         @Schema(description = "계정 활성화 여부", example = "true")
         private Boolean enabled;
 
@@ -148,21 +139,6 @@ public class UserDto {
         @Pattern(message = "전화번호 형식이 올바르지 않습니다 (예: 010-1234-5678)",
                 regexp = "^01[0-9]-[0-9]{3,4}-[0-9]{4}$")
         private String phone;
-
-        @Schema(description = "우편번호 (선택사항, 최대 10자)",
-                example = "12345")
-        @Size(max = 10, message = "우편번호는 10자 이하로 입력해주세요")
-        private String zipCode;
-
-        @Schema(description = "기본 주소 (선택사항, 최대 200자)",
-                example = "서울시 강남구 테헤란로")
-        @Size(max = 200, message = "주소는 200자 이하로 입력해주세요")
-        private String address;
-
-        @Schema(description = "상세 주소 (선택사항, 최대 100자)",
-                example = "123번지 456호")
-        @Size(max = 100, message = "상세주소는 100자 이하로 입력해주세요")
-        private String detailAddress;
     }
 
     // =================================================================
@@ -196,21 +172,6 @@ public class UserDto {
                 example = "https://example.com/new-profile.jpg")
         @Size(max = 500, message = "프로필 이미지 URL은 500자 이하로 입력해주세요")
         private String profileImage;
-
-        @Schema(description = "우편번호 (선택사항)",
-                example = "54321")
-        @Size(max = 10, message = "우편번호는 10자 이하로 입력해주세요")
-        private String zipCode;
-
-        @Schema(description = "기본 주소 (선택사항)",
-                example = "부산시 해운대구 센텀로")
-        @Size(max = 200, message = "주소는 200자 이하로 입력해주세요")
-        private String address;
-
-        @Schema(description = "상세 주소 (선택사항)",
-                example = "789번지 101호")
-        @Size(max = 100, message = "상세주소는 100자 이하로 입력해주세요")
-        private String detailAddress;
     }
 
     @Schema(description = "사용자 정보 응답")
@@ -234,15 +195,6 @@ public class UserDto {
 
         @Schema(description = "프로필 이미지 URL", example = "https://example.com/profile.jpg")
         private String profileImage;
-
-        @Schema(description = "우편번호", example = "12345")
-        private String zipCode;
-
-        @Schema(description = "기본 주소", example = "서울시 강남구 테헤란로")
-        private String address;
-
-        @Schema(description = "상세 주소", example = "123번지 456호")
-        private String detailAddress;
     }
 
     // =================================================================
