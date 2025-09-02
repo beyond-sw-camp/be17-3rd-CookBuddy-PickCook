@@ -39,7 +39,7 @@ public class RecipeService {
     private static final String DEFAULT_SMALL_IMAGE = "https://example.com/default-small.jpg";
     private static final String DEFAULT_LARGE_IMAGE = "https://example.com/default-large.jpg";
     private static final String DEFAULT_STEP_IMAGE  = "https://example.com/default-step.jpg";
-
+ 
 
     // 레시피 등록
     @Transactional

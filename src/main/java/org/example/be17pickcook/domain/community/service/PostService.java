@@ -57,21 +57,9 @@ public class PostService {
     }
 
     // 게시글 작성
-    public PostDto.DetailResponse createPost(PostDto.Request dto, UserDto.AuthUser authUser) {
-        // DB에서 User 조회
-        User user = userRepository.findById(authUser.getIdx())
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-
-        // Post 생성
-        Post post = dto.toEntity(user); // toEntity에서 User 객체 받도록 수정
-
-        Post saved = postRepository.save(post);
-        if(dto.getImageList() != null) {
-            for (String imageUrl : dto.getImageList()) {
-                postImageRepository.save(PostImage.of(post, imageUrl));
-            }
-        }
-        return PostDto.DetailResponse.from(saved, false, false);
+    public void createPost(PostDto.Request dto, UserDto.AuthUser authUser) {
+        Post post = dto.toEntity(User.builder().idx(authUser.getIdx()).build()); // toEntity에서 User 객체 받도록 수정
+        postRepository.save(post);
     }
 
     public Page<PostDto.ListResponse> getPostsWithPaging(String keyword, int page, int size, String dir) {

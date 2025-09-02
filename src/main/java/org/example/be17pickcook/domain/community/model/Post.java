@@ -10,6 +10,9 @@ import org.example.be17pickcook.domain.likes.model.LikeCountable;
 import org.example.be17pickcook.domain.scrap.model.ScrapCountable;
 import org.example.be17pickcook.domain.user.model.User;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Getter
 @Entity
 @Builder
@@ -27,11 +30,24 @@ public class Post extends BaseEntity implements LikeCountable, ScrapCountable {
     private String content;
     private Long likeCount;
     private Long scrapCount;
+    private Long viewCount;
 
     @ManyToOne
     @JoinColumn(name="user_id")
     private User user;
 
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PostImage> postImageList;
+
+
+    public void addImageUrl(PostImage image) {
+        if (this.postImageList == null) this.postImageList = new ArrayList<>();
+
+        this.postImageList.add(image);
+        image.setPost(this);
+    }
+
+    // 좋아요
     @Override
     public Long getIdxLike() { return this.id; }
     @Override
@@ -52,6 +68,8 @@ public class Post extends BaseEntity implements LikeCountable, ScrapCountable {
         }
     }
 
+
+    // 스크랩
     @Override
     public Long getIdxScrap() { return this.id; }
     @Override

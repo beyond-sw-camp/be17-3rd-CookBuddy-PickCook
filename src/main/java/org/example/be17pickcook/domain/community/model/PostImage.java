@@ -25,6 +25,8 @@ public class PostImage {
     @Column(name = "image_url", nullable = false, length = 1000)
     private String imageUrl;
 
+    public void setPost(Post post) { this.post = post; }
+
     // 생성 편의 메서드
     public static PostImage of(Post post, String imageUrl) {
         return PostImage.builder()

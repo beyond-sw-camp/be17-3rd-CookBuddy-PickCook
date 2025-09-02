@@ -20,16 +20,46 @@ public class PostDto {
     public static class Request {
         private String title;
         private String content;
-        private List<String> imageList;
+        private Long likeCount;
+        private Long scrapCount;
+        private Long viewCount;
+        private List<PostImageRequest> imageList;
 
         public Post toEntity(User user) {
-            return Post.builder()
+            Post post = Post.builder()
                     .title(title)
                     .content(content)
+                    .likeCount(0L)
+                    .scrapCount(0L)
+                    .viewCount(0L)
                     .user(user)
+                    .build();
+
+            if (imageList != null) {
+                for (PostDto.PostImageRequest image : imageList) {
+                    PostImage imageEntity = image.toEntity(post);
+                    post.addImageUrl(imageEntity); // 이미지 하나씩 추가
+                }
+            }
+
+            return post;
+        }
+    }
+
+
+    @Getter
+    @Builder
+    public static class PostImageRequest {
+        private String imageUrl;
+
+        public PostImage toEntity(Post post) {
+            return PostImage.builder()
+                    .imageUrl(imageUrl)
+                    .post(post)
                     .build();
         }
     }
+
 
     @Builder
     @Getter
@@ -116,5 +146,29 @@ public class PostDto {
                     .updatedAt(post.getUpdatedAt().format(formatter))
                     .build();
         }
+    }
+
+
+    @Getter
+    @Builder
+    public static class PostCardResponse {
+        private Long id;
+        private String title;
+        private String postImage;
+        private String authorName;
+        private String authorProfileImage;
+        private Long likeCount;
+        private boolean hasLiked;
+        private Long scrapCount;
+        private boolean hasScrapped;
+        private Long viewCount;
+
+//        public static PostCardResponse fromEntity(Post post) {
+//            return PostCardResponse.builder()
+//                    .id(post.getId())
+//                    .title(post.getTitle())
+//                    .postImage(post.getPostImageList().getImage)
+//                    .authorName()
+//        }
     }
 }

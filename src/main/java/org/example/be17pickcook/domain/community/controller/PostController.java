@@ -50,7 +50,7 @@ public class PostController {
 
     @Operation(summary = "게시글 작성", description = "새 게시글을 작성합니다.")
     @PostMapping
-    public BaseResponse<PostDto.DetailResponse> createPost(
+    public BaseResponse createPost(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "게시글 생성 DTO",
                     required = true,
@@ -60,8 +60,8 @@ public class PostController {
             )
             @RequestBody PostDto.Request postDto,
             @AuthenticationPrincipal UserDto.AuthUser authUser) {
-        PostDto.DetailResponse saved = postService.createPost(postDto, authUser);
-        return BaseResponse.success(saved);
+        postService.createPost(postDto, authUser);
+        return BaseResponse.success("게시글 등록 성공");
     }
 
 
