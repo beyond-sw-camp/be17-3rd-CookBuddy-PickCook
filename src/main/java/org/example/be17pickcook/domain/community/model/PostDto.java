@@ -1,7 +1,9 @@
 package org.example.be17pickcook.domain.community.model;
 
+import jakarta.persistence.Column;
 import lombok.*;
 import org.example.be17pickcook.domain.user.model.User;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -48,8 +50,8 @@ public class PostDto {
                     .authorName(post.getUser().getNickname())
                     .contentPreview(generatePreview(post.getContent()))
                     .createdAgo(generateCreatedAgo(post.getCreatedAt()))
-                    .likeCount(post.getLikeCount())
-                    .scrapCount(post.getScrapCount())
+                    .likeCount(post.getLikeCount() != null ? post.getLikeCount() : 0L)
+                    .scrapCount(post.getScrapCount() != null ? post.getScrapCount() : 0L)
                     .comments(comments)
                     .build();
         }
@@ -107,9 +109,9 @@ public class PostDto {
                     .title(post.getTitle())
                     .content(post.getContent())
                     .authorName(post.getUser().getNickname())
-                    .likeCount(post.getLikeCount())
+                    .likeCount(post.getLikeCount() != null ? post.getLikeCount() : 0L)
                     .hasLiked(hasLiked)
-                    .scrapCount(post.getScrapCount())
+                    .scrapCount(post.getScrapCount() != null ? post.getScrapCount() : 0L)
                     .hasScrapped(hasScrapped)
                     .updatedAt(post.getUpdatedAt().format(formatter))
                     .build();

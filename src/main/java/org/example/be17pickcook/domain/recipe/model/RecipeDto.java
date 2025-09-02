@@ -36,7 +36,7 @@ public class RecipeDto {
         @Schema(description = "팁/노하우")
         private String tip;
         @Schema(description = "좋아요 수")
-        private Long likeCount = 0L;
+        private Long likeCount;
 
         @ArraySchema(schema = @Schema(implementation = RecipeStepDto.class), arraySchema = @Schema(description = "조리 단계 리스트"))
         private List<RecipeStepDto> steps;
@@ -59,7 +59,7 @@ public class RecipeDto {
                     .tip(this.tip)
                     .image_small_url(this.image_small_url)
                     .image_large_url(this.image_large_url)
-                    .likeCount(this.likeCount)
+                    .likeCount(0L)
                     .user(authUser)
                     .build();
 
