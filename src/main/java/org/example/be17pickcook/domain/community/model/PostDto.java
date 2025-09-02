@@ -154,7 +154,7 @@ public class PostDto {
     public static class PostCardResponse {
         private Long id;
         private String title;
-        private String postImage;
+        private String postImage;           // 대표 이미지 1개
         private String authorName;
         private String authorProfileImage;
         private Long likeCount;
@@ -163,12 +163,26 @@ public class PostDto {
         private boolean hasScrapped;
         private Long viewCount;
 
-//        public static PostCardResponse fromEntity(Post post) {
-//            return PostCardResponse.builder()
-//                    .id(post.getId())
-//                    .title(post.getTitle())
-//                    .postImage(post.getPostImageList().getImage)
-//                    .authorName()
-//        }
+        public void setHasLiked(boolean hasLiked) { this.hasLiked = hasLiked; }
+        public void setHasScrapped(boolean hasScrapped) { this.hasScrapped = hasScrapped; }
+
+        // Entity -> DTO 변환
+        public static PostCardResponse fromEntity(Post post) {
+            String firstImage = null;
+            if (post.getPostImageList() != null && !post.getPostImageList().isEmpty()) {
+                firstImage = post.getPostImageList().get(0).getImageUrl();
+            }
+
+            return PostCardResponse.builder()
+                    .id(post.getId())
+                    .title(post.getTitle())
+                    .postImage(firstImage)
+                    .authorName(post.getUser().getNickname())
+                    .authorProfileImage(post.getUser().getProfileImage())
+                    .likeCount(post.getLikeCount() != null ? post.getLikeCount() : 0L)
+                    .scrapCount(post.getScrapCount() != null ? post.getScrapCount() : 0L)
+                    .viewCount(post.getViewCount() != null ? post.getViewCount() : 0L)
+                    .build();
+        }
     }
 }

@@ -1,6 +1,7 @@
 package org.example.be17pickcook.domain.community.service;
 
 import lombok.RequiredArgsConstructor;
+import org.example.be17pickcook.common.PageResponse;
 import org.example.be17pickcook.domain.community.model.Post;
 import org.example.be17pickcook.domain.community.model.PostDto;
 import org.example.be17pickcook.domain.community.model.PostImage;
@@ -8,19 +9,18 @@ import org.example.be17pickcook.domain.community.repository.PostImageRepository;
 import org.example.be17pickcook.domain.community.repository.PostQueryRepository;
 import org.example.be17pickcook.domain.community.repository.PostRepository;
 import org.example.be17pickcook.domain.likes.model.LikeTargetType;
+import org.example.be17pickcook.domain.likes.repository.LikeRepository;
 import org.example.be17pickcook.domain.likes.service.LikeService;
 import org.example.be17pickcook.domain.scrap.model.ScrapTargetType;
+import org.example.be17pickcook.domain.scrap.repository.ScrapRepository;
 import org.example.be17pickcook.domain.scrap.service.ScrapService;
 import org.example.be17pickcook.domain.user.model.User;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.domain.user.repository.UserRepository;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,11 +28,11 @@ import java.util.stream.Collectors;
 public class PostService {
 
     private final PostRepository postRepository;
-    private final PostImageRepository postImageRepository;
     private final PostQueryRepository postQueryRepository;
-    private final UserRepository userRepository;
     private final LikeService likesService;
     private final ScrapService scrapService;
+    private final LikeRepository likeRepository;
+    private final ScrapRepository scrapRepository;
     private final CommentService commentService;
 
     // 전체 게시글 조회
@@ -64,6 +64,50 @@ public class PostService {
 
     public Page<PostDto.ListResponse> getPostsWithPaging(String keyword, int page, int size, String dir) {
         return postQueryRepository.findPostsWithPaging(keyword, page, size, dir);
+    }
+
+    // 메인 화면에서 쓸 게시글 조회
+    public PageResponse<PostDto.PostCardResponse> getMainPosts(Integer userIdx, Pageable pageable) {
+        // Object[] 배열로 필요한 컬럼만 조회
+        Page<Object[]> postPage = postRepository.findAllPostData(pageable);
+
+        List<Long> postIds = new ArrayList<>();
+
+        // Object[] -> DTO 변환
+        List<PostDto.PostCardResponse> content = postPage.stream()
+                .map(obj -> {
+                    Long id = (Long) obj[0];
+                    postIds.add(id);
+
+                    return PostDto.PostCardResponse.builder()
+                            .id(id)
+                            .title((String) obj[1])
+                            .postImage((String) obj[2])
+                            .authorName((String) obj[3])
+                            .authorProfileImage((String) obj[4])
+                            .likeCount(obj[5] != null ? (Long) obj[5] : 0L)
+                            .scrapCount(obj[6] != null ? (Long) obj[6] : 0L)
+                            .viewCount(obj[7] != null ? (Long) obj[7] : 0L)
+                            .hasLiked(false)   // 나중에 업데이트
+                            .hasScrapped(false) // 나중에 업데이트
+                            .build();
+                }).collect(Collectors.toList());
+
+        // 좋아요/스크랩 여부 조회
+        Set<Long> likedByUser = (userIdx == null || postIds.isEmpty()) ? Collections.emptySet() :
+                new HashSet<>(likeRepository.findLikedRecipeIdsByUser(LikeTargetType.POST, userIdx, postIds));
+
+        Set<Long> scrappedByUser = (userIdx == null || postIds.isEmpty()) ? Collections.emptySet() :
+                new HashSet<>(scrapRepository.findScrappedRecipeIdsByUser(ScrapTargetType.POST, userIdx, postIds));
+
+        // 좋아요/스크랩 여부 반영
+        content.forEach(dto -> {
+            dto.setHasLiked(likedByUser.contains(dto.getId()));
+            dto.setHasScrapped(scrappedByUser.contains(dto.getId()));
+        });
+
+        // PageImpl로 감싸서 반환
+        return PageResponse.from(new PageImpl<>(content, pageable, postPage.getTotalElements()));
     }
 
 }

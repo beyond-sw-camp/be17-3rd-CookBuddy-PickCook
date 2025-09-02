@@ -76,4 +76,27 @@ public class PostController {
         Page<PostDto.ListResponse> posts = postService.getPostsWithPaging(keyword, page, size, dir);
         return BaseResponse.success(PageResponse.from(posts));
     }
+
+
+
+    @GetMapping("/mplist")
+    public BaseResponse<PageResponse<PostDto.PostCardResponse>> getMainPosts(
+            @AuthenticationPrincipal UserDto.AuthUser authUser,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "4") int size,
+            @RequestParam(defaultValue = "latest") String sortType
+    ) {
+        Integer userIdx = (authUser != null) ? authUser.getIdx() : null;
+
+        Sort sort = switch (sortType) {
+            case "oldest" -> Sort.by(Sort.Direction.ASC, "createdAt");
+            case "likes" -> Sort.by(Sort.Direction.DESC, "likeCount");
+            case "scraps" -> Sort.by(Sort.Direction.DESC, "scrapCount");
+            default -> Sort.by(Sort.Direction.DESC, "createdAt"); // latest
+        };
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        return BaseResponse.success(postService.getMainPosts(userIdx, pageable));
+    }
 }
