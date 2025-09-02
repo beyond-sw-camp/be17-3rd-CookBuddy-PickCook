@@ -75,6 +75,7 @@ public class SecurityConfig {
                                 "/api/user/reset-password",
                                 "/oauth2/authorization/kakao"
                         ).permitAll()
+                        .requestMatchers("/api/user/addresses/**").authenticated()
                         .requestMatchers("/test/*").hasRole("USER")
                         .anyRequest().permitAll()
         );

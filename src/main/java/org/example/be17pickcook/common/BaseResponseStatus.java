@@ -48,6 +48,20 @@ public enum BaseResponseStatus {
     WITHDRAW_SUCCESS(true, 20400, "회원탈퇴가 완료되었습니다."),
 
     // =================================================================
+    // 배송지 관련 성공 (20500번대)
+    // =================================================================
+
+    // 배송지 CRUD 성공
+    ADDRESS_CREATE_SUCCESS(true, 20500, "배송지가 성공적으로 추가되었습니다."),
+    ADDRESS_UPDATE_SUCCESS(true, 20501, "배송지가 성공적으로 수정되었습니다."),
+    ADDRESS_DELETE_SUCCESS(true, 20502, "배송지가 성공적으로 삭제되었습니다."),
+    ADDRESS_LIST_SUCCESS(true, 20503, "배송지 목록 조회가 완료되었습니다."),
+
+    // 배송지 기본 설정 성공
+    ADDRESS_DEFAULT_SET_SUCCESS(true, 20510, "기본배송지가 설정되었습니다."),
+    ADDRESS_DEFAULT_AUTO_SET_SUCCESS(true, 20511, "첫 번째 배송지가 기본배송지로 자동 설정되었습니다."),
+
+    // =================================================================
     // 30000번대: 클라이언트 요청 오류
     // =================================================================
 
@@ -102,6 +116,28 @@ public enum BaseResponseStatus {
     CATEGORY_NOT_FOUND(false, 30600, "카테고리를 찾을 수 없습니다."),
     CATEGORY_NAME_DUPLICATE(false, 30601, "이미 존재하는 카테고리명입니다."),
     CATEGORY_IN_USE_CANNOT_DELETE(false, 30602, "사용 중인 카테고리는 삭제할 수 없습니다."),
+
+    // =================================================================
+    // 배송지 관련 오류 (30700번대) ✅ 수정됨
+    // =================================================================
+
+    // 배송지 기본 오류
+    ADDRESS_NOT_FOUND(false, 30700, "배송지를 찾을 수 없습니다."),
+    ADDRESS_ACCESS_DENIED(false, 30701, "해당 배송지에 접근할 권한이 없습니다."),
+
+    // 배송지 유효성 검증 오류
+    ADDRESS_DUPLICATE_ERROR(false, 30710, "동일한 주소가 이미 등록되어 있습니다."),
+    ADDRESS_POSTAL_CODE_INVALID(false, 30711, "올바르지 않은 우편번호 형식입니다."),
+    ADDRESS_ROAD_ADDRESS_REQUIRED(false, 30712, "도로명주소는 필수입니다."),
+    ADDRESS_DETAIL_ADDRESS_REQUIRED(false, 30713, "상세주소는 필수입니다."),
+
+    // 기본배송지 관리 오류
+    ADDRESS_DEFAULT_REQUIRED(false, 30720, "최소 하나의 기본배송지가 필요합니다."),
+    ADDRESS_DEFAULT_ALREADY_EXISTS(false, 30721, "이미 기본배송지가 설정되어 있습니다."),
+    ADDRESS_DEFAULT_NOT_FOUND(false, 30722, "기본배송지를 찾을 수 없습니다."),
+
+    // 배송지 개수 제한 오류 (선택사항)
+    ADDRESS_LIMIT_EXCEEDED(false, 30730, "배송지는 최대 10개까지 등록 가능합니다."),
 
     // =================================================================
     // 31000번대: 커뮤니티 기능 오류
