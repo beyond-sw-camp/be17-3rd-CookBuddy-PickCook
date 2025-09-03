@@ -2,12 +2,15 @@ package org.example.be17pickcook.domain.recipe.model;
 
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import org.example.be17pickcook.domain.user.model.User;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 public class RecipeDto {
 
@@ -214,6 +217,25 @@ public class RecipeDto {
         @Schema(description = "로그인 사용자가 스크랩을 눌렀는지 여부", example = "true")
         private Boolean scrappedByUser;
 
+        public RecipeListResponseDto(Long idx, String title, String cooking_method, String category,
+                                     String time_taken, String difficulty_level, String serving_size,
+                                     String hashtags, String image_large_url, Long likeCount, Long scrapCount,
+                                     Boolean likedByUser, Boolean scrappedByUser) {
+            this.idx = idx;
+            this.title = title;
+            this.cooking_method = cooking_method;
+            this.category = category;
+            this.time_taken = time_taken;
+            this.difficulty_level = difficulty_level;
+            this.serving_size = serving_size;
+            this.hashtags = hashtags;
+            this.image_large_url = image_large_url;
+            this.likeCount = likeCount;
+            this.scrapCount = scrapCount;
+            this.likedByUser = likedByUser;
+            this.scrappedByUser = scrappedByUser;
+        }
+
         // 좋아요 관련 값 세팅 메서드 (반 정규화 전)
 //        public void setLikeInfo(Integer likeCount, Boolean likedByUser) {
 //            this.likeCount = likeCount;
@@ -230,98 +252,100 @@ public class RecipeDto {
     }
 
 
+        @Getter
+        @Builder
+        @Schema(description = "레시피 상세 조회 응답 DTO")
+        public static class RecipeResponseDto {
+            @Schema(description = "레시피 ID", example = "1")
+            private Long idx;
+            @Schema(description = "레시피 제목", example = "김치찌개")
+            private String title;
+            @Schema(description = "조리 방법", example = "끓이기")
+            private String cooking_method;
+            @Schema(description = "레시피 카테고리", example = "한식")
+            private String category;
+            @Schema(description = "소요 시간", example = "20분")
+            private String time_taken;
+            @Schema(description = "난이도", example = "어려움/보통/쉬움")
+            private String difficulty_level;
+            @Schema(description = "인분/양", example = "2인분")
+            private String serving_size;
+            @Schema(description = "해시태그", example = "#매운 #한식")
+            private String hashtags;
+            @Schema(description = "작은 이미지 URL")
+            private String image_small_url;
+            @Schema(description = "큰 이미지 URL")
+            private String image_large_url;
+            @Schema(description = "팁/노하우")
+            private String tip;
+            @Schema(description = "작성자 ID", example = "5")
+            private Integer user_idx;
+            @ArraySchema(schema = @Schema(implementation = RecipeStepDto.class), arraySchema = @Schema(description = "조리 단계 리스트"))
+            private List<RecipeStepDto> steps;
+            @ArraySchema(schema = @Schema(implementation = RecipeIngredientDto.class), arraySchema = @Schema(description = "재료 리스트"))
+            private List<RecipeIngredientDto> ingredients;
+            @Schema(description = "영양 정보")
+            private RecipeNutritionDto nutrition;
+            @Schema(description = "생성일")
+            private LocalDateTime createdAt;
+            @Schema(description = "수정일")
+            private LocalDateTime updatedAt;
+            @Schema(description = "좋아요 수", example = "12")
+            private Long likeCount;
+            @Schema(description = "로그인 사용자가 좋아요를 눌렀는지 여부", example = "true")
+            private Boolean likedByUser;
+            @Schema(description = "스크랩 수", example = "12")
+            private Long scrapCount;
+            @Schema(description = "로그인 사용자가 스크랩을 눌렀는지 여부", example = "true")
+            private Boolean scrappedByUser;
 
-
-    @Getter
-    @Builder
-    @Schema(description = "레시피 상세 조회 응답 DTO")
-    public static class RecipeResponseDto {
-        @Schema(description = "레시피 ID", example = "1")
-        private Long idx;
-        @Schema(description = "레시피 제목", example = "김치찌개")
-        private String title;
-        @Schema(description = "조리 방법", example = "끓이기")
-        private String cooking_method;
-        @Schema(description = "레시피 카테고리", example = "한식")
-        private String category;
-        @Schema(description = "소요 시간", example = "20분")
-        private String time_taken;
-        @Schema(description = "난이도", example = "어려움/보통/쉬움")
-        private String difficulty_level;
-        @Schema(description = "인분/양", example = "2인분")
-        private String serving_size;
-        @Schema(description = "해시태그", example = "#매운 #한식")
-        private String hashtags;
-        @Schema(description = "작은 이미지 URL")
-        private String image_small_url;
-        @Schema(description = "큰 이미지 URL")
-        private String image_large_url;
-        @Schema(description = "팁/노하우")
-        private String tip;
-        @Schema(description = "작성자 ID", example = "5")
-        private Integer user_idx;
-        @ArraySchema(schema = @Schema(implementation = RecipeStepDto.class), arraySchema = @Schema(description = "조리 단계 리스트"))
-        private List<RecipeStepDto> steps;
-        @ArraySchema(schema = @Schema(implementation = RecipeIngredientDto.class), arraySchema = @Schema(description = "재료 리스트"))
-        private List<RecipeIngredientDto> ingredients;
-        @Schema(description = "영양 정보")
-        private RecipeNutritionDto nutrition;
-        @Schema(description = "생성일")
-        private LocalDateTime createdAt;
-        @Schema(description = "수정일")
-        private LocalDateTime updatedAt;
-        @Schema(description = "좋아요 수", example = "12")
-        private Long likeCount;
-        @Schema(description = "로그인 사용자가 좋아요를 눌렀는지 여부", example = "true")
-        private Boolean likedByUser;
-        @Schema(description = "스크랩 수", example = "12")
-        private Long scrapCount;
-        @Schema(description = "로그인 사용자가 스크랩을 눌렀는지 여부", example = "true")
-        private Boolean scrappedByUser;
-
-        // 좋아요 관련 값 세팅 메서드 (반정규화 전)
+            // 좋아요 관련 값 세팅 메서드 (반정규화 전)
 //        public void setLikeInfo(Integer likeCount, Boolean likedByUser) {
-////            this.likeCount = likeCount;
+
+            /// /            this.likeCount = likeCount;
 //            this.likedByUser = likedByUser;
 //        }
+            public void setLikeInfo(Boolean likedByUser) {
+                this.likedByUser = likedByUser;
+            }
 
-        public void setLikeInfo(Boolean likedByUser) {
-            this.likedByUser = likedByUser;
-        }
-
-        // 스크랩 관련 값 세팅 메서드 (반정규화 후)
+            // 스크랩 관련 값 세팅 메서드 (반정규화 후)
 //        public void setScrapInfo(Integer scrapCount, Boolean scrappedByUser) {
 //            this.scrapCount = scrapCount;
 //            this.scrappedByUser = scrappedByUser;
 //        }
-        public void setScrapInfo(Boolean scrappedByUser) {
-            this.scrappedByUser = scrappedByUser;
-        }
+            public void setScrapInfo(Boolean scrappedByUser) {
+                this.scrappedByUser = scrappedByUser;
+            }
 
-        public static RecipeResponseDto fromEntity(Recipe recipe) {
-            return RecipeResponseDto.builder()
-                    .idx(recipe.getIdx())
-                    .title(recipe.getTitle())
-                    .cooking_method(recipe.getCooking_method())
-                    .category(recipe.getCategory())
-                    .time_taken(recipe.getTime_taken())
-                    .difficulty_level(recipe.getDifficulty_level())
-                    .serving_size(recipe.getServing_size())
-                    .hashtags(recipe.getHashtags())
-                    .image_small_url(recipe.getImage_small_url())
-                    .image_large_url(recipe.getImage_large_url())
-                    .tip(recipe.getTip())
-                    .user_idx(recipe.getUser() != null ? recipe.getUser().getIdx() : null)
-                    .steps(recipe.getSteps() != null ? recipe.getSteps().stream()
-                            .map(RecipeStepDto::fromEntity).toList() : null)
-                    .ingredients(recipe.getIngredients() != null ? recipe.getIngredients().stream()
-                            .map(RecipeIngredientDto::fromEntity).toList() : null)
-                    .nutrition(recipe.getNutrition() != null ? RecipeNutritionDto.fromEntity(recipe.getNutrition()) : null)
-                    .createdAt(recipe.getCreatedAt())
-                    .updatedAt(recipe.getUpdatedAt())
-                    .likeCount(recipe.getLikeCount())
-                    .scrapCount(recipe.getScrapCount())
-                    .build();
-        }
+            public static RecipeResponseDto fromEntity(Recipe recipe) {
+                return RecipeResponseDto.builder()
+                        .idx(recipe.getIdx())
+                        .title(recipe.getTitle())
+                        .cooking_method(recipe.getCooking_method())
+                        .category(recipe.getCategory())
+                        .time_taken(recipe.getTime_taken())
+                        .difficulty_level(recipe.getDifficulty_level())
+                        .serving_size(recipe.getServing_size())
+                        .hashtags(recipe.getHashtags())
+                        .image_small_url(recipe.getImage_small_url())
+                        .image_large_url(recipe.getImage_large_url())
+                        .tip(recipe.getTip())
+                        .user_idx(recipe.getUser() != null ? recipe.getUser().getIdx() : null)
+                        .steps(recipe.getSteps() != null ? recipe.getSteps().stream()
+                                .map(RecipeStepDto::fromEntity).toList() : null)
+                        .ingredients(recipe.getIngredients() != null ? recipe.getIngredients().stream()
+                                .map(RecipeIngredientDto::fromEntity).toList() : null)
+                        .ingredients(recipe.getIngredients() != null ?
+                                recipe.getIngredients().stream()
+                                        .map(RecipeIngredientDto::fromEntity)
+                                        .toList()
+                                : null)
+                        .createdAt(recipe.getCreatedAt())
+                        .updatedAt(recipe.getUpdatedAt())
+                        .likeCount(recipe.getLikeCount())
+                        .scrapCount(recipe.getScrapCount())
+                        .build();
+            }
     }
 }

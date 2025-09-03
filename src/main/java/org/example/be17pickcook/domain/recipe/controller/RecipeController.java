@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.example.be17pickcook.common.BaseResponse;
 import org.example.be17pickcook.common.PageResponse;
+import org.example.be17pickcook.domain.recipe.model.RecipeListResponseDto;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.domain.recipe.model.RecipeDto;
 import org.example.be17pickcook.domain.recipe.service.RecipeService;
@@ -12,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -81,6 +83,12 @@ public class RecipeController {
     public ResponseEntity<RecipeDto.RecipeResponseDto> getRecipe(@AuthenticationPrincipal UserDto.AuthUser authUser, @PathVariable Long id) {
         Integer userIdx = (authUser != null) ? authUser.getIdx() : null;
         return ResponseEntity.ok(recipeService.getRecipe(id, userIdx));
+    }
+
+
+    @GetMapping("/recommendation")
+    public BaseResponse<PageResponse<RecipeListResponseDto>> getRecommendations(@AuthenticationPrincipal UserDto.AuthUser authUser, @RequestParam int page, @RequestParam int size) {
+        return BaseResponse.success(recipeService.getRecommendations(authUser.getIdx(), page, size));
     }
 
 //    // 레시피 목록 조회

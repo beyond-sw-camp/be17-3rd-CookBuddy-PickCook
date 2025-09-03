@@ -36,7 +36,7 @@ public class Recipe extends BaseEntity implements LikeCountable, ScrapCountable 
     // 반정규화 적용 (기본값 0 보장)
     private Long likeCount = 0L;
     private Long scrapCount = 0L;
-
+    private Long commentCount = 0L;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -119,6 +119,16 @@ public class Recipe extends BaseEntity implements LikeCountable, ScrapCountable 
             scrapCount = 0L;
         } else {
             scrapCount--;
+        }
+    }
+
+    public void increaseReviewCount() {
+        this.commentCount++;
+    }
+
+    public void decreaseReviewCount() {
+        if (this.commentCount > 0) {
+            this.commentCount--;
         }
     }
 }
