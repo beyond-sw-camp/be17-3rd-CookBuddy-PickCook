@@ -54,4 +54,14 @@ public interface RefrigeratorItemRepository extends JpaRepository<RefrigeratorIt
         ORDER BY ri.expirationDate DESC
     """)
     List<RefrigeratorItem> findExpiredItems(@Param("userId") Integer userId);
+
+    @Query("""
+        SELECT ri FROM RefrigeratorItem ri
+        WHERE ri.user.idx = :userIdx
+        AND ri.isDeleted = false
+        AND ri.expirationDate IS NOT NULL
+        AND ri.expirationDate >= CURRENT_DATE
+        ORDER BY ri.expirationDate ASC
+    """)
+    List<RefrigeratorItem> findUsableItems(Integer userIdx, LocalDate today);
 }

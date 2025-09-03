@@ -7,15 +7,18 @@ import org.example.be17pickcook.common.service.S3UploadService;
 import org.example.be17pickcook.domain.likes.model.LikeTargetType;
 import org.example.be17pickcook.domain.likes.repository.LikeRepository;
 import org.example.be17pickcook.domain.likes.service.LikeService;
-import org.example.be17pickcook.domain.recipe.model.Recipe;
-import org.example.be17pickcook.domain.recipe.model.RecipeDto;
-import org.example.be17pickcook.domain.recipe.model.RecipeStep;
+import org.example.be17pickcook.domain.recipe.model.*;
+import org.example.be17pickcook.domain.recipe.repository.RecipeIngredientRepository;
+import org.example.be17pickcook.domain.recipe.repository.RecipeQueryRepository;
+import org.example.be17pickcook.domain.refrigerator.model.RefrigeratorItem;
+import org.example.be17pickcook.domain.refrigerator.repository.RefrigeratorItemRepository;
 import org.example.be17pickcook.domain.scrap.model.ScrapTargetType;
 import org.example.be17pickcook.domain.scrap.repository.ScrapRepository;
 import org.example.be17pickcook.domain.scrap.service.ScrapService;
 import org.example.be17pickcook.domain.user.model.User;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.domain.recipe.repository.RecipeRepository;
+import org.example.be17pickcook.domain.user.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -23,12 +26,17 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class RecipeService {
     private final RecipeRepository recipeRepository;
+    private final RecipeIngredientRepository recipeIngredientRepository;
+    private final RefrigeratorItemRepository refrigeratorItemRepository;
     private final S3UploadService s3UploadService;
     private final LikeService likesService;
     private final ScrapService scrapService;
@@ -39,7 +47,9 @@ public class RecipeService {
     private static final String DEFAULT_SMALL_IMAGE = "https://example.com/default-small.jpg";
     private static final String DEFAULT_LARGE_IMAGE = "https://example.com/default-large.jpg";
     private static final String DEFAULT_STEP_IMAGE  = "https://example.com/default-step.jpg";
- 
+    private final UserRepository userRepository;
+    private final RecipeQueryRepository recipeQueryRepository;
+
 
     // 레시피 등록
     @Transactional
@@ -169,6 +179,67 @@ public class RecipeService {
 
         return PageResponse.from(dtoPage);
     }
+
+    public PageResponse<RecipeListResponseDto> getRecipesFiltered(String keyword, List<String> categories, List<String> difficulties, String sortBy, int page, int size, String dir) {
+        return recipeQueryRepository.getRecipesFiltered(keyword, categories, difficulties, sortBy, page, size);
+    }
+
+
+    public PageResponse<RecipeListResponseDto> getRecommendations(Integer userIdx, int page, int size) {
+        // 1. 사용자 냉장고 재료 조회
+        Set<String> userItemNames = refrigeratorItemRepository.findUsableItems(userIdx, LocalDate.now()).stream()
+                .map(item -> item.getIngredientName().toLowerCase())
+                .collect(Collectors.toSet());
+
+        // 2. 레시피 재료 조회
+        List<Object[]> rawIngredients = recipeIngredientRepository.findAllRecipeIngredients();
+
+        Map<Long, List<String>> recipeIngredientMap = rawIngredients.stream()
+                .collect(Collectors.groupingBy(
+                        row -> ((Number) row[0]).longValue(),
+                        Collectors.mapping(row -> ((String) row[1]).toLowerCase(), Collectors.toList())
+                ));
+
+        // 3. 매칭 개수 계산
+        Map<Long, Integer> recipeMatchCount = recipeIngredientMap.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> (int) e.getValue().stream().filter(userItemNames::contains).count()
+                ));
+
+        // 4. 추천 레시피 ID 정렬
+        List<Long> recommendedRecipeIds = recipeMatchCount.entrySet().stream()
+                .sorted(Map.Entry.<Long, Integer>comparingByValue().reversed())
+                .map(Map.Entry::getKey)
+                .toList();
+
+        if (recommendedRecipeIds.isEmpty()) {
+            return new PageResponse<>(Collections.emptyList(), page, size, 0, 0);
+        }
+
+        // 5. DTO 조회
+        List<RecipeListResponseDto> dtos = recipeRepository.findAllOnlyRecipeWithIds(recommendedRecipeIds);
+
+        // 6. 추천 순서대로 정렬
+        Map<Long, RecipeListResponseDto> dtoMap = dtos.stream()
+                .collect(Collectors.toMap(RecipeListResponseDto::getIdx, Function.identity()));
+
+        List<RecipeListResponseDto> scoredRecipes = recommendedRecipeIds.stream()
+                .map(dtoMap::get)
+                .toList();
+
+        // 7. 페이징
+        int fromIndex = page * size;
+        int toIndex = Math.min(fromIndex + size, scoredRecipes.size());
+        List<RecipeListResponseDto> pageContent =
+                fromIndex < toIndex ? scoredRecipes.subList(fromIndex, toIndex) : Collections.emptyList();
+
+        int totalElements = scoredRecipes.size();
+        int totalPages = (int) Math.ceil((double) totalElements / size);
+
+        return new PageResponse<>(pageContent, page, size, totalElements, totalPages);
+    }
+
 
 
 }
