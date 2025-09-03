@@ -1,7 +1,9 @@
 package org.example.be17pickcook.domain.product.service;
 
 import lombok.RequiredArgsConstructor;
+import org.example.be17pickcook.common.BaseResponseStatus;
 import org.example.be17pickcook.common.PageResponse;
+import org.example.be17pickcook.common.exception.BaseException;
 import org.example.be17pickcook.domain.cart.repository.CartsRepository;
 import org.example.be17pickcook.domain.cart.service.CartsService;
 import org.example.be17pickcook.domain.product.repository.ProductRepository;
@@ -24,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -186,5 +189,41 @@ public class ProductService {
             throw new IllegalArgumentException("상품을 찾을 수 없습니다: id=" + id);
         }
         productRepository.deleteById(id);
+    }
+
+    /**
+     * 레시피 기반 연관 상품 조회
+     */
+    @Transactional(readOnly = true)
+    public List<ProductDto.RelatedProductResponse> getRelatedProductsByRecipe(Long recipeId) {
+        validateRecipeExists(recipeId);
+
+        // 1차: 재료 기반 매칭 상품 조회
+        List<ProductDto.RelatedProductResponse> matchedProducts =
+                productRepository.findProductsByRecipeIngredients(recipeId, 16);
+
+        System.out.println("🔍 매칭된 상품 개수: " + matchedProducts.size()); // 디버깅
+
+        // 16개 미만일 경우 랜덤 상품으로 보충
+        if (matchedProducts.size() < 16) {
+            int remainingCount = 16 - matchedProducts.size();
+            List<ProductDto.RelatedProductResponse> randomProducts =
+                    productRepository.findRandomProducts(remainingCount);
+
+            System.out.println("🔍 랜덤 상품 개수: " + randomProducts.size()); // 디버깅
+            matchedProducts.addAll(randomProducts);
+        }
+
+        return matchedProducts.stream()
+                .limit(16)
+                .collect(Collectors.toList());
+    }
+
+    private void validateRecipeExists(Long recipeId) {
+        // Recipe 엔티티 존재 확인 로직
+        // 현재 Recipe 리포지토리가 없다면 기본 검증만 수행
+        if (recipeId == null || recipeId <= 0) {
+            throw BaseException.from(BaseResponseStatus.INVALID_RECIPE_ID);
+        }
     }
 }

@@ -193,4 +193,17 @@ public class ProductController {
             @Max(value = 99, message = "할인율은 99% 이하여야 합니다.")
             Integer rate
     ) {}
+
+    // 기존 코드 유지하고 아래 메서드 추가
+
+    @GetMapping("/recipe/{recipeId}/related")
+    @Operation(summary = "레시피 기반 연관 상품 조회", description = "레시피 재료를 기반으로 연관된 상품 16개를 추천합니다")
+    public ResponseEntity<BaseResponse<List<ProductDto.RelatedProductResponse>>> getRelatedProductsByRecipe(
+            @PathVariable @Parameter(description = "레시피 ID") Long recipeId) {
+
+        List<ProductDto.RelatedProductResponse> relatedProducts =
+                productService.getRelatedProductsByRecipe(recipeId);
+
+        return ResponseEntity.ok(BaseResponse.success(relatedProducts));
+    }
 }

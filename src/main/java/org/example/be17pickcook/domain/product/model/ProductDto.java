@@ -485,4 +485,52 @@ public class ProductDto {
             if (description != null) entity.setDescription(description);
         }
     }
+
+    @Getter
+    @Builder
+    @Schema(description = "레시피 기반 연관 상품 응답 DTO")
+    public static class RelatedProductResponse {
+        @Schema(description = "상품 ID", example = "1")
+        private Long productId;
+
+        @Schema(description = "상품 제목", example = "신선한 유기농 상추")
+        private String title;
+
+        @Schema(description = "상품 부제목", example = "아침에 따온 신선한 상추")
+        private String subtitle;
+
+        @Schema(description = "원가", example = "5000")
+        private Integer originalPrice;
+
+        @Schema(description = "할인율", example = "15")
+        private Integer discountRate;
+
+        @Schema(description = "메인 이미지 URL")
+        private String mainImageUrl;
+
+        @Schema(description = "카테고리명", example = "채소")
+        private String categoryName;
+
+        @Schema(description = "매칭 타입", example = "INGREDIENT_MATCH")
+        private String matchType;
+
+        @Schema(description = "매칭된 재료명", example = "상추")
+        private String matchedIngredient;
+
+        // 생성자 (QueryDSL Projections용)
+        public RelatedProductResponse(Long productId, String title, String subtitle,
+                                      Integer originalPrice, Integer discountRate,
+                                      String mainImageUrl, String categoryName,
+                                      String matchType, String matchedIngredient) {
+            this.productId = productId;
+            this.title = title;
+            this.subtitle = subtitle;
+            this.originalPrice = originalPrice;
+            this.discountRate = discountRate;
+            this.mainImageUrl = mainImageUrl;
+            this.categoryName = categoryName;
+            this.matchType = matchType;
+            this.matchedIngredient = matchedIngredient;
+        }
+    }
 }
