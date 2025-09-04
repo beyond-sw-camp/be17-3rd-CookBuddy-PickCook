@@ -4,15 +4,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import org.checkerframework.checker.units.qual.A;
-import org.example.be17pickcook.domain.cart.model.Carts;
 import org.example.be17pickcook.domain.product.model.Product;
 import org.example.be17pickcook.domain.user.model.User;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public class OrderDto {
 
