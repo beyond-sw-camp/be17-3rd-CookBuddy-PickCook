@@ -5,8 +5,7 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 import org.example.be17pickcook.domain.common.model.Category;
 import org.example.be17pickcook.domain.user.model.User;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import org.example.be17pickcook.common.BaseEntity;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -34,7 +33,7 @@ import java.time.LocalDateTime;
 )
 /** 유통기한은 null이거나(today 포함) 미래여야 한다는 DB 체크 */
 //@Check(constraints = "expiration_date IS NULL OR expiration_date >= CURRENT_DATE")
-public class RefrigeratorItem {
+public class RefrigeratorItem extends BaseEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -83,19 +82,6 @@ public class RefrigeratorItem {
     @FutureOrPresent(message = "유통기한은 오늘 또는 미래여야 합니다.")
     @Column(name = "expiration_date")
     private LocalDate expirationDate;
-
-    // =================================================================
-    // 시간 정보 필드
-    // =================================================================
-
-    /** 생성/수정 시각: 자동 관리 */
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
 
     // =================================================================
     // 소프트 삭제 필드

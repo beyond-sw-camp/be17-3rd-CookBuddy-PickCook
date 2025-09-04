@@ -19,8 +19,8 @@ import java.time.LocalDate;
 @Entity
 @Table(name = "refrigerator_item_delete_logs",
         indexes = {
-                @Index(name = "idx_user_deleted_at", columnList = "user_id, deleted_at"),
-                @Index(name = "idx_category_deleted_at", columnList = "category_id, deleted_at"),
+                @Index(name = "idx_user_created_at", columnList = "user_id, created_at"),
+                @Index(name = "idx_category_created_at", columnList = "category_id, created_at"),
                 @Index(name = "idx_ingredient_name", columnList = "ingredient_name")
         })
 @Getter
