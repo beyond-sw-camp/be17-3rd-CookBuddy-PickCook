@@ -122,11 +122,11 @@ public class Recipe extends BaseEntity implements LikeCountable, ScrapCountable 
         }
     }
 
-    public void increaseReviewCount() {
+    public void increaseCommentCount() {
         this.commentCount++;
     }
 
-    public void decreaseReviewCount() {
+    public void decreaseCommentCount() {
         if (this.commentCount > 0) {
             this.commentCount--;
         }

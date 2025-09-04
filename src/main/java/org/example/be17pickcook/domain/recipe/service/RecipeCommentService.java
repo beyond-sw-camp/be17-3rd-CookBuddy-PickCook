@@ -1,46 +1,61 @@
 package org.example.be17pickcook.domain.recipe.service;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.example.be17pickcook.common.service.S3UploadService;
 import org.example.be17pickcook.domain.recipe.model.Recipe;
 import org.example.be17pickcook.domain.recipe.model.RecipeComment;
+import org.example.be17pickcook.domain.recipe.model.RecipeCommentDto;
+import org.example.be17pickcook.domain.recipe.model.RecipeCommentImage;
+import org.example.be17pickcook.domain.recipe.repository.RecipeCommentRepository;
 import org.example.be17pickcook.domain.recipe.repository.RecipeRepository;
 import org.example.be17pickcook.domain.user.model.User;
+import org.example.be17pickcook.domain.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class RecipeCommentService {
+    private final RecipeCommentRepository commentRepository;
     private final RecipeRepository recipeRepository;
-    private final RecipeCommentRepository recipeCommentRepository;
+    private final UserRepository userRepository;
+    private final S3UploadService s3UploadService;
 
     @Transactional
-    public RecipeComment addReview(Long recipeId, String content, RecipeComment parentComment, User writer) {
-        Recipe recipe = recipeRepository.findById(recipeId)
-                .orElseThrow(() -> new RuntimeException("레시피를 찾을 수 없음"));
+    public RecipeCommentDto.Response addComment(RecipeCommentDto.Request request, MultipartFile image, int userId) throws SQLException, IOException {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        RecipeComment review = RecipeComment.builder()
-                .content(content)
-                .content(content)
-                .recipe(recipe)
-                .user(writer)
-                .parentComment(parentComment)
-                .build();
+        Recipe recipe = recipeRepository.findById(request.getRecipeId())
+                .orElseThrow(() -> new RuntimeException("Recipe not found"));
 
-        recipeCommentRepository.save(review);
-        recipe.increaseReviewCount(); // ✅ 리뷰 개수 증가
+        RecipeComment parentComment = null;
+        if (request.getParentCommentId() != null) {
+            parentComment = commentRepository.findById(request.getParentCommentId())
+                    .orElseThrow(() -> new RuntimeException("Parent comment not found"));
+        }
 
-        return review;
+        RecipeComment comment = request.toEntity(user, recipe, parentComment);
+        if (image != null && !image.isEmpty()){
+            String imageUrl = s3UploadService.upload(image);
+            comment.setImage(RecipeCommentImage.builder().recipeComment(comment).imageUrl(imageUrl).build());
+        }
+        RecipeComment savedComment = commentRepository.save(comment);
+
+        return RecipeCommentDto.Response.fromEntity(savedComment);
     }
 
-    @Transactional
-    public void deleteReview(Long reviewId) {
-        RecipeComment review = recipeCommentRepository.findById(reviewId)
-                .orElseThrow(() -> new RuntimeException("리뷰를 찾을 수 없음"));
-
-        Recipe recipe = review.getRecipe();
-        recipeCommentRepository.delete(review);
-
-        recipe.decreaseReviewCount(); // ✅ 리뷰 개수 감소
+    @Transactional(readOnly = true)
+    public List<RecipeCommentDto.Response> getComments(Long recipeId) {
+        List<RecipeComment> comments = commentRepository.findByRecipeIdxAndParentCommentIsNullOrderByCreatedAtAsc(recipeId);
+        return comments.stream()
+                .map(RecipeCommentDto.Response::fromEntity)
+                .collect(Collectors.toList());
     }
 }

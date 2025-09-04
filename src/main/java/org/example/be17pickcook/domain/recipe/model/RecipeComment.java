@@ -44,7 +44,7 @@ public class RecipeComment extends BaseEntity {
     private List<RecipeComment> children = new ArrayList<>();
 
     // 이미지 하나만 첨부 가능
-    @OneToOne(mappedBy = "recipeComment", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "recipeComment", cascade = CascadeType.ALL, orphanRemoval = true)
     private RecipeCommentImage image;
 
     // 이미지 편의 메서드
