@@ -10,15 +10,23 @@ import org.example.be17pickcook.domain.user.model.User;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Schema(description = "주문 관련 DTO 클래스들")
 public class OrderDto {
 
     @Getter
     @Builder
     @Schema(description = "결제 시작 요청 DTO")
     public static class PaymentStartReqDto {
+        @Schema(description = "총 결제 금액", example = "25000")
         private Integer total_price;
+
+        @Schema(description = "주문 타입", example = "ONLINE")
         private String orderType;
+
+        @Schema(description = "주문 상품 목록")
         private List<OrderItemDto> orderItems;
+
+        @Schema(description = "배송 정보")
         private OrderDeliveryDto orderDelivery;
 
         public Orders toEntity(User authUser, String paymentId) {
@@ -46,16 +54,26 @@ public class OrderDto {
         }
     }
 
-
     @Getter
     @Builder
-    @Schema(description = "결제 상품 DTO")
+    @Schema(description = "주문 상품 DTO")
     public static class OrderItemDto {
+        @Schema(description = "상품 ID", example = "1")
         private Long product_id;
+
+        @Schema(description = "장바구니 ID", example = "10")
         private Long cart_id;
+
+        @Schema(description = "상품명", example = "신선한 유기농 상추")
         private String product_name;
+
+        @Schema(description = "상품 가격", example = "5000")
         private Integer product_price;
+
+        @Schema(description = "주문 수량", example = "2")
         private Integer quantity;
+
+        @Schema(description = "배송 상태", example = "READY")
         private DeliveryStatus deliveryStatus;
 
         public OrderItem toEntity(Orders order) {
@@ -79,16 +97,29 @@ public class OrderDto {
         }
     }
 
-
     @Getter
     @Builder
+    @Schema(description = "배송 정보 DTO")
     public static class OrderDeliveryDto {
+        @Schema(description = "받는 사람 이름", example = "홍길동")
         private String receiverName;
+
+        @Schema(description = "받는 사람 전화번호", example = "010-1234-5678")
         private String receiverPhone;
+
+        @Schema(description = "우편번호", example = "12345")
         private Integer zipCode;
+
+        @Schema(description = "주소", example = "서울특별시 강남구 테헤란로 123")
         private String address;
+
+        @Schema(description = "상세 주소", example = "456호")
         private String detailAddress;
+
+        @Schema(description = "배송 장소", example = "문 앞")
         private String deliveryPlace;
+
+        @Schema(description = "배송 요청사항", example = "부재 시 문 앞에 놓아주세요")
         private String requestMessage;
 
         public OrderDelivery toEntity(Orders order) {
@@ -117,18 +148,33 @@ public class OrderDto {
         }
     }
 
-
     // 주문 내역 조회용
     @Getter
     @Builder
+    @Schema(description = "주문 상품 정보 DTO")
     public static class OrderInfoDto {
+        @Schema(description = "상품 ID", example = "1")
         private Long product_id;
+
+        @Schema(description = "상품명", example = "신선한 유기농 상추")
         private String product_name;
+
+        @Schema(description = "원가", example = "5000")
         private Integer original_price;
+
+        @Schema(description = "할인율", example = "15")
         private Integer discount_rate;
+
+        @Schema(description = "주문 수량", example = "2")
         private Integer quantity;
+
+        @Schema(description = "상품 이미지 URL", example = "https://example.com/product.jpg")
         private String product_image;
+
+        @Schema(description = "상품 용량/무게", example = "500g")
         private String product_amount;
+
+        @Schema(description = "배송 상태", example = "READY")
         private String status;
 
         public static OrderInfoDto fromEntity(OrderItem orderItem) {
@@ -145,13 +191,18 @@ public class OrderDto {
         }
     }
 
-
     // 주문 내역 목록 조회
     @Getter
     @Builder
+    @Schema(description = "주문 내역 목록 DTO")
     public static class OrderInfoListDto {
+        @Schema(description = "주문 ID", example = "1")
         private Long orderId;
+
+        @Schema(description = "주문 날짜", example = "2025-01-15T14:30:00")
         private LocalDateTime date;
+
+        @Schema(description = "주문 상품 목록")
         private List<OrderInfoDto> orderItems; // 기존 OrderInfoDto 사용
 
         public static OrderInfoListDto fromEntity(Orders order) {
@@ -165,16 +216,26 @@ public class OrderDto {
         }
     }
 
-
     @Getter
     @Builder
+    @Schema(description = "주문 상세 정보 DTO")
     public static class OrderDetailDto {
+        @Schema(description = "주문 번호", example = "ORD20250115-12345")
         private String orderNumber;
+
+        @Schema(description = "총 결제 금액", example = "25000")
         private Integer total_price;
+
+        @Schema(description = "결제 승인 시간", example = "2025-01-15T14:30:00")
         private LocalDateTime approvedAt;
+
+        @Schema(description = "결제 방법", example = "카드")
         private String paymentMethod;
 
+        @Schema(description = "배송 정보")
         private OrderDeliveryDto orderDelivery; // 배송 정보
+
+        @Schema(description = "주문 상품 목록")
         private List<OrderInfoDto> orderItems; // 상품 목록
 
         public static OrderDetailDto fromEntity(Orders order) {
@@ -192,25 +253,33 @@ public class OrderDto {
         }
     }
 
-
     @Getter
     @AllArgsConstructor
+    @Schema(description = "결제 시작 응답 DTO")
     public static class PaymentStartResDto {
+        @Schema(description = "결제 ID", example = "payment_123456")
         private String paymentId;
+
+        @Schema(description = "결제 상태", example = "PENDING")
         private String status;
     }
 
     @Getter
     @AllArgsConstructor
+    @Schema(description = "결제 검증 요청 DTO")
     public static class PaymentValidationReqDto {
+        @Schema(description = "결제 ID", example = "payment_123456")
         private String paymentId;
     }
 
     @Getter
     @AllArgsConstructor
+    @Schema(description = "결제 검증 응답 DTO")
     public static class PaymentValidationResDto {
+        @Schema(description = "주문 ID", example = "1")
         private Long order_id;
+
+        @Schema(description = "검증 상태", example = "SUCCESS")
         private String status;
     }
-
 }

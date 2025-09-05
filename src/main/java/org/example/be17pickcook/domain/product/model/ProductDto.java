@@ -92,13 +92,7 @@ public class ProductDto {
         public void setIsInCart(Boolean isInCart) {
             this.isInCart = isInCart;
         }
-
-//        public static ProductListResponse fromEntity(Product product) {
-//
-//        }
     }
-
-
 
     @Schema(description = "상품 상세 응답 정보")
     @Getter
@@ -190,7 +184,7 @@ public class ProductDto {
     }
 
     // =================================================================
-    // 리뷰 포함 상품 상세 응답 DTO (🆕 새로 추가)
+    // 리뷰 포함 상품 상세 응답 DTO (새로 추가)
     // =================================================================
 
     @Schema(description = "리뷰가 포함된 상품 상세 응답")
