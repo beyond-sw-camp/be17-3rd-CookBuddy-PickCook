@@ -1,5 +1,3 @@
-// 📁 org.example.be17pickcook.domain.user.controller.AddressController.java
-
 package org.example.be17pickcook.domain.user.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,10 +24,10 @@ import java.util.List;
  * - 기본배송지 관리 기능
  * - JWT 인증 기반 사용자별 배송지 관리
  */
+@Tag(name = "배송지 관리", description = "사용자 배송지 CRUD 관리 API")
 @RestController
 @RequestMapping("/api/user/addresses")
 @RequiredArgsConstructor
-@Tag(name = "배송지 관리", description = "사용자 배송지 CRUD 관리 API")
 public class AddressController {
 
     // =================================================================
