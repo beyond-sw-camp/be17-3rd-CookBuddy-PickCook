@@ -1,3 +1,20 @@
+# PickCook 애플리케이션 설정 (운영환경 포함)
+
+# =================================================================
+# 서버 및 SSL 설정
+# =================================================================
+server:
+  port: ${SERVER_PORT:8080}                                    # 기본 8080, 운영시 443
+  ssl:
+    enabled: ${SSL_ENABLED:false}                              # 운영환경에서만 true
+    key-store: ${SSL_KEYSTORE_PATH}                            # SSL 인증서 파일 경로
+    key-store-password: ${SSL_KEYSTORE_PASSWORD}               # SSL 인증서 비밀번호
+    key-store-type: ${SSL_KEYSTORE_TYPE:PKCS12}               # 인증서 타입
+    key-alias: ${SSL_KEY_ALIAS}                               # SSL 키 별칭
+
+# =================================================================
+# 관리 엔드포인트 설정
+# =================================================================
 management:
   endpoints:
     web:
@@ -7,46 +24,16 @@ management:
     health:
       show-details: always
 
+# =================================================================
+# Spring Boot 핵심 설정
+# =================================================================
 spring:
   application:
     name: pickcook
 
-  security:
-    oauth2:
-      client:
-        registration:
-          kakao:
-            client-id: ${KAKAO_CLIENT_ID}
-            # 앱 > 일반 > REST_API
-            client-secret: ${KAKAO_CLIENT_SECRET}
-            # 카카오 로그인 일반 앱 밑에 클라이언트 시크릿 발급
-            client-name: Kakao
-            authorization-grant-type: authorization_code
-            redirect-uri: ${KAKAO_REDIRECT_URI}
-            # 카카오에 똑같아야함
-            scope: profile_nickname
-            client-authentication-method: client_secret_post
-        provider:
-          kakao:
-            authorization-uri: https://kauth.kakao.com/oauth/authorize
-            token-uri: https://kauth.kakao.com/oauth/token
-            user-info-uri: https://kapi.kakao.com/v2/user/me
-            user-name-attribute: id
-
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: ${GMAIL_USERNAME}
-    password: ${GMAIL_PASSWORD}
-    properties:
-      mail:
-        smtp:
-          starttls:
-            enable: true
-            required: true
-          auth: true
-          timeout: 5000
-
+  # =================================================================
+  # 데이터베이스 설정
+  # =================================================================
   datasource:
     url: ${DB_URL}
     driver-class-name: org.mariadb.jdbc.Driver
@@ -63,42 +50,90 @@ spring:
     show-sql: true
     properties:
       hibernate:
-        format_sql: truespring.application.name=instagram
-#    database-platform: org.hibernate.dialect.MariaDBDialect
-#    defer-datasource-initialization: true
+        format_sql: true
 
+  # =================================================================
+  # OAuth2 소셜 로그인 설정 (카카오)
+  # =================================================================
+  security:
+    oauth2:
+      client:
+        registration:
+          kakao:
+            client-id: ${KAKAO_CLIENT_ID}
+            client-secret: ${KAKAO_CLIENT_SECRET}
+            client-name: Kakao
+            authorization-grant-type: authorization_code
+            redirect-uri: ${KAKAO_REDIRECT_URI}
+            scope: profile_nickname
+            client-authentication-method: client_secret_post
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
+
+  # =================================================================
+  # 이메일 SMTP 설정 (Gmail)
+  # =================================================================
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${GMAIL_USERNAME}
+    password: ${GMAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          starttls:
+            enable: true
+            required: true
+          auth: true
+          timeout: 5000
+
+  # =================================================================
+  # AWS 클라우드 설정 (S3)
+  # =================================================================
   cloud:
     aws:
       credentials:
         access-key: ${ACCESS_KEY}
         secret-key: ${SECRET_KEY}
-
-
       s3:
         bucket: ${MY_BUCKET}
       region:
         static: ${MY_REGION}
 
-
+  # =================================================================
+  # 파일 업로드 설정
+  # =================================================================
   servlet:
     multipart:
       enabled: true
       max-file-size: 20MB
       max-request-size: 20MB
 
+# =================================================================
+# 포트원 결제 시스템 설정
+# =================================================================
 portone:
   secret-key: ${PORTONE_SECRETE_KEY}
   store-id: ${PORTONE_STORE_ID}
   webhook-secret: ${PORTONE_WEBHOOK_SECRET}
 
-
+# =================================================================
+# 로깅 설정
+# =================================================================
 logging:
   level:
-    root: INFO               # 전체 로그 기본 레벨
-    org.example.be17pickcook: DEBUG  # 우리 프로젝트 패키지 로그
+    root: INFO                           # 전체 로그 기본 레벨
+    org.example.be17pickcook: DEBUG      # 우리 프로젝트 패키지 로그
 
-  app:
-    frontend:
-      url: ${FRONTEND_URL}
-    backend:
-      url: ${BACKEND_URL}
+# =================================================================
+# 애플리케이션 URL 설정
+# =================================================================
+app:
+  frontend:
+    url: ${FRONTEND_URL}
+  backend:
+    url: ${BACKEND_URL}
