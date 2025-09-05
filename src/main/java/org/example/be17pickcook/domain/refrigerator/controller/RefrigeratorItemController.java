@@ -24,7 +24,6 @@ import java.util.List;
  * - 검색, 필터링 API
  * - 소프트 삭제 및 복원 API
  */
-
 @Tag(name = "냉장고 관리", description = "냉장고 식재료 등록, 조회, 수정, 삭제 및 검색/필터링 기능을 제공합니다.")
 @RestController
 @RequiredArgsConstructor
@@ -190,7 +189,6 @@ public class RefrigeratorItemController {
     // =================================================================
     // 검색 관련 API
     // =================================================================
-
 
     @Operation(
             summary = "복합 필터링 조회",

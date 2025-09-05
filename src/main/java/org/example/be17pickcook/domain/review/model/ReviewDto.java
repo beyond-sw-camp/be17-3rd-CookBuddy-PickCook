@@ -31,24 +31,24 @@ public class ReviewDto {
     @AllArgsConstructor
     public static class WriteRequest {
 
-        @Schema(description = "상품 ID", example = "1", required = true)
+        @Schema(description = "상품 ID", example = "1", requiredMode = Schema.RequiredMode.REQUIRED)
         @NotNull(message = "상품 ID는 필수입니다.")
         private Long productId;
 
         @Schema(description = "주문 상품 ID (구매 이력 확인용)", example = "10")
         private Long orderItemId;  // 향후 주문 연동시 사용
 
-        @Schema(description = "리뷰 제목", example = "정말 신선해요!", required = true)
+        @Schema(description = "리뷰 제목", example = "정말 신선해요!", requiredMode = Schema.RequiredMode.REQUIRED)
         @NotBlank(message = "리뷰 제목을 입력해주세요.")
         @Size(max = 100, message = "리뷰 제목은 100자 이하로 작성해주세요.")
         private String title;
 
-        @Schema(description = "리뷰 내용", example = "배송도 빠르고 상품 상태도 좋았습니다.", required = true)
+        @Schema(description = "리뷰 내용", example = "배송도 빠르고 상품 상태도 좋았습니다.", requiredMode = Schema.RequiredMode.REQUIRED)
         @NotBlank(message = "리뷰 내용을 입력해주세요.")
         @Size(max = 2000, message = "리뷰 내용은 2000자 이하로 작성해주세요.")
         private String content;
 
-        @Schema(description = "별점 (1~5점)", example = "5", required = true)
+        @Schema(description = "별점 (1~5점)", example = "5", requiredMode = Schema.RequiredMode.REQUIRED)
         @NotNull(message = "별점을 선택해주세요.")
         @Min(value = 1, message = "별점은 1점부터 5점까지 선택할 수 있습니다.")
         @Max(value = 5, message = "별점은 1점부터 5점까지 선택할 수 있습니다.")
