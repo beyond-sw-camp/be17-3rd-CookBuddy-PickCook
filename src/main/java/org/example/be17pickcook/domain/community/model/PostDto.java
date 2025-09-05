@@ -1,5 +1,6 @@
 package org.example.be17pickcook.domain.community.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import lombok.*;
 import org.example.be17pickcook.domain.user.model.User;
@@ -10,6 +11,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+@Schema(description = "커뮤니티 게시글 관련 DTO 클래스들")
 public class PostDto {
 
     @Getter
@@ -17,12 +19,25 @@ public class PostDto {
     @Builder
     @AllArgsConstructor
     @NoArgsConstructor
+    @Schema(description = "게시글 작성 요청 정보")
     public static class Request {
+
+        @Schema(description = "게시글 제목", example = "맛있는 김치찌개 레시피 공유해요", requiredMode = Schema.RequiredMode.REQUIRED)
         private String title;
+
+        @Schema(description = "게시글 내용", example = "오늘 만든 김치찌개가 정말 맛있어서 레시피를 공유합니다.", requiredMode = Schema.RequiredMode.REQUIRED)
         private String content;
+
+        @Schema(description = "좋아요 수 (초기값 0)", example = "0")
         private Long likeCount;
+
+        @Schema(description = "스크랩 수 (초기값 0)", example = "0")
         private Long scrapCount;
+
+        @Schema(description = "조회 수 (초기값 0)", example = "0")
         private Long viewCount;
+
+        @Schema(description = "첨부 이미지 목록")
         private List<PostImageRequest> imageList;
 
         public Post toEntity(User user) {
@@ -38,7 +53,7 @@ public class PostDto {
             if (imageList != null) {
                 for (PostDto.PostImageRequest image : imageList) {
                     PostImage imageEntity = image.toEntity(post);
-                    post.addImageUrl(imageEntity); // 이미지 하나씩 추가
+                    post.addImageUrl(imageEntity);
                 }
             }
 
@@ -46,10 +61,12 @@ public class PostDto {
         }
     }
 
-
     @Getter
     @Builder
+    @Schema(description = "게시글 이미지 요청 정보")
     public static class PostImageRequest {
+
+        @Schema(description = "이미지 URL", example = "https://example.com/image.jpg", requiredMode = Schema.RequiredMode.REQUIRED)
         private String imageUrl;
 
         public PostImage toEntity(Post post) {
@@ -60,17 +77,33 @@ public class PostDto {
         }
     }
 
-
     @Builder
     @Getter
+    @Schema(description = "게시글 목록 조회 응답 정보")
     public static class ListResponse {
+
+        @Schema(description = "게시글 ID", example = "1")
         private Long id;
+
+        @Schema(description = "게시글 제목", example = "맛있는 김치찌개 레시피 공유해요")
         private String title;
+
+        @Schema(description = "작성자 닉네임", example = "요리왕")
         private String authorName;
-        private String contentPreview; // 내용 요약 (최대 2줄)
-        private String createdAgo;     // "n시간 전", "n일 전"
+
+        @Schema(description = "내용 미리보기 (최대 100자)", example = "오늘 만든 김치찌개가 정말 맛있어서...")
+        private String contentPreview;
+
+        @Schema(description = "작성 시간 (상대시간)", example = "2시간 전")
+        private String createdAgo;
+
+        @Schema(description = "좋아요 수", example = "15")
         private Long likeCount;
+
+        @Schema(description = "스크랩 수", example = "8")
         private Long scrapCount;
+
+        @Schema(description = "댓글 수", example = "12")
         private int comments;
 
         public static ListResponse from(Post post, int comments) {
@@ -121,15 +154,34 @@ public class PostDto {
 
     @Builder
     @Getter
+    @Schema(description = "게시글 상세 조회 응답 정보")
     public static class DetailResponse {
+
+        @Schema(description = "게시글 ID", example = "1")
         private Long id;
+
+        @Schema(description = "게시글 제목", example = "맛있는 김치찌개 레시피 공유해요")
         private String title;
+
+        @Schema(description = "게시글 내용", example = "오늘 만든 김치찌개가 정말 맛있어서 레시피를 공유합니다...")
         private String content;
+
+        @Schema(description = "작성자 닉네임", example = "요리왕")
         private String authorName;
+
+        @Schema(description = "좋아요 수", example = "15")
         private Long likeCount;
+
+        @Schema(description = "현재 사용자의 좋아요 여부", example = "true")
         private boolean hasLiked;
+
+        @Schema(description = "스크랩 수", example = "8")
         private Long scrapCount;
+
+        @Schema(description = "현재 사용자의 스크랩 여부", example = "false")
         private boolean hasScrapped;
+
+        @Schema(description = "수정일시", example = "2025년 1월 15일")
         private String updatedAt;
 
         public static DetailResponse from(Post post, boolean hasLiked, boolean hasScrapped) {
@@ -148,23 +200,48 @@ public class PostDto {
         }
     }
 
-
     @Getter
     @Builder
+    @Schema(description = "게시글 카드형 응답 정보 (메인 페이지용)")
     public static class PostCardResponse {
+
+        @Schema(description = "게시글 ID", example = "1")
         private Long id;
+
+        @Schema(description = "게시글 제목", example = "맛있는 김치찌개 레시피 공유해요")
         private String title;
-        private String postImage;           // 대표 이미지 1개
+
+        @Schema(description = "대표 이미지 URL", example = "https://example.com/image.jpg")
+        private String postImage;
+
+        @Schema(description = "작성자 닉네임", example = "요리왕")
         private String authorName;
+
+        @Schema(description = "작성자 프로필 이미지 URL", example = "https://example.com/profile.jpg")
         private String authorProfileImage;
+
+        @Schema(description = "좋아요 수", example = "15")
         private Long likeCount;
+
+        @Schema(description = "현재 사용자의 좋아요 여부", example = "true")
         private boolean hasLiked;
+
+        @Schema(description = "스크랩 수", example = "8")
         private Long scrapCount;
+
+        @Schema(description = "현재 사용자의 스크랩 여부", example = "false")
         private boolean hasScrapped;
+
+        @Schema(description = "조회 수", example = "120")
         private Long viewCount;
 
-        public void setHasLiked(boolean hasLiked) { this.hasLiked = hasLiked; }
-        public void setHasScrapped(boolean hasScrapped) { this.hasScrapped = hasScrapped; }
+        public void setHasLiked(boolean hasLiked) {
+            this.hasLiked = hasLiked;
+        }
+
+        public void setHasScrapped(boolean hasScrapped) {
+            this.hasScrapped = hasScrapped;
+        }
 
         // Entity -> DTO 변환
         public static PostCardResponse fromEntity(Post post) {

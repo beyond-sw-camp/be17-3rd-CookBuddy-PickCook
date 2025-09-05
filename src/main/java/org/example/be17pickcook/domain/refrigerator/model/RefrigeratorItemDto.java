@@ -407,13 +407,13 @@ public class RefrigeratorItemDto {
         public enum PromptType {
 
             @Schema(description = "정보성 메시지")
-            INFO("ℹ️"),
+            INFO("정보"),
 
             @Schema(description = "경고성 메시지")
-            WARNING("⚠️"),
+            WARNING("경고"),
 
             @Schema(description = "액션 유도 메시지")
-            ACTION("🔥");
+            ACTION("액션");
 
             private final String icon;
             PromptType(String icon) { this.icon = icon; }
