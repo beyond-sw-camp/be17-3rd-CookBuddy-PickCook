@@ -26,13 +26,19 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     public LoginFilter(AuthenticationManager authenticationManager, UserMapper userMapper) {
         this.authenticationManager = authenticationManager;
         this.userMapper = userMapper;
-        super.setFilterProcessesUrl("/login"); // 경로 설정
+        super.setFilterProcessesUrl("/api/auth/login"); // 경로 설정
     }
 
     // 원래는 form-data 형식으로 사용자 정보를 입력받았는데
     // 우리는 JSON 형태로 입력을 받기 위해서 재정의
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
+
+        String requestURI = request.getRequestURI();
+        if (requestURI.startsWith("/login/oauth2/code/")) {
+            throw new AuthenticationException("OAuth2 callback should not be processed by LoginFilter") {};
+        }
+
         UsernamePasswordAuthenticationToken authToken;
         try {
             System.out.println("LoginFilter 실행됐다.");
