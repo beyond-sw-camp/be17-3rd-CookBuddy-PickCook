@@ -23,14 +23,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     // 인증이 필요없는 경로들
     private static final List<String> PUBLIC_PATHS = Arrays.asList(
-            "/login",
+            "/api/auth/login",
             "/api/user/signup",
             "/api/user/verify",
             "/api/user/check-email",
-            "/api/user/find-email",              // ✅ 추가
-            "/api/user/request-password-reset",  // ✅ 추가
-            "/api/user/reset-password",          // ✅ 추가
-            "/oauth2/authorization/kakao"
+            "/api/user/find-email",
+            "/api/user/request-password-reset",
+            "/api/user/reset-password",
+            "/oauth2/authorization/kakao",
+            "/login/oauth2/code/kakao"
     );
 
     @Override
