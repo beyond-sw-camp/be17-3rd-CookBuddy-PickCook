@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.be17pickcook.common.BaseResponse;
 import org.example.be17pickcook.common.service.PresignedUploadService;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.sql.SQLException;
 
+@Slf4j
 @RestController
 @Tag(name = "이미지 업로드", description = "AWS S3 기반 이미지 파일 업로드 기능을 제공합니다.")
 @RequestMapping("/api/image-upload")
@@ -34,7 +36,7 @@ public class ImageUploadController {
     @PostMapping
     public BaseResponse<String> upload(@RequestParam MultipartFile file) throws SQLException, IOException {
         String url = presignedUploadService.upload(file);
-        System.out.println("url:"+url);
+        log.info("이미지 업로드 완료: URL = {}", url);
         return BaseResponse.success(url);
     }
 }

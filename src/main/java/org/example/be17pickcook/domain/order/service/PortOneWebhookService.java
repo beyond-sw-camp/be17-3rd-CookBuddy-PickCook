@@ -97,8 +97,9 @@ public class PortOneWebhookService {
     /** 페이로드 JSON -> DTO 변환 */
     private PortOneWebhookReqDto parsePayload (String payload){
         try {
-            System.out.println(objectMapper.readValue(payload, PortOneWebhookReqDto.class));
-            return objectMapper.readValue(payload, PortOneWebhookReqDto.class);
+            PortOneWebhookReqDto result = objectMapper.readValue(payload, PortOneWebhookReqDto.class);
+            log.debug("웹훅 페이로드 파싱 완료: type = {}", result.getType());
+            return result;
         } catch (Exception e) {
             throw new IllegalArgumentException("웹훅 payload 파싱 실패", e);
         }
