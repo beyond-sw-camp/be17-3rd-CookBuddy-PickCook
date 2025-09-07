@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional; // import 수�
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -38,16 +39,41 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
         User user;
 
         if (existingUser.isEmpty()) {
-            // MapStruct 매퍼로 OAuth2 사용자 생성
+            // MapStruct 매퍼로 OAuth2 사용자 생성 (일단 nickname 값 넣음)
             user = userMapper.createOAuth2User(kakaoId, nickname);
+
+            // name 기본값 설정
+            if (user.getName() == null || user.getName().isBlank()) {
+                user.setName("이름을 입력해주세요");
+            }
+
+            if (user.getPhone() == null || user.getPhone().isBlank()) {
+                user.setPhone("이름을 입력해주세요");
+            }
+
+            // nickname 유니크 보장 (랜덤 suffix 붙이기)
+            user.setNickname(generateUniqueNickname(nickname));
+
             user = userRepository.save(user);
-            log.info("OAuth2 신규 사용자 생성 - 카카오ID: {}, 닉네임: {}", kakaoId, nickname);
+            log.info("OAuth2 신규 사용자 생성 - 카카오ID: {}, 닉네임: {}", kakaoId, user.getNickname());
         } else {
             user = existingUser.get();
             log.info("OAuth2 기존 사용자 로그인 - 카카오ID: {}", kakaoId);
         }
 
-        // MapStruct 매퍼로 OAuth2 속성까지 한 번에 처리
         return userMapper.entityToAuthUserWithAttributes(user, attributes);
+    }
+
+    /**
+     * 닉네임 중복 방지 로직
+     * ex) nickname → nickname_ab12, nickname_f9x3 ...
+     */
+    private String generateUniqueNickname(String baseNickname) {
+        String candidate = baseNickname;
+        while (userRepository.existsByNickname(candidate)) {
+            String randomSuffix = UUID.randomUUID().toString().substring(0, 4); // 4자리 랜덤
+            candidate = baseNickname + "_" + randomSuffix;
+        }
+        return candidate;
     }
 }

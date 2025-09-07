@@ -11,6 +11,8 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Integer> {
     Optional<User> findByEmail(String email);
 
+    boolean existsByNickname(String candidate);
+
     // 🔧 추가: 탈퇴하지 않은 사용자만 조회
     @Query("SELECT u FROM User u WHERE u.email = :email AND (u.deleted IS NULL OR u.deleted = false)")
     Optional<User> findByEmailAndNotDeleted(@Param("email") String email);

@@ -44,6 +44,7 @@ public class SecurityConfig {
         corsConfiguration.addAllowedOrigin("https://admin.pickcook.kro.kr");
         corsConfiguration.addAllowedOrigin("https://52.78.5.241");
         corsConfiguration.addAllowedOrigin("http://52.78.5.241");
+        corsConfiguration.addAllowedOrigin("https://pick-cook.kro.kr");
         corsConfiguration.addAllowedOriginPattern("http://localhost:*");
         corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         corsConfiguration.setAllowedHeaders(List.of("*"));
