@@ -53,8 +53,6 @@ public interface RefrigeratorItemMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "user", ignore = true)
     @Mapping(target = "category", ignore = true)  // Service에서 Category 엔티티 설정
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "isDeleted", constant = "false")
     @Mapping(target = "deletedAt", ignore = true)
     RefrigeratorItem requestToEntity(RefrigeratorItemDto.Request dto);
@@ -71,8 +69,6 @@ public interface RefrigeratorItemMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "user", ignore = true)
     @Mapping(target = "category", ignore = true)  // Service에서 카테고리 변경 처리
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "isDeleted", ignore = true)
     @Mapping(target = "deletedAt", ignore = true)
     void updateEntityFromDto(@MappingTarget RefrigeratorItem entity, RefrigeratorItemDto.Update dto);

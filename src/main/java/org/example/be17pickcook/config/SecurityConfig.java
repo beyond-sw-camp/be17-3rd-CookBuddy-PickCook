@@ -40,11 +40,14 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();  // 변수명 변경
 
+        corsConfiguration.addAllowedOrigin("https://www.pickcook.kro.kr");
+        corsConfiguration.addAllowedOrigin("https://admin.pickcook.kro.kr");
         corsConfiguration.addAllowedOrigin("https://52.78.5.241");
         corsConfiguration.addAllowedOrigin("http://52.78.5.241");
         corsConfiguration.addAllowedOriginPattern("http://localhost:*");
         corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         corsConfiguration.setAllowedHeaders(List.of("*"));
+        corsConfiguration.setExposedHeaders(List.of("*"));
         corsConfiguration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -66,14 +69,15 @@ public class SecurityConfig {
         http.authorizeHttpRequests(
                 (auth) -> auth
                         .requestMatchers(
-                                "/login",
+                                "/api/auth/login",
                                 "/api/user/signup",
                                 "/api/user/verify",
                                 "/api/user/check-email",
                                 "/api/user/find-email",
                                 "/api/user/request-password-reset",
                                 "/api/user/reset-password",
-                                "/oauth2/authorization/kakao"
+                                "/oauth2/authorization/kakao",
+                                "/login/oauth2/code/kakao"
                         ).permitAll()
                         .requestMatchers("/api/user/addresses/**").authenticated()
                         .requestMatchers("/test/*").hasRole("USER")
