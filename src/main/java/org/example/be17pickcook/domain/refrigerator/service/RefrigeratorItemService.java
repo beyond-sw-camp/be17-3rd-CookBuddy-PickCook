@@ -345,6 +345,16 @@ public class RefrigeratorItemService {
         List<String> actions = new ArrayList<>();
         RefrigeratorItemDto.SyncPrompt.PromptType messageType = RefrigeratorItemDto.SyncPrompt.PromptType.INFO;
 
+        // 🆕 전체 냉장고가 비어있는 경우 (최우선 처리)
+        if (allItems.isEmpty()) {
+            return RefrigeratorItemDto.SyncPrompt.builder()
+                    .baseMessage(SyncPromptMessage.BASE_MESSAGE.getTemplate())
+                    .contextMessage(SyncPromptMessage.EMPTY_REFRIGERATOR.getTemplate())
+                    .messageType(RefrigeratorItemDto.SyncPrompt.PromptType.INFO)
+                    .recommendedAction("첫 식재료 등록하기")
+                    .build();
+        }
+
         // 만료된 아이템
         if (!expiredItems.isEmpty()) {
             messages.add(SyncPromptMessage.EXPIRED_ITEMS.format(expiredItems.size()));
