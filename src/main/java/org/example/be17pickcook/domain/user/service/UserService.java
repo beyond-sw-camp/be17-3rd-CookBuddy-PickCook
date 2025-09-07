@@ -73,7 +73,6 @@ public class UserService implements UserDetailsService {
     public void logout(HttpServletRequest request, HttpServletResponse response, AuthService authService) {
         // ✅ 매개변수로 AuthService를 받아서 처리 (Controller에서 주입)
         authService.logout(request, response);
-        log.info("사용자 로그아웃 처리 완료 - AuthService 위임");
     }
 
     /**
@@ -83,7 +82,6 @@ public class UserService implements UserDetailsService {
     public void clearAuthenticationCookies(HttpServletResponse response, AuthService authService) {
         // ✅ 매개변수로 AuthService를 받아서 처리 (Controller에서 주입)
         authService.clearAllAuthenticationCookies(response);
-        log.info("인증 쿠키 삭제 완료 - AuthService 위임");
     }
 
     // =================================================================
@@ -97,8 +95,6 @@ public class UserService implements UserDetailsService {
      */
     @Transactional
     public void register(UserDto.Register dto) {
-        log.info("=== 회원가입 처리 시작 (All or Nothing) ===");
-        log.info("이메일: {}", dto.getEmail());
 
         Optional<User> existingUser = userRepository.findByEmail(dto.getEmail());
 
@@ -106,8 +102,6 @@ public class UserService implements UserDetailsService {
             User user = existingUser.get();
 
             if (user.getDeleted() != null && user.getDeleted()) {
-                // 탈퇴한 계정을 재활성화
-                log.info("=== 탈퇴한 계정 재활성화 ===");
                 reactivateWithdrawnAccount(user, dto);
                 return;
             } else {
@@ -127,13 +121,11 @@ public class UserService implements UserDetailsService {
         // 인증 이메일 발송 (실패 시 전체 롤백)
         try {
             emailService.sendVerificationEmail(dto.getEmail(), uuid);
-            log.info("회원가입 및 인증 이메일 발송 완료: {}", dto.getEmail());
+            log.info("회원가입 완료: 이메일 = {}", dto.getEmail());
         } catch (MessagingException e) {
             log.error("인증 이메일 발송 실패 - 전체 트랜잭션 롤백: {}", dto.getEmail(), e);
             throw BaseException.from(BaseResponseStatus.EMAIL_SEND_FAILED);
         }
-
-        log.info("=== 회원가입 처리 완료 (All or Nothing) ===");
     }
 
     /**
@@ -168,8 +160,7 @@ public class UserService implements UserDetailsService {
      */
     @Transactional(readOnly = true)
     public UserDto.FindEmailResponse findEmailByNameAndPhone(UserDto.FindEmailRequest dto) {
-        log.info("=== 아이디 찾기 요청 ===");
-        log.info("이름: {}, 전화번호: {}", dto.getName(), dto.getPhone());
+        log.info("아이디 찾기 요청: 이름 = {}", dto.getName());
 
         // 1. 전화번호 중복 검증 먼저 수행
         List<User> usersWithSamePhone = userRepository.findByPhoneAndNotDeleted(dto.getPhone());
@@ -295,8 +286,7 @@ public class UserService implements UserDetailsService {
      */
     @Transactional
     public void requestPasswordReset(String email) {
-        log.info("=== 비밀번호 재설정 요청 ===");
-        log.info("이메일: {}", email);
+        log.info("비밀번호 재설정 요청: 이메일 = {}", email);
 
         Optional<User> userOptional = userRepository.findByEmail(email);
 
@@ -330,8 +320,6 @@ public class UserService implements UserDetailsService {
 
         // ✅ TokenService로 내부용 토큰 생성 (10분 만료)
         String token = tokenService.createInternalPasswordResetToken(user);
-
-        log.info("마이페이지 비밀번호 변경 토큰 생성 완료: 사용자 ID = {}", userId);
 
         return token;
     }
@@ -381,15 +369,12 @@ public class UserService implements UserDetailsService {
      */
     @Transactional
     public UserDto.WithdrawResponse withdrawUser(Integer userId, UserDto.WithdrawRequest dto) {
-        log.info("=== 회원탈퇴 요청 ===");
-        log.info("사용자 ID: {}, 탈퇴 사유: {}", userId, dto.getReason());
+        log.info("회원탈퇴 요청: 사용자ID = {}, 사유 = {}", userId, dto.getReason());
 
         try {
             // 사용자 조회
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> BaseException.from(BaseResponseStatus.USER_NOT_FOUND));
-
-            log.info("사용자 조회 완료 - 이메일: {}, 삭제상태: {}", user.getEmail(), user.getDeleted());
 
             // 이미 탈퇴한 사용자인지 확인
             if (user.getDeleted() != null && user.getDeleted()) {
@@ -403,11 +388,8 @@ public class UserService implements UserDetailsService {
                 throw BaseException.from(BaseResponseStatus.WITHDRAW_CONFIRM_REQUIRED);
             }
 
-            log.info("탈퇴 확인 체크 통과");
-
             // 비밀번호 확인 (일반 로그인 사용자만)
             if (user.getPassword() != null && !isOAuth2User(user)) {
-                log.info("일반 로그인 사용자 - 비밀번호 확인 시작");
 
                 if (dto.getPassword() == null || dto.getPassword().trim().isEmpty()) {
                     log.warn("비밀번호가 입력되지 않음");
@@ -418,24 +400,14 @@ public class UserService implements UserDetailsService {
                     log.warn("비밀번호 불일치");
                     throw BaseException.from(BaseResponseStatus.INVALID_USER_INFO);
                 }
-
-                log.info("비밀번호 확인 완료");
-            } else {
-                log.info("소셜 로그인 사용자 - 비밀번호 확인 건너뛰기");
             }
-
-            // 소프트 삭제 실행
-            log.info("소프트 삭제 실행 시작");
             user.softDelete();
-
-            log.info("사용자 저장 시작");
             User savedUser = userRepository.save(user);
 
             log.info("회원탈퇴 완료 - 사용자: {}, 탈퇴일시: {}", savedUser.getEmail(), savedUser.getDeletedAt());
 
             // 마스킹된 이메일로 응답
             String maskedEmail = maskEmail(user.getEmail());
-            log.info("마스킹된 이메일: {}", maskedEmail);
 
             UserDto.WithdrawResponse response = UserDto.WithdrawResponse.builder()
                     .message("회원탈퇴가 완료되었습니다.")
@@ -443,7 +415,6 @@ public class UserService implements UserDetailsService {
                     .email(maskedEmail)
                     .build();
 
-            log.info("응답 객체 생성 완료");
             return response;
 
         } catch (BaseException e) {

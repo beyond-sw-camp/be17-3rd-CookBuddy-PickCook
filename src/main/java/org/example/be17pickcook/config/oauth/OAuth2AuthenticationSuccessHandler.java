@@ -1,5 +1,6 @@
 package org.example.be17pickcook.config.oauth;
 
+import lombok.extern.slf4j.Slf4j;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.utils.JwtUtil;
 import jakarta.servlet.ServletException;
@@ -15,19 +16,17 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
+
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-        System.out.println("=== OAuth2 로그인 성공 ===");
+
         UserDto.AuthUser authUser = (UserDto.AuthUser) authentication.getPrincipal();
 
-        // 디버깅 로그 추가
-        System.out.println("사용자 정보:");
-        System.out.println("- idx: " + authUser.getIdx());
-        System.out.println("- email: " + authUser.getEmail());
-        System.out.println("- nickname: " + authUser.getNickname());
+        log.info("OAuth2 로그인 성공: 사용자 = {}", authUser.getEmail());
 
         String jwt = JwtUtil.generateToken(authUser.getEmail(), authUser.getIdx(), authUser.getNickname(), authUser.getName());
 
@@ -36,23 +35,23 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             cookie.setHttpOnly(true);
             cookie.setPath("/");
             response.addCookie(cookie);
-            System.out.println("OAuth2 쿠키 설정 완료");
+
+            log.info("OAuth2 JWT 쿠키 설정 완료: 사용자 = {}", authUser.getEmail());
 
             // 닉네임을 URL 파라미터로 전달 (한글 인코딩 처리)
             String encodedNickname = URLEncoder.encode(authUser.getNickname(), StandardCharsets.UTF_8);
             String redirectUrl = String.format(
-                    "http://localhost:*/?loginSuccess=true&nickname=%s&loginType=social",
+                    "https://www.pickcook.kro.kr/?loginSuccess=true&nickname=%s&loginType=social",
                     encodedNickname
             );
 
-            System.out.println("리다이렉트 URL: " + redirectUrl);
-
             // 프론트엔드 메인 페이지로 리다이렉트
             response.sendRedirect(redirectUrl);
-            System.out.println("OAuth2 리다이렉트 완료");
+
+            log.info("OAuth2 리다이렉트 완료: 사용자 = {}", authUser.getEmail());
         } else {
-            System.out.println("JWT 생성 실패");
-            response.sendRedirect("http://localhost:*/login?error=true");
+            log.error("OAuth2 JWT 토큰 생성 실패: 사용자 = {}", authUser.getEmail());
+            response.sendRedirect("https://admin.pickcook.kro.kr:*/login?error=true");
         }
     }
 }

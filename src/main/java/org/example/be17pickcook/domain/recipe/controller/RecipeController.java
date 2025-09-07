@@ -1,6 +1,8 @@
 package org.example.be17pickcook.domain.recipe.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.example.be17pickcook.common.BaseResponse;
@@ -9,11 +11,9 @@ import org.example.be17pickcook.domain.recipe.model.RecipeListResponseDto;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.domain.recipe.model.RecipeDto;
 import org.example.be17pickcook.domain.recipe.service.RecipeService;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.repository.query.Param;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,41 +24,80 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
+/**
+ * 레시피 관리 컨트롤러
+ * - 레시피 CRUD API
+ * - 레시피 목록 조회 (페이징, 정렬)
+ * - 레시피 추천 기능
+ * - 이미지 첨부 지원
+ */
+@Tag(name = "레시피 관리", description = "레시피 등록, 조회, 목록 조회 기능을 제공합니다.")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/recipe")
-@Tag(name = "레시피 기능", description = "레시피 등록, 조회, 목록 조회 기능을 제공합니다.")
 public class RecipeController {
+
+    // =================================================================
+    // 의존성 주입
+    // =================================================================
+
     private final RecipeService recipeService;
+
+    // =================================================================
+    // 레시피 등록 관련 API
+    // =================================================================
 
     @Operation(
             summary = "레시피 등록",
-            description = "사용자가 새로운 레시피를 등록합니다.\n" +
-                    "- 레시피 정보는 RecipeRequestDto로 전달\n" +
-                    "- 이미지 파일은 optional로 MultipartFile 리스트 형태로 전달 가능"
+            description = "사용자가 새로운 레시피를 등록합니다. " +
+                    "레시피 정보는 RecipeRequestDto로 전달하고, " +
+                    "이미지 파일은 optional로 MultipartFile 리스트 형태로 전달 가능합니다.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "레시피 등록 성공"),
+                    @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
+                    @ApiResponse(responseCode = "401", description = "인증 필요"),
+                    @ApiResponse(responseCode = "500", description = "서버 오류")
+            }
     )
     @PostMapping(value="/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity register(@AuthenticationPrincipal UserDto.AuthUser authUser,
-                                   @RequestPart RecipeDto.RecipeRequestDto dto,
-                                   @RequestPart(value = "files", required = false)List<MultipartFile> files) throws SQLException, IOException {
-        recipeService.register(authUser, dto, files);
+    public ResponseEntity<BaseResponse<String>> register(
+            @Parameter(description = "인증된 사용자 정보", hidden = true)
+            @AuthenticationPrincipal UserDto.AuthUser authUser,
+            @Parameter(description = "레시피 등록 정보", required = true)
+            @RequestPart RecipeDto.RecipeRequestDto dto,
+            @Parameter(description = "레시피 이미지 파일들 (선택사항)")
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws SQLException, IOException {
 
-        return ResponseEntity.status(200).body("레시피 작성 성공");
+        recipeService.register(authUser, dto, files);
+        return ResponseEntity.ok(BaseResponse.success("레시피 작성 성공"));
     }
 
-    @GetMapping
+    // =================================================================
+    // 레시피 조회 관련 API
+    // =================================================================
+
     @Operation(
             summary = "레시피 목록 조회 (페이징)",
-            description = "등록된 레시피 목록을 페이지 단위로 조회합니다.\n" +
-                    "- page: 0부터 시작하는 페이지 번호\n" +
-                    "- size: 페이지당 레코드 수"
+            description = "등록된 레시피 목록을 페이지 단위로 조회합니다. " +
+                    "page: 0부터 시작하는 페이지 번호, " +
+                    "size: 페이지당 레코드 수, " +
+                    "sortType: 정렬 방식 (latest: 최신순, oldest: 오래된순, likes: 좋아요순, scraps: 스크랩순)",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "조회 성공"),
+                    @ApiResponse(responseCode = "400", description = "잘못된 파라미터")
+            }
     )
+    @GetMapping
     public BaseResponse<PageResponse<RecipeDto.RecipeListResponseDto>> getRecipeList(
+            @Parameter(description = "인증된 사용자 정보", hidden = true)
             @AuthenticationPrincipal UserDto.AuthUser authUser,
+            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
             @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지당 레시피 수", example = "10")
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "latest") String sortType
-    ) {
+            @Parameter(description = "정렬 방식 (latest, oldest, likes, scraps)", example = "latest")
+            @RequestParam(defaultValue = "latest") String sortType) {
+
         Integer userIdx = (authUser != null) ? authUser.getIdx() : null;
 
         Sort sort = switch (sortType) {
@@ -69,37 +108,50 @@ public class RecipeController {
         };
 
         Pageable pageable = PageRequest.of(page, size, sort);
-//        Pageable pageable = PageRequest.of(page, size);
-
         return BaseResponse.success(recipeService.getRecipeList(userIdx, pageable));
     }
 
-    // 특정 레시피 조회
     @Operation(
             summary = "특정 레시피 조회",
-            description = "레시피 ID를 기반으로 레시피 상세 정보를 조회합니다."
+            description = "레시피 ID를 기반으로 레시피 상세 정보를 조회합니다. " +
+                    "조회수가 증가하고 사용자별 좋아요/스크랩 상태도 함께 반환됩니다.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "조회 성공"),
+                    @ApiResponse(responseCode = "404", description = "레시피를 찾을 수 없음")
+            }
     )
     @GetMapping("/{id}")
-    public ResponseEntity<RecipeDto.RecipeResponseDto> getRecipe(@AuthenticationPrincipal UserDto.AuthUser authUser, @PathVariable Long id) {
+    public ResponseEntity<RecipeDto.RecipeResponseDto> getRecipe(
+            @Parameter(description = "인증된 사용자 정보", hidden = true)
+            @AuthenticationPrincipal UserDto.AuthUser authUser,
+            @Parameter(description = "조회할 레시피 ID", example = "1")
+            @PathVariable Long id) {
+
         Integer userIdx = (authUser != null) ? authUser.getIdx() : null;
         return ResponseEntity.ok(recipeService.getRecipe(id, userIdx));
     }
 
+    // =================================================================
+    // 레시피 추천 관련 API
+    // =================================================================
 
+    @Operation(
+            summary = "사용자 맞춤 레시피 추천",
+            description = "사용자의 냉장고 식재료와 선호도를 기반으로 맞춤 레시피를 추천합니다.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "추천 성공"),
+                    @ApiResponse(responseCode = "401", description = "인증 필요")
+            }
+    )
     @GetMapping("/recommendation")
-    public BaseResponse<PageResponse<RecipeListResponseDto>> getRecommendations(@AuthenticationPrincipal UserDto.AuthUser authUser, @RequestParam int page, @RequestParam int size) {
+    public BaseResponse<PageResponse<RecipeListResponseDto>> getRecommendations(
+            @Parameter(description = "인증된 사용자 정보", hidden = true)
+            @AuthenticationPrincipal UserDto.AuthUser authUser,
+            @Parameter(description = "페이지 번호", example = "0")
+            @RequestParam int page,
+            @Parameter(description = "페이지 크기", example = "10")
+            @RequestParam int size) {
+
         return BaseResponse.success(recipeService.getRecommendations(authUser.getIdx(), page, size));
     }
-
-//    // 레시피 목록 조회
-//    @Operation(
-//            summary = "레시피 목록 조회",
-//            description = "등록된 모든 레시피 목록을 조회합니다."
-//    )
-//    @GetMapping
-//    public BaseResponse<List<RecipeDto.RecipeResponseDto>> getRecipeList(@AuthenticationPrincipal UserDto.AuthUser authUser) {
-//        Integer userIdx = (authUser != null) ? authUser.getIdx() : null;
-//
-//        return BaseResponse.success(recipeService.getRecipeList(userIdx));
-//    }
 }

@@ -10,7 +10,9 @@ public enum SyncPromptMessage {
     EXPIRED_ITEMS("⚠️ 만료된 식재료 %d개를 정리해주세요!"),
     URGENT_ITEMS("🔥 긴급! 1일 내 만료 예정 식재료 %d개!"),
     EXPIRING_ITEMS("⏰ 2-3일 내 만료 예정 식재료 %d개가 있어요!"),
-    NORMAL_STATE("✨ 냉장고가 잘 관리되고 있네요! 새로운 변화가 있다면 알려주세요");
+    NORMAL_STATE("✨ 냉장고가 잘 관리되고 있네요! 새로운 변화가 있다면 알려주세요"),
+    EMPTY_REFRIGERATOR("아직 등록된 식재료가 없어요\n+ 버튼을 눌러 식재료를 추가해보세요!"),
+    EMPTY_LOCATION("이 공간은 비어있어요\n첫 식재료를 등록해보세요!");
 
     private final String template;
 
