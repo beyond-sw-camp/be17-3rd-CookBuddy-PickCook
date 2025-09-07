@@ -50,6 +50,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
             log.info("OAuth2 리다이렉트 완료: 사용자 = {}", authUser.getEmail());
         } else {
+            log.error("OAuth2 JWT 토큰 생성 실패: 사용자 = {}", authUser.getEmail());
             response.sendRedirect("https://admin.pickcook.kro.kr:*/login?error=true");
         }
     }

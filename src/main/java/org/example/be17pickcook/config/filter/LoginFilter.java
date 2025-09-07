@@ -1,6 +1,7 @@
 package org.example.be17pickcook.config.filter;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.be17pickcook.common.BaseResponse;
 import org.example.be17pickcook.common.BaseResponseStatus;
 import org.example.be17pickcook.domain.user.mapper.UserMapper;
@@ -19,6 +20,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import java.io.IOException;
 
+@Slf4j
 public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     private final AuthenticationManager authenticationManager;
     private final UserMapper userMapper;
@@ -41,9 +43,11 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
         UsernamePasswordAuthenticationToken authToken;
         try {
-            System.out.println("LoginFilter 실행됐다.");
 
             UserDto.Login dto = new ObjectMapper().readValue(request.getInputStream(), UserDto.Login.class);
+
+            log.info("로그인 시도: 이메일 = {}", dto.getEmail());
+
             authToken = new UsernamePasswordAuthenticationToken(
                     dto.getEmail(), dto.getPassword(), null
             );
@@ -61,6 +65,9 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
 
         UserDto.AuthUser authUser = (UserDto.AuthUser) authResult.getPrincipal();
+
+        log.info("로그인 성공: 사용자 = {}", authUser.getEmail());
+
         String jwt = JwtUtil.generateToken(authUser.getEmail(), authUser.getIdx(), authUser.getNickname(), authUser.getName());
 
         if (jwt != null) {
@@ -93,6 +100,8 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws IOException, ServletException {
+
+        log.warn("로그인 실패: 원인 = {}", failed.getMessage());
 
         // BaseResponse 형식으로 에러 응답
         BaseResponse<Void> errorResponse = BaseResponse.error(BaseResponseStatus.INVALID_USER_INFO);
