@@ -42,7 +42,8 @@ public interface UserMapper {
     // OAuth2 사용자 생성용 매핑
     @Mapping(target = "idx", ignore = true)
     @Mapping(target = "password", ignore = true)
-    @Mapping(target = "name", source = "nickname")        // nickname을 name으로 매핑
+    @Mapping(target = "name", ignore = true)
+    @Mapping(target = "nickname", source = "nickname") // 카카오 닉네임으로 매핑
     @Mapping(target = "phone", ignore = true)
     @Mapping(target = "enabled", constant = "true")
     @Mapping(target = "role", constant = "USER")

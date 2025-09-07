@@ -8,6 +8,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -20,10 +21,11 @@ import java.nio.charset.StandardCharsets;
 @Component
 @RequiredArgsConstructor
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
+    @Value("${FRONTEND_URL}")
+    private String frontendUrl;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-
         UserDto.AuthUser authUser = (UserDto.AuthUser) authentication.getPrincipal();
 
         log.info("OAuth2 로그인 성공: 사용자 = {}", authUser.getEmail());
@@ -41,7 +43,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             // 닉네임을 URL 파라미터로 전달 (한글 인코딩 처리)
             String encodedNickname = URLEncoder.encode(authUser.getNickname(), StandardCharsets.UTF_8);
             String redirectUrl = String.format(
-                    "https://www.pickcook.kro.kr/?loginSuccess=true&nickname=%s&loginType=social",
+                    "%s/?loginSuccess=true&nickname=%s&loginType=social",
+                    frontendUrl,
                     encodedNickname
             );
 
@@ -51,7 +54,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             log.info("OAuth2 리다이렉트 완료: 사용자 = {}", authUser.getEmail());
         } else {
             log.error("OAuth2 JWT 토큰 생성 실패: 사용자 = {}", authUser.getEmail());
-            response.sendRedirect("https://admin.pickcook.kro.kr:*/login?error=true");
+            response.sendRedirect(frontendUrl + "/login?error=true");
         }
     }
 }
