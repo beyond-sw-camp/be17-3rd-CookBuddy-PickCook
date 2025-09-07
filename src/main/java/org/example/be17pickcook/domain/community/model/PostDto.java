@@ -241,6 +241,9 @@ public class PostDto {
         @Schema(description = "게시글 내용", example = "내용 본문")
         private String content;
 
+        @Schema(description = "댓글 수", example = "12")
+        private Long commentCount;
+
         public void setHasLiked(boolean hasLiked) {
             this.hasLiked = hasLiked;
         }

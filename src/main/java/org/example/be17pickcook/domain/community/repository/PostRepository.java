@@ -19,7 +19,7 @@ public interface PostRepository extends JpaRepository<Post,Long> {
     // 홈화면에서 사용할 데이터 반환
     @Query("""
     SELECT p.id, p.title, pi.imageUrl, p.user.nickname, p.user.profileImage, 
-           p.likeCount, p.scrapCount, p.viewCount, p.updatedAt
+           p.likeCount, p.scrapCount, p.viewCount, p.updatedAt, p.content
     FROM Post p
     LEFT JOIN p.postImageList pi
     WHERE pi.id = (

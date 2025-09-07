@@ -5,6 +5,7 @@ import org.example.be17pickcook.common.PageResponse;
 import org.example.be17pickcook.domain.community.model.Post;
 import org.example.be17pickcook.domain.community.model.PostDto;
 import org.example.be17pickcook.domain.community.model.PostImage;
+import org.example.be17pickcook.domain.community.repository.CommentRepository;
 import org.example.be17pickcook.domain.community.repository.PostImageRepository;
 import org.example.be17pickcook.domain.community.repository.PostQueryRepository;
 import org.example.be17pickcook.domain.community.repository.PostRepository;
@@ -29,6 +30,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PostService {
     private final PostRepository postRepository;
+    private final CommentRepository commentRepository;
     private final PostQueryRepository postQueryRepository;
     private final LikeService likesService;
     private final ScrapService scrapService;
@@ -77,7 +79,6 @@ public class PostService {
 
     // 메인 화면에서 쓸 게시글 조회
     public PageResponse<PostDto.PostCardResponse> getMainPosts(Integer userIdx, Pageable pageable, String filterType) {
-        // Object[] 배열로 필요한 컬럼만 조회
         Page<Object[]> postPage;
 
         switch (filterType) {
@@ -93,19 +94,26 @@ public class PostService {
             case "replied":
                 postPage = postRepository.findRepliedPostsByUser(userIdx, pageable);
                 break;
-            default: // 기본은 전체 게시글
+            default:
                 postPage = postRepository.findAllPostData(pageable);
                 break;
         }
 
-        List<Long> postIds = new ArrayList<>();
+        List<Long> postIds = postPage.stream()
+                .map(obj -> (Long) obj[0])
+                .collect(Collectors.toList());
 
-        // Object[] -> DTO 변환
+        // 2. 댓글 수 조회 (별도 쿼리)
+        Map<Long, Long> commentCountMap = new HashMap<>();
+        if (!postIds.isEmpty()) {
+            commentRepository.countCommentsByPostIds(postIds)
+                    .forEach(obj -> commentCountMap.put((Long) obj[0], (Long) obj[1]));
+        }
+
+        // 3. Object[] -> DTO 변환
         List<PostDto.PostCardResponse> content = postPage.stream()
                 .map(obj -> {
                     Long id = (Long) obj[0];
-                    postIds.add(id);
-
                     return PostDto.PostCardResponse.builder()
                             .id(id)
                             .title((String) obj[1])
@@ -117,27 +125,28 @@ public class PostService {
                             .viewCount(obj[7] != null ? (Long) obj[7] : 0L)
                             .updatedAt((LocalDateTime) obj[8])
                             .content((String) obj[9])
-                            .hasLiked(false)   // 나중에 업데이트
-                            .hasScrapped(false) // 나중에 업데이트
+                            .commentCount(commentCountMap.getOrDefault(id, 0L)) // 댓글 수 추가
+                            .hasLiked(false)
+                            .hasScrapped(false)
                             .build();
                 }).collect(Collectors.toList());
 
-        // 좋아요/스크랩 여부 조회
+        // 4. 좋아요/스크랩 여부 조회
         Set<Long> likedByUser = (userIdx == null || postIds.isEmpty()) ? Collections.emptySet() :
                 new HashSet<>(likeRepository.findLikedRecipeIdsByUser(LikeTargetType.POST, userIdx, postIds));
 
         Set<Long> scrappedByUser = (userIdx == null || postIds.isEmpty()) ? Collections.emptySet() :
                 new HashSet<>(scrapRepository.findScrappedRecipeIdsByUser(ScrapTargetType.POST, userIdx, postIds));
 
-        // 좋아요/스크랩 여부 반영
         content.forEach(dto -> {
             dto.setHasLiked(likedByUser.contains(dto.getId()));
             dto.setHasScrapped(scrappedByUser.contains(dto.getId()));
         });
 
-        // PageImpl로 감싸서 반환
+        // 5. PageImpl로 감싸서 반환
         return PageResponse.from(new PageImpl<>(content, pageable, postPage.getTotalElements()));
     }
+
 
 
 }
