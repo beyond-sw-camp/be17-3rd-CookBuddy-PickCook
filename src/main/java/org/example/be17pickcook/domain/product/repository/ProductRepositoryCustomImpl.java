@@ -5,6 +5,7 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.be17pickcook.domain.product.model.ProductDto;
 import org.springframework.stereotype.Repository;
 
@@ -20,6 +21,7 @@ import static org.example.be17pickcook.domain.recipe.model.QRecipeIngredient.rec
  * 상품 커스텀 리포지토리 구현체
  * - QueryDSL을 활용한 레시피 기반 연관 상품 검색
  */
+@Slf4j
 @Repository
 @RequiredArgsConstructor
 public class ProductRepositoryCustomImpl implements ProductRepositoryCustom {
@@ -36,7 +38,7 @@ public class ProductRepositoryCustomImpl implements ProductRepositoryCustom {
                 .where(recipe.idx.eq(recipeId))
                 .fetch();
 
-        System.out.println("🔍 레시피 재료들: " + ingredientNames);
+        log.debug("레시피 재료 조회 완료: 레시피ID = {}, 재료 수 = {}", recipeId, ingredientNames.size());
 
         if (ingredientNames.isEmpty()) {
             return findRandomProducts(limit);
@@ -66,7 +68,7 @@ public class ProductRepositoryCustomImpl implements ProductRepositoryCustom {
                     .limit(4) // 재료당 최대 4개
                     .fetch();
 
-            System.out.println("🔍 재료 '" + ingredientName + "'로 찾은 상품 수: " + products.size());
+            log.debug("재료별 상품 조회 완료: 재료 = {}, 찾은 상품 수 = {}", ingredientName, products.size());
 
             matchedProducts.addAll(products);
 

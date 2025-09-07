@@ -1,6 +1,7 @@
 package org.example.be17pickcook.config.filter;
 
 import io.jsonwebtoken.ExpiredJwtException;
+import lombok.extern.slf4j.Slf4j;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.utils.JwtUtil;
 import io.jsonwebtoken.Claims;
@@ -19,6 +20,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
+@Slf4j
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     // 인증이 필요없는 경로들
@@ -83,9 +85,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 }
             } catch (ExpiredJwtException e) {
                 clearExpiredCookie(response);
-                System.out.println("만료된 JWT 토큰이 삭제되었습니다.");
+                log.warn("만료된 JWT 토큰 접근: IP = {}", request.getRemoteAddr());
             } catch (Exception e) {
-                System.out.println("JWT 처리 중 오류: " + e.getMessage());
+                log.error("JWT 토큰 처리 중 오류: IP = {}, 원인 = {}", request.getRemoteAddr(), e.getMessage());
             }
         }
 
