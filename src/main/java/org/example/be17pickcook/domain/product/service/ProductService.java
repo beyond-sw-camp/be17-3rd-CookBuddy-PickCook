@@ -1,6 +1,7 @@
 package org.example.be17pickcook.domain.product.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.be17pickcook.common.BaseResponseStatus;
 import org.example.be17pickcook.common.PageResponse;
 import org.example.be17pickcook.common.exception.BaseException;
@@ -28,6 +29,7 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -66,8 +68,8 @@ public class ProductService {
     }
 
     // =================================================================
-// 리뷰 포함 상품 상세 조회 (추가 필요)
-// =================================================================
+    // 리뷰 포함 상품 상세 조회 (추가 필요)
+    // =================================================================
 
     @Transactional(readOnly = true)
     public ProductDto.DetailWithReview getProductDetailWithReview(Long productId, Integer currentUserId) {
@@ -202,7 +204,7 @@ public class ProductService {
         List<ProductDto.RelatedProductResponse> matchedProducts =
                 productRepository.findProductsByRecipeIngredients(recipeId, 16);
 
-        System.out.println("🔍 매칭된 상품 개수: " + matchedProducts.size()); // 디버깅
+        log.debug("레시피 연관 상품 매칭 완료: 레시피ID = {}, 매칭 수 = {}", recipeId, matchedProducts.size());
 
         // 16개 미만일 경우 랜덤 상품으로 보충
         if (matchedProducts.size() < 16) {
@@ -210,7 +212,8 @@ public class ProductService {
             List<ProductDto.RelatedProductResponse> randomProducts =
                     productRepository.findRandomProducts(remainingCount);
 
-            System.out.println("🔍 랜덤 상품 개수: " + randomProducts.size()); // 디버깅
+            log.debug("랜덤 상품 보충 완료: 추가 수 = {}", randomProducts.size());
+
             matchedProducts.addAll(randomProducts);
         }
 

@@ -160,12 +160,6 @@ public class ReviewController {
             @Parameter(description = "페이지당 리뷰 수", example = "20")
             @RequestParam(defaultValue = "20") Integer size) {
 
-        System.out.println("=== 개별 파라미터로 받은 값들 ===");
-        System.out.println("rating: " + rating);
-        System.out.println("period: " + period);
-        System.out.println("imageFilter: " + imageFilter);
-        System.out.println("sortType: " + sortType);
-
         // Enum 변환
         ReviewDto.PeriodFilter periodEnum = period != null ?
                 ReviewDto.PeriodFilter.valueOf(period) : null;

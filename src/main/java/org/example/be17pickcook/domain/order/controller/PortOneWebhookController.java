@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.be17pickcook.domain.order.service.PortOneWebhookService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
  * - 결제 취소, 환불 등의 웹훅 이벤트 수신
  * - 웹훅 서명 검증을 통한 보안 처리
  */
+@Slf4j
 @Tag(name = "결제 웹훅", description = "포트원(PortOne) 결제 시스템의 웹훅 이벤트를 처리합니다.")
 @RestController
 @RequiredArgsConstructor
@@ -54,7 +56,7 @@ public class PortOneWebhookController {
             @Parameter(description = "포트원 웹훅 페이로드 (이벤트 데이터)", required = true)
             @RequestBody String payload) {
 
-        System.out.println("[Webhook Payload] " + payload);
+        log.info("포트원 웹훅 수신: webhookId = {}", webhookId);
 
         portOneWebhookService.handleWebhookCancel(
                 payload,
