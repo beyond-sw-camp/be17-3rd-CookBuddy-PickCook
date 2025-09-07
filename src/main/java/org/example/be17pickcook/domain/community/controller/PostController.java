@@ -153,7 +153,9 @@ public class PostController {
             @Parameter(description = "페이지당 게시글 수", example = "4")
             @RequestParam(defaultValue = "4") int size,
             @Parameter(description = "정렬 타입 (latest: 최신순, oldest: 오래된순, likes: 좋아요순, scraps: 스크랩순)", example = "latest")
-            @RequestParam(defaultValue = "latest") String sortType) {
+            @RequestParam(defaultValue = "latest") String sortType,
+            @Parameter(description = "필터 타입 (all: 전체글, my: 내가 쓴 글, liked: 내가 좋아요 누른 글, scrapped: 내가 스크랩한 글, replied: 내가 댓글 단 글", example = "all")
+            @RequestParam(defaultValue = "all") String filterType) {
 
         Integer userIdx = (authUser != null) ? authUser.getIdx() : null;
 
@@ -165,6 +167,6 @@ public class PostController {
         };
 
         Pageable pageable = PageRequest.of(page, size, sort);
-        return BaseResponse.success(postService.getMainPosts(userIdx, pageable));
+        return BaseResponse.success(postService.getMainPosts(userIdx, pageable, filterType));
     }
 }

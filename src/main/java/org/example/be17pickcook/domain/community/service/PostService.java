@@ -21,6 +21,7 @@ import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -75,9 +76,27 @@ public class PostService {
     }
 
     // 메인 화면에서 쓸 게시글 조회
-    public PageResponse<PostDto.PostCardResponse> getMainPosts(Integer userIdx, Pageable pageable) {
+    public PageResponse<PostDto.PostCardResponse> getMainPosts(Integer userIdx, Pageable pageable, String filterType) {
         // Object[] 배열로 필요한 컬럼만 조회
-        Page<Object[]> postPage = postRepository.findAllPostData(pageable);
+        Page<Object[]> postPage;
+
+        switch (filterType) {
+            case "my":
+                postPage = postRepository.findAllByAuthorId(userIdx, pageable);
+                break;
+            case "liked":
+                postPage = postRepository.findLikedPostsByUser(userIdx, pageable);
+                break;
+            case "scrapped":
+                postPage = postRepository.findScrappedPostsByUser(userIdx, pageable);
+                break;
+            case "replied":
+                postPage = postRepository.findRepliedPostsByUser(userIdx, pageable);
+                break;
+            default: // 기본은 전체 게시글
+                postPage = postRepository.findAllPostData(pageable);
+                break;
+        }
 
         List<Long> postIds = new ArrayList<>();
 
@@ -96,6 +115,8 @@ public class PostService {
                             .likeCount(obj[5] != null ? (Long) obj[5] : 0L)
                             .scrapCount(obj[6] != null ? (Long) obj[6] : 0L)
                             .viewCount(obj[7] != null ? (Long) obj[7] : 0L)
+                            .updatedAt((LocalDateTime) obj[8])
+                            .content((String) obj[9])
                             .hasLiked(false)   // 나중에 업데이트
                             .hasScrapped(false) // 나중에 업데이트
                             .build();
@@ -117,6 +138,7 @@ public class PostService {
         // PageImpl로 감싸서 반환
         return PageResponse.from(new PageImpl<>(content, pageable, postPage.getTotalElements()));
     }
+
 
 }
 

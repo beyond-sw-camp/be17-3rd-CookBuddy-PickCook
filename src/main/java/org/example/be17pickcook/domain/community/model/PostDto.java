@@ -235,6 +235,12 @@ public class PostDto {
         @Schema(description = "조회 수", example = "120")
         private Long viewCount;
 
+        @Schema(description = "작성일(수정일)", example = "2025.08.25")
+        private LocalDateTime updatedAt;
+
+        @Schema(description = "게시글 내용", example = "내용 본문")
+        private String content;
+
         public void setHasLiked(boolean hasLiked) {
             this.hasLiked = hasLiked;
         }
@@ -259,6 +265,8 @@ public class PostDto {
                     .likeCount(post.getLikeCount() != null ? post.getLikeCount() : 0L)
                     .scrapCount(post.getScrapCount() != null ? post.getScrapCount() : 0L)
                     .viewCount(post.getViewCount() != null ? post.getViewCount() : 0L)
+                    .updatedAt(post.getUpdatedAt())
+                    .content(post.getContent())
                     .build();
         }
     }
