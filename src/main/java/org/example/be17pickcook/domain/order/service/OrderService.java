@@ -179,19 +179,32 @@ public class OrderService {
 
         } catch (ExecutionException e) {
             log.error("포트원 결제 조회 실패", e.getCause());
+            updateOrderStatusToFailed(dto.getPaymentId());
             return new OrderDto.PaymentValidationResDto(null, OrderStatus.FAILED.name());
         } catch (TimeoutException e) {
             log.error("포트원 결제 조회 타임아웃", e);
+            updateOrderStatusToFailed(dto.getPaymentId());
             return new OrderDto.PaymentValidationResDto(null, OrderStatus.FAILED.name());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.error("포트원 결제 조회 중 인터럽트 발생", e);
+            updateOrderStatusToFailed(dto.getPaymentId());
             return new OrderDto.PaymentValidationResDto(null, OrderStatus.FAILED.name());
         } catch (Exception e) {
             log.error("포트원 결제 조회 중 오류 발생", e);
+            updateOrderStatusToFailed(dto.getPaymentId());
             return new OrderDto.PaymentValidationResDto(null, OrderStatus.FAILED.name());
         }
     }
+
+
+    private void updateOrderStatusToFailed(String paymentId) {
+        orderRepository.findByPaymentId(paymentId).ifPresent(order -> {
+            order.updateStatus(OrderStatus.FAILED);
+            log.debug("결제 검증 실패로 주문 상태 FAILED 업데이트, paymentId={}", paymentId);
+        });
+    }
+
 
 
     // 주문 목록
