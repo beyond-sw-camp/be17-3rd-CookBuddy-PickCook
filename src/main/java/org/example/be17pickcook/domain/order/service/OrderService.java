@@ -221,8 +221,14 @@ public class OrderService {
         }
 
         Pageable pageable = PageRequest.of(page, size);
+        List<OrderStatus> statuses = List.of(OrderStatus.PAID, OrderStatus.REFUNDED);
 
-        Page<Orders> ordersPage = orderRepository.findAllWithItemsByCreatedAtBetween(start, now, pageable);
+        Page<Orders> ordersPage = orderRepository.findAllWithItemsByCreatedAtBetweenAndStatuses(
+                start,
+                now,
+                statuses,
+                pageable
+        );
 
         // DTO 변환
         List<OrderDto.OrderInfoListDto> pageList = ordersPage.stream()
