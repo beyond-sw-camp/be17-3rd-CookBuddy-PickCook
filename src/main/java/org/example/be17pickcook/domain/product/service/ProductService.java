@@ -7,6 +7,9 @@ import org.example.be17pickcook.common.PageResponse;
 import org.example.be17pickcook.common.exception.BaseException;
 import org.example.be17pickcook.domain.cart.repository.CartsRepository;
 import org.example.be17pickcook.domain.cart.service.CartsService;
+import org.example.be17pickcook.domain.common.model.Category;
+import org.example.be17pickcook.domain.common.repository.CategoryRepository;
+import org.example.be17pickcook.domain.product.mapper.ProductMapper;
 import org.example.be17pickcook.domain.product.repository.ProductRepository;
 import org.example.be17pickcook.domain.product.model.Product;
 import org.example.be17pickcook.domain.product.model.ProductDto;
@@ -16,10 +19,7 @@ import org.example.be17pickcook.domain.review.repository.ReviewRepository;
 import org.example.be17pickcook.domain.user.model.User;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.common.service.S3UploadService;
-import org.springframework.data.domain.Page;                          // [변경] 페이징
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;                    // [변경] 페이징
-import org.springframework.data.domain.Sort;                        // [변경] 정렬
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -42,6 +42,8 @@ public class ProductService {
     private static final String MAIN_IMAGE_URL = "https://example.com/default-small.jpg";
     private static final String DETAIL_IMAGE_URL = "https://example.com/default-large.jpg";
     private final CartsRepository cartsRepository;
+    private final CategoryRepository categoryRepository;
+    private final ProductMapper productMapper;
 
     // 등록 (쓰기)
     @Transactional
@@ -124,8 +126,12 @@ public class ProductService {
 //    }
 
 
-    public PageResponse<ProductDto.ProductListResponse> getProductList(Integer userIdx, Pageable pageable) {            // [변경]
-        Page<Object[]> productPage = productRepository.findAllOnlyProductList(pageable);  // [변경]
+    /**
+     * 전체 상품 목록 조회 (실시간 리뷰 통계 포함)
+     */
+    public PageResponse<ProductDto.ProductListResponse> getProductList(Integer userIdx, Pageable pageable) {
+        // 실시간 리뷰 통계가 포함된 상품 목록 조회
+        Page<Object[]> productPage = productRepository.findAllProductListWithReviewStats(pageable);
 
         List<Long> productIds = new ArrayList<>();
         Page<ProductDto.ProductListResponse> dtoPage = productPage.map(arr -> {
@@ -138,7 +144,8 @@ public class ProductService {
                     .main_image_url((String) arr[2])
                     .discount_rate((Integer) arr[3])
                     .original_price((Integer) arr[4])
-                    .review_count((Long) arr[5])
+                    .review_count((Long) arr[5])        // 실시간 리뷰 개수
+                    .average_rating((Double) arr[6])    // 실시간 평균 별점
                     .build();
         });
 
@@ -149,6 +156,8 @@ public class ProductService {
         dtoPage.forEach(dto -> {
             dto.setIsInCart(isInCart.contains(dto.getId()));
         });
+
+        log.info("상품 목록 조회 완료 - 총 {}개 상품", dtoPage.getTotalElements());
 
         return PageResponse.from(dtoPage);
     }
@@ -228,5 +237,93 @@ public class ProductService {
         if (recipeId == null || recipeId <= 0) {
             throw BaseException.from(BaseResponseStatus.INVALID_RECIPE_ID);
         }
+    }
+
+// =================================================================
+// 검색 관련 API
+// =================================================================
+
+    /**
+     * 카테고리별 상품 조회 (실시간 리뷰 통계 포함)
+     */
+    @Transactional(readOnly = true)
+    public PageResponse<ProductDto.ProductListResponse> getProductsByCategory(
+            Integer userIdx, Long categoryId, Pageable pageable) {
+
+        // 정렬 필드 검증 추가
+        validateSortField(pageable.getSort());
+
+        // 1. 카테고리 존재 여부 검증 및 이름 조회
+        Category category = findCategoryById(categoryId);
+        String categoryName = category.getName();
+
+        log.info("카테고리별 상품 조회 요청 - categoryId: {}, categoryName: {}, sort: {}",
+                categoryId, categoryName, pageable.getSort());
+
+        // 2. 카테고리명으로 상품 조회 (실시간 리뷰 통계 포함)
+        Page<Object[]> productPage = productRepository.findByCategoryWithReviewStats(categoryName, pageable);
+
+        List<Long> productIds = new ArrayList<>();
+        List<ProductDto.ProductListResponse> dtoList = productPage.getContent().stream()
+                .map(arr -> {
+                    Long id = (Long) arr[0];
+                    productIds.add(id);
+
+                    return ProductDto.ProductListResponse.builder()
+                            .id(id)
+                            .title((String) arr[1])
+                            .main_image_url((String) arr[2])
+                            .discount_rate((Integer) arr[3])
+                            .original_price((Integer) arr[4])
+                            .review_count((Long) arr[5])        // 실시간 리뷰 개수
+                            .average_rating((Double) arr[6])    // 실시간 평균 별점
+                            .build();
+                })
+                .toList();
+
+        // 3. Page 객체 재구성
+        Page<ProductDto.ProductListResponse> dtoPage = new PageImpl<>(dtoList, pageable, productPage.getTotalElements());
+
+        // 4. 사용자별 장바구니 상태 설정 (기존 패턴과 동일)
+        if (userIdx != null) {
+            Set<Long> isInCart = cartsRepository.findCartsProductIdsByUser(userIdx, productIds)
+                    .stream()
+                    .collect(Collectors.toSet());
+
+            dtoList.forEach(dto -> dto.setIsInCart(isInCart.contains(dto.getId())));
+        }
+
+        log.info("카테고리별 상품 조회 완료 - categoryName: {}, 총 {}개 상품", categoryName, dtoPage.getTotalElements());
+
+        return PageResponse.from(dtoPage);
+    }
+
+    // 정렬 필드 검증 메서드 추가
+    private void validateSortField(Sort sort) {
+        Set<String> allowedFields = Set.of(
+                "id", "title", "original_price", "discount_rate",
+                "createdAt", "review_count" // 실제 Product 엔티티 필드명으로 수정
+        );
+
+        for (Sort.Order order : sort) {
+            if (!allowedFields.contains(order.getProperty())) {
+                throw BaseException.from(BaseResponseStatus.INVALID_SORT_FIELD);
+            }
+        }
+    }
+
+// =================================================================
+// 기타 비즈니스 로직 API
+// =================================================================
+
+    /**
+     * 카테고리 ID로 Category 엔티티 조회
+     */
+    private Category findCategoryById(Long categoryId) {
+        return categoryRepository.findById(categoryId)
+                .orElseThrow(() -> {
+                    log.warn("존재하지 않는 카테고리 요청 - categoryId: {}", categoryId);
+                    return BaseException.from(BaseResponseStatus.CATEGORY_NOT_FOUND);
+                });
     }
 }

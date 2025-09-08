@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.be17pickcook.common.BaseResponse;
 import org.example.be17pickcook.common.PageResponse;
 import org.example.be17pickcook.domain.product.model.ProductDto;
@@ -33,6 +34,7 @@ import java.util.List;
  * - 리뷰 정보 포함 상품 조회
  * - 레시피 연관 상품 추천
  */
+@Slf4j
 @Tag(name = "상품 관리", description = "상품 등록, 조회, 수정, 삭제 및 검색 기능을 제공합니다.")
 @RestController
 @RequestMapping("/api/products")
@@ -157,6 +159,40 @@ public class ProductController {
         Integer currentUserId = authUser != null ? authUser.getIdx() : null;
         ProductDto.DetailWithReview result = productService.getProductDetailWithReview(id, currentUserId);
         return ResponseEntity.ok(BaseResponse.success(result));
+    }
+
+    @Operation(
+            summary = "카테고리별 상품 조회",
+            description = "특정 카테고리에 속한 상품들을 페이징하여 조회합니다.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "조회 성공"),
+                    @ApiResponse(responseCode = "404", description = "카테고리를 찾을 수 없음")
+            }
+    )
+    @GetMapping("/category/{categoryId}")
+    public BaseResponse<PageResponse<ProductDto.ProductListResponse>> getProductsByCategory(
+            @Parameter(description = "인증된 사용자 정보", hidden = true)
+            @AuthenticationPrincipal UserDto.AuthUser authUser,
+            @Parameter(description = "카테고리 ID", example = "1")
+            @PathVariable Long categoryId,
+            @Parameter(description = "페이지 번호", example = "0")
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기", example = "10")
+            @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "정렬 기준 필드", example = "id")
+            @RequestParam(defaultValue = "id") String sort,
+            @Parameter(description = "정렬 방향 (ASC/DESC)", example = "ASC")
+            @RequestParam(defaultValue = "ASC") String dir
+    ) {
+        log.info("카테고리별 상품 조회 요청 - categoryId: {}", categoryId);
+
+        Integer userIdx = (authUser != null) ? authUser.getIdx() : null;
+        Sort s = dir.equalsIgnoreCase("DESC")
+                ? Sort.by(sort).descending()
+                : Sort.by(sort).ascending();
+        Pageable pageable = PageRequest.of(page, size, s);
+
+        return BaseResponse.success(productService.getProductsByCategory(userIdx, categoryId, pageable));
     }
 
     // =================================================================
