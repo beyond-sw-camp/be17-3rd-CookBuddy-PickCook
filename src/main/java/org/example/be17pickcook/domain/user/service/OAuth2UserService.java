@@ -31,10 +31,36 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
         Map<String, Object> attributes = oAuth2User.getAttributes();
 
         // 카카오 사용자 정보 추출
-        Map<String, Object> properties = (Map<String, Object>) attributes.get("properties");
-        String nickname = (String) properties.get("nickname");
         String kakaoId = attributes.get("id").toString();
 
+        // 수정: properties null 체크 추가
+        Map<String, Object> properties = (Map<String, Object>) attributes.get("properties");
+        String nickname = null;
+
+        // 추가 디버깅
+        log.info("=== 디버깅 시작 ===");
+        log.info("attributes: {}", attributes);
+        log.info("properties: {}", properties);
+
+        // properties와 nickname 안전한 추출
+        if (properties != null && properties.get("nickname") != null) {
+            nickname = (String) properties.get("nickname");
+            log.info("카카오에서 받은 nickname: {}", nickname);
+        } else {
+            log.warn("properties가 null이거나 nickname이 없음");
+        }
+
+        // 추가: nickname이 null이거나 빈 문자열인 경우 기본값 설정
+        if (nickname == null || nickname.trim().isEmpty()) {
+            nickname = "카카오사용자" + kakaoId.substring(Math.max(0, kakaoId.length() - 4));
+            log.info("기본 nickname 생성: {}", nickname);
+        }
+
+        // 추가: 매퍼 호출 전 최종 확인
+        log.info("최종 nickname 값: '{}' (null 여부: {})", nickname, nickname == null);
+        log.info("=== 디버깅 끝 ===");
+
+        // 나머지 코드는 동일...
         Optional<User> existingUser = userRepository.findByEmail(kakaoId);
         User user;
 
