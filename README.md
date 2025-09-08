@@ -64,6 +64,12 @@ PickCook은 단순한 도구를 넘어서, 함께 요리하는 즐거움을 제�
 [https://pick-cook.kro.kr/](https://pick-cook.kro.kr/)
 
 <br/>
+[테스트 계정]
+
+email: test@gmail.com<br/>
+password: qwer1234!
+
+<br/>
 
 ## 🛠️ 기술 스택
 
