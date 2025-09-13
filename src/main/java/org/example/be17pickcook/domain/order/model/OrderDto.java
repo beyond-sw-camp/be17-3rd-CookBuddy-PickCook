@@ -199,6 +199,9 @@ public class OrderDto {
         @Schema(description = "주문 ID", example = "1")
         private Long orderId;
 
+        @Schema(description = "주문 번호(고객용)", example = "1")
+        private Long orderNumber;
+
         @Schema(description = "주문 날짜", example = "2025-01-15T14:30:00")
         private LocalDateTime date;
 

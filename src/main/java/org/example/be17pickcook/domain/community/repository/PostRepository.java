@@ -22,7 +22,7 @@ public interface PostRepository extends JpaRepository<Post,Long> {
            p.likeCount, p.scrapCount, p.viewCount, p.updatedAt, p.content
     FROM Post p
     LEFT JOIN p.postImageList pi
-    WHERE pi.id = (
+    ON pi.id = (
         SELECT MIN(pi2.id) 
         FROM PostImage pi2 
         WHERE pi2.post = p
@@ -36,7 +36,7 @@ public interface PostRepository extends JpaRepository<Post,Long> {
            p.likeCount, p.scrapCount, p.viewCount, p.updatedAt, p.content
     FROM Post p
     LEFT JOIN p.postImageList pi
-    WHERE pi.id = (
+    ON pi.id = (
         SELECT MIN(pi2.id) 
         FROM PostImage pi2 
         WHERE pi2.post = p
@@ -53,7 +53,7 @@ public interface PostRepository extends JpaRepository<Post,Long> {
     FROM Post p
     JOIN Like l ON l.targetId = p.id AND l.targetType = 'POST'
     LEFT JOIN p.postImageList pi
-    WHERE l.user.idx = :userId
+    ON l.user.idx = :userId
       AND pi.id = (
         SELECT MIN(pi2.id) 
         FROM PostImage pi2 
@@ -70,7 +70,7 @@ public interface PostRepository extends JpaRepository<Post,Long> {
     FROM Post p
     JOIN Scrap s ON s.targetId = p.id AND s.targetType = 'POST'
     LEFT JOIN p.postImageList pi
-    WHERE s.user.idx = :userId
+    ON s.user.idx = :userId
       AND pi.id = (
         SELECT MIN(pi2.id) 
         FROM PostImage pi2 
@@ -87,7 +87,7 @@ public interface PostRepository extends JpaRepository<Post,Long> {
     FROM Post p
     JOIN Comment c ON c.post = p
     LEFT JOIN p.postImageList pi
-    WHERE c.user.idx = :userId
+    ON c.user.idx = :userId
       AND pi.id = (
         SELECT MIN(pi2.id) 
         FROM PostImage pi2 
@@ -112,4 +112,8 @@ public interface PostRepository extends JpaRepository<Post,Long> {
         where p.id = :postId
         """)
     Optional<Post> findPostWithDetails(@Param("postId") Long postId);
+
+
+    // 특정 게시글 ID와 작성자 ID로 게시글 조회
+    Optional<Post> findByIdAndUserIdx(Long postIdx, Integer userIdx);
 }
