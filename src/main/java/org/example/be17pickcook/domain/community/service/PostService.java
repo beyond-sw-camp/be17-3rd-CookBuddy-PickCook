@@ -1,6 +1,7 @@
 package org.example.be17pickcook.domain.community.service;
 
 import lombok.RequiredArgsConstructor;
+import org.example.be17pickcook.common.BaseResponse;
 import org.example.be17pickcook.common.PageResponse;
 import org.example.be17pickcook.domain.community.model.Post;
 import org.example.be17pickcook.domain.community.model.PostDto;
@@ -19,6 +20,7 @@ import org.example.be17pickcook.domain.user.model.User;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.domain.user.repository.UserRepository;
 import org.springframework.data.domain.*;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -148,6 +150,30 @@ public class PostService {
     }
 
 
+    // 게시글 수정
+    @Transactional
+    public void updatePost(Long postId, PostDto.Request postDto, UserDto.AuthUser authUser) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException(("게시글이 존재하지 않습니다.")));
+
+        if (!post.getUser().getIdx().equals(authUser.getIdx())) {
+            throw new AccessDeniedException("본인 게시글만 수정 가능합니다.");
+        }
+
+        post.setTitle(postDto.getTitle());
+        post.setContent(postDto.getContent());
+
+        postRepository.save(post);
+    }
+
+    // 게시글 삭제
+    @Transactional
+    public void deletePost(Long postId, UserDto.AuthUser authUser) {
+        Post post = postRepository.findByIdAndUserIdx(postId, authUser.getIdx())
+                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+
+        postRepository.delete(post);
+    }
 
 }
 

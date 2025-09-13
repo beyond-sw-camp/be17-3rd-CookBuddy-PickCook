@@ -1,10 +1,7 @@
 package org.example.be17pickcook.domain.community.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.example.be17pickcook.common.BaseEntity;
 import org.example.be17pickcook.domain.likes.model.LikeCountable;
 import org.example.be17pickcook.domain.scrap.model.ScrapCountable;
@@ -25,8 +22,10 @@ public class Post extends BaseEntity implements LikeCountable, ScrapCountable {
     @Column(name = "post_id")
     private Long id;
     @Column(columnDefinition = "TEXT")
+    @Setter
     private String title;
     @Column(columnDefinition = "TEXT")
+    @Setter
     private String content;
     private Long likeCount;
     private Long scrapCount;

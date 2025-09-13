@@ -109,6 +109,45 @@ public class PostController {
         return BaseResponse.success("게시글 등록 성공");
     }
 
+
+    @Operation(
+            summary = "게시글 삭제",
+            description = "게시글을 삭제합니다. 작성자 본인만 삭제 가능"
+    )
+    @DeleteMapping("/{postId}")
+    public BaseResponse<String> deletePost(
+            @PathVariable Long postId,
+            @Parameter(description = "인증된 사용자 정보", hidden = true)
+            @AuthenticationPrincipal UserDto.AuthUser authUser) {
+
+        postService.deletePost(postId, authUser);
+
+        return BaseResponse.success("게시글 삭제 성공");
+    }
+
+
+    @Operation(
+            summary = "게시글 수정",
+            description = "기존 게시글을 수정합니다. 작성자 본인만 수정 가능"
+    )
+    @PutMapping("/{postId}")
+    public BaseResponse<String> updatePost(
+            @PathVariable Long postId,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "게시글 수정 DTO",
+                    required = true,
+                    content = @io.swagger.v3.oas.annotations.media.Content(
+                            schema = @Schema(implementation = PostDto.Request.class)
+                    )
+            )
+            @RequestBody PostDto.Request postDto,
+            @Parameter(description = "인증된 사용자 정보", hidden = true)
+            @AuthenticationPrincipal UserDto.AuthUser authUser) {
+
+        postService.updatePost(postId, postDto, authUser);
+        return BaseResponse.success("게시글 수정 성공");
+    }
+
     // =================================================================
     // 검색 및 페이징 관련 API
     // =================================================================
