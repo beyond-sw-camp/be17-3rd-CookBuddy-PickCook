@@ -23,6 +23,7 @@ public class Recipe extends BaseEntity implements LikeCountable, ScrapCountable 
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idx;
     private String title;
+    private String description;
     private String cooking_method;
     private String category;
     private String time_taken;
