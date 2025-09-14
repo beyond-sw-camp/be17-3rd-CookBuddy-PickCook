@@ -152,6 +152,7 @@ public class RecipeService {
                     .image_large_url((String) arr[8])
                     .likeCount((Long) arr[9])
                     .scrapCount((Long) arr[10])
+                    .description((String) arr[11])
                     .build();
         });
 
@@ -179,11 +180,6 @@ public class RecipeService {
 
         return PageResponse.from(dtoPage);
     }
-
-    public PageResponse<RecipeListResponseDto> getRecipesFiltered(String keyword, List<String> categories, List<String> difficulties, String sortBy, int page, int size, String dir) {
-        return recipeQueryRepository.getRecipesFiltered(keyword, categories, difficulties, sortBy, page, size);
-    }
-
 
     public PageResponse<RecipeListResponseDto> getRecommendations(Integer userIdx, int page, int size) {
         // 1. 사용자 냉장고 재료 조회
@@ -242,4 +238,8 @@ public class RecipeService {
 
 
 
+    // 레시피 검색
+    public Page<RecipeDto.RecipeListResponseDto> getRecipeKeyword(String keyword, int page, int size, String dir) {
+        return recipeQueryRepository.getRecipesFiltered(keyword, page, size, dir);
+    }
 }

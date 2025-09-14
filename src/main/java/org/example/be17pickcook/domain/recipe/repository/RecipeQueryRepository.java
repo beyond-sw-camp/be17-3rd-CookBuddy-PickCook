@@ -1,33 +1,52 @@
 package org.example.be17pickcook.domain.recipe.repository;
 
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
-import com.querydsl.jpa.JPQLQuery;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
-import org.example.be17pickcook.common.PageResponse;
-import org.example.be17pickcook.domain.recipe.model.QRecipe;
-import org.example.be17pickcook.domain.recipe.model.RecipeListResponseDto;
+import org.example.be17pickcook.domain.recipe.model.*;
+import org.example.be17pickcook.domain.user.model.QUser;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
+import com.querydsl.core.types.dsl.BooleanTemplate;
+
 
 import java.util.List;
+import java.util.stream.Collectors;
+
+import static javax.management.Query.or;
 
 @Repository
 public class RecipeQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
-    public RecipeQueryRepository(EntityManager em){
+    public RecipeQueryRepository(EntityManager em) {
         this.queryFactory = new JPAQueryFactory(em);
     }
 
+    public Page<RecipeDto.RecipeListResponseDto> getRecipesFiltered(
+            String keyword, int page, int size, String dir) {
 
-    public PageResponse<RecipeListResponseDto> getRecipesFiltered(
-            String keyword, List<String> categories, List<String> difficulties, String sortBy, int page, int size) {
         QRecipe recipe = QRecipe.recipe;
+        QRecipeComment recipeComment = QRecipeComment.recipeComment;
+        QUser user = QUser.user;
 
-         JPQLQuery<RecipeListResponseDto> query = queryFactory
+        // 검색 조건
+        BooleanBuilder builder = new BooleanBuilder();
+        if (keyword != null && !keyword.isBlank()) {
+            builder.and(recipe.title.containsIgnoreCase(keyword)
+                    .or(recipe.description.containsIgnoreCase(keyword)));
+        }
+
+        // 데이터 조회
+        List<RecipeDto.RecipeListResponseDto> content = queryFactory
                 .select(Projections.constructor(
-                        RecipeListResponseDto.class,
+                        RecipeDto.RecipeListResponseDto.class,
                         recipe.idx,
                         recipe.title,
                         recipe.cooking_method,
@@ -38,46 +57,29 @@ public class RecipeQueryRepository {
                         recipe.hashtags,
                         recipe.image_large_url,
                         recipe.likeCount,
-                        recipe.scrapCount
+                        recipe.scrapCount,
+                        recipe.description,
+                        Expressions.FALSE, // likedByUser 기본값
+                        Expressions.FALSE  // scrappedByUser 기본값
                 ))
-                .from(recipe);
-
-        // 검색어 조건
-        if (keyword != null && !keyword.isBlank()) {
-            query.where(recipe.title.containsIgnoreCase(keyword));
-        }
-
-        // 카테고리 조건
-        if (categories != null && !categories.isEmpty()) {
-            query.where(recipe.category.in(categories));
-        }
-
-        // 난이도 조건
-        if (difficulties != null && !difficulties.isEmpty()) {
-            query.where(recipe.difficulty_level.in(difficulties));
-        }
-
-        // 정렬 조건
-        if ("popular".equalsIgnoreCase(sortBy)) {
-            query.orderBy(recipe.likeCount.desc());
-        } else if ("recent".equalsIgnoreCase(sortBy)) {
-            query.orderBy(recipe.createdAt.desc());
-        } else if ("comments".equalsIgnoreCase(sortBy)) {
-            query.orderBy(recipe.commentCount.desc()); // 댓글 개수 기준
-        } else {
-            query.orderBy(recipe.idx.desc()); // 기본값: 최신순
-        }
-
-        // 전체 개수
-        long total = query.fetchCount();
-
-        // 페이징
-        List<RecipeListResponseDto> results = query
-                .offset((long) page * size)
+                .from(recipe)
+                .leftJoin(recipe.user, user) // fetchJoin는 select에 recipe만 포함
+                .leftJoin(recipeComment).on(recipeComment.recipe.eq(recipe))
+                .where(builder)
+                .groupBy(recipe.idx)
+                .orderBy("DESC".equalsIgnoreCase(dir) ? recipe.createdAt.desc() : recipe.createdAt.asc())
+                .offset(page * size)
                 .limit(size)
                 .fetch();
 
-        int totalPages = (int) Math.ceil((double) total / size);
-        return new PageResponse<>(results, page, totalPages, total, size);
+        // 전체 건수 조회
+        Long total = queryFactory
+                .select(recipe.count())
+                .from(recipe)
+                .where(builder)
+                .fetchOne();
+
+        Pageable pageable = PageRequest.of(page, size);
+        return new PageImpl<>(content, pageable, total != null ? total : 0);
     }
 }
