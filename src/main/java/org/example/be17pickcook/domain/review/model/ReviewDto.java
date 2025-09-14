@@ -2,13 +2,15 @@ package org.example.be17pickcook.domain.review.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.example.be17pickcook.domain.order.model.Orders;
+import org.example.be17pickcook.domain.product.model.Product;
+import org.example.be17pickcook.domain.user.model.User;
+import org.example.be17pickcook.domain.user.model.UserDto;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -31,18 +33,6 @@ public class ReviewDto {
     @AllArgsConstructor
     public static class WriteRequest {
 
-        @Schema(description = "상품 ID", example = "1", requiredMode = Schema.RequiredMode.REQUIRED)
-        @NotNull(message = "상품 ID는 필수입니다.")
-        private Long productId;
-
-        @Schema(description = "주문 상품 ID (구매 이력 확인용)", example = "10")
-        private Long orderItemId;  // 향후 주문 연동시 사용
-
-        @Schema(description = "리뷰 제목", example = "정말 신선해요!", requiredMode = Schema.RequiredMode.REQUIRED)
-        @NotBlank(message = "리뷰 제목을 입력해주세요.")
-        @Size(max = 100, message = "리뷰 제목은 100자 이하로 작성해주세요.")
-        private String title;
-
         @Schema(description = "리뷰 내용", example = "배송도 빠르고 상품 상태도 좋았습니다.", requiredMode = Schema.RequiredMode.REQUIRED)
         @NotBlank(message = "리뷰 내용을 입력해주세요.")
         @Size(max = 2000, message = "리뷰 내용은 2000자 이하로 작성해주세요.")
@@ -54,10 +44,64 @@ public class ReviewDto {
         @Max(value = 5, message = "별점은 1점부터 5점까지 선택할 수 있습니다.")
         private Integer rating;
 
-        @Schema(description = "이미지 URL 목록 (최대 5개)", example = "[\"https://s3.../image1.jpg\", \"https://s3.../image2.jpg\"]")
+        @Schema(description = "리뷰 이미지 목록 (최대 5개)")
         @Size(max = 5, message = "리뷰 이미지는 최대 5개까지 업로드할 수 있습니다.")
-        private List<String> imageUrls;
+        private List<ReviewImageRequest> images;
+
+        public Review toEntity(User authUser, Product product, Orders order) {
+            Review review = Review.builder()
+                    .content(content)
+                    .rating(rating)
+                    .product(product)
+                    .order(order)
+                    .user(authUser)
+                    .build();
+
+            if (images != null && !images.isEmpty()) {
+                List<ReviewImage> reviewImages = images.stream()
+                        .map(img -> ReviewImage.builder()
+                                .imageUrl(img.getImageUrl())
+                                .originalFilename(img.getOriginalFilename())
+                                .contentType(img.getContentType())
+                                .fileSize(img.getFileSize())
+                                .imageOrder(img.getImageOrder())
+                                .review(review) // FK 연결
+                                .build())
+                        .toList();
+
+                review.getImages().addAll(reviewImages);
+            }
+
+            return review;
+        }
     }
+
+
+    @Schema(description = "리뷰 이미지 요청 DTO")
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ReviewImageRequest {
+
+        @Schema(description = "이미지 URL", example = "https://s3.../image1.jpg", requiredMode = Schema.RequiredMode.REQUIRED)
+        @NotBlank(message = "이미지 URL은 필수입니다.")
+        private String imageUrl;
+
+        @Schema(description = "원본 파일명", example = "product.jpg")
+        private String originalFilename;
+
+        @Schema(description = "MIME 타입", example = "image/jpeg")
+        private String contentType;
+
+        @Schema(description = "파일 크기 (bytes)", example = "123456")
+        private Long fileSize;
+
+        @Schema(description = "이미지 순서 (1~5)", example = "1", requiredMode = Schema.RequiredMode.REQUIRED)
+        private Integer imageOrder;
+    }
+
 
     // =================================================================
     // 리뷰 수정 요청 DTO
@@ -69,10 +113,6 @@ public class ReviewDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class UpdateRequest {
-
-        @Schema(description = "리뷰 제목", example = "수정된 리뷰 제목")
-        @Size(max = 100, message = "리뷰 제목은 100자 이하로 작성해주세요.")
-        private String title;
 
         @Schema(description = "리뷰 내용", example = "수정된 리뷰 내용")
         @Size(max = 2000, message = "리뷰 내용은 2000자 이하로 작성해주세요.")
@@ -104,9 +144,6 @@ public class ReviewDto {
 
         @Schema(description = "상품 ID", example = "10")
         private Long productId;
-
-        @Schema(description = "리뷰 제목", example = "정말 신선해요!")
-        private String title;
 
         @Schema(description = "리뷰 내용", example = "배송도 빠르고 상품 상태도 좋았습니다.")
         private String content;
@@ -140,7 +177,6 @@ public class ReviewDto {
             return Response.builder()
                     .reviewId(review.getReviewId())
                     .productId(review.getProduct().getId())
-                    .title(review.getTitle())
                     .content(review.getContent())
                     .rating(review.getRating())
                     .author(AuthorInfo.fromUser(review.getUser()))
@@ -167,7 +203,6 @@ public class ReviewDto {
             return Response.builder()
                     .reviewId(review.getReviewId())
                     .productId(review.getProduct().getId())
-                    .title(review.getTitle())
                     .content(review.getContent())
                     .rating(review.getRating())
                     .author(AuthorInfo.fromUser(review.getUser()))

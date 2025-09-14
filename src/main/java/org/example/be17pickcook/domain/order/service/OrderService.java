@@ -7,6 +7,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.be17pickcook.common.BaseResponse;
 import org.example.be17pickcook.common.PageResponse;
 import org.example.be17pickcook.domain.cart.repository.CartsRepository;
 import org.example.be17pickcook.domain.order.model.OrderItem;
@@ -17,6 +18,7 @@ import org.example.be17pickcook.domain.order.repository.OrderItemRepository;
 import org.example.be17pickcook.domain.order.repository.OrderRepository;
 import org.example.be17pickcook.domain.product.model.Product;
 import org.example.be17pickcook.domain.product.model.ProductDto;
+import org.example.be17pickcook.domain.review.repository.ReviewRepository;
 import org.example.be17pickcook.domain.user.model.User;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,6 +45,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final CartsRepository cartsRepository;
+    private final ReviewRepository reviewRepository;
     private final EntityManager entityManager;
 
 
@@ -206,6 +209,15 @@ public class OrderService {
     }
 
 
+    // 주문 상품 조회(단일)
+    public OrderDto.OrderInfoDto getOrderInfo(Integer userIdx, Long productIdx, Long orderIdx) {
+        System.out.println("실행은 됟고 있어??");
+        OrderItem orderItem = orderItemRepository.findByProductIdAndOrderId(productIdx, orderIdx)
+                .orElseThrow(() -> new IllegalArgumentException("주문 상품을 찾을 수 없습니다."));
+
+        return OrderDto.OrderInfoDto.fromEntity(orderItem);
+    }
+
 
     // 주문 목록
     public PageResponse<OrderDto.OrderInfoListDto> getOrdersByPeriodPaged(String period, int page, int size) {
@@ -251,6 +263,15 @@ public class OrderService {
             throw new RuntimeException("본인 주문만 조회할 수 있습니다.");
         }
 
-        return OrderDto.OrderDetailDto.fromEntity(order);
+        List<OrderDto.OrderInfoDto> orderItemsWithReview = order.getOrderItems().stream()
+                .map(oi -> {
+                    boolean hasReview = reviewRepository.existsReviewByOrderAndProduct(
+                            order.getIdx(), oi.getProduct().getId()
+                    );
+                    return OrderDto.OrderInfoDto.fromEntity(oi, hasReview);
+                })
+                .toList();
+
+        return OrderDto.OrderDetailDto.fromEntity(order, orderItemsWithReview);
     }
 }
