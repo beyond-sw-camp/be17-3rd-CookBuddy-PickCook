@@ -122,4 +122,23 @@ public class OrderController {
         OrderDto.OrderDetailDto result = orderService.getOrderDetail(userIdx, orderId);
         return BaseResponse.success(result);
     }
+
+
+    @Operation(
+            summary = "리뷰 작성할 상품 조회",
+            description = "리뷰를 작성할 상품의 정보를 조회합니다."
+    )
+    @GetMapping("/product")
+    public BaseResponse<OrderDto.OrderInfoDto> getOrderProduct(
+            @Parameter(description = "인증된 사용자 정보", hidden = true)
+            @AuthenticationPrincipal UserDto.AuthUser authUser,
+            @Parameter(description = "조회할 상품 ID", required = true, example = "1")
+            @RequestParam Long productId,
+            @Parameter(description = "조회할 주문 ID", required = true, example = "1")
+            @RequestParam Long orderId) {
+
+        Integer userIdx = (authUser != null) ? authUser.getIdx() : null;
+        OrderDto.OrderInfoDto result = orderService.getOrderInfo(userIdx, productId, orderId);
+        return BaseResponse.success(result);
+    }
 }

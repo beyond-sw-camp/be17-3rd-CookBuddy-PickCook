@@ -177,6 +177,25 @@ public class OrderDto {
         @Schema(description = "배송 상태", example = "READY")
         private String status;
 
+        @Schema(description = "리뷰 작성 여부", example = "true")
+        private boolean hasReview;
+
+        // 리뷰 작성 여부까지 조회용
+        public static OrderInfoDto fromEntity(OrderItem orderItem, boolean hasReview) {
+            return OrderInfoDto.builder()
+                    .product_id(orderItem.getProduct().getId())
+                    .product_name(orderItem.getProduct().getTitle())
+                    .original_price(orderItem.getProduct().getOriginal_price())
+                    .discount_rate(orderItem.getProduct().getDiscount_rate())
+                    .quantity(orderItem.getQuantity())
+                    .product_image(orderItem.getProduct().getMain_image_url())
+                    .product_amount(orderItem.getProduct().getWeight_or_volume())
+                    .status(orderItem.getDeliveryStatus().name())
+                    .hasReview(hasReview)
+                    .build();
+        }
+
+        // 리뷰 작성 여부 포함X  조회용
         public static OrderInfoDto fromEntity(OrderItem orderItem) {
             return OrderInfoDto.builder()
                     .product_id(orderItem.getProduct().getId())
@@ -241,17 +260,14 @@ public class OrderDto {
         @Schema(description = "주문 상품 목록")
         private List<OrderInfoDto> orderItems; // 상품 목록
 
-        public static OrderDetailDto fromEntity(Orders order) {
+        public static OrderDetailDto fromEntity(Orders order, List<OrderInfoDto> orderItems) {
             return OrderDetailDto.builder()
                     .orderNumber(order.getOrderNumber())
                     .total_price(order.getTotal_price())
                     .approvedAt(order.getApprovedAt())
                     .paymentMethod(order.getPaymentMethod())
                     .orderDelivery(OrderDeliveryDto.fromEntity(order.getOrderDelivery()))
-                    .orderItems(order.getOrderItems().stream()
-                            .map(OrderInfoDto::fromEntity)
-                            .toList()
-                    )
+                    .orderItems(orderItems)
                     .build();
         }
     }

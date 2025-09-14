@@ -1,6 +1,9 @@
 package org.example.be17pickcook.domain.review.repository;
 
+import org.example.be17pickcook.domain.order.model.Orders;
+import org.example.be17pickcook.domain.product.model.Product;
 import org.example.be17pickcook.domain.review.model.Review;
+import org.example.be17pickcook.domain.user.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -44,6 +47,13 @@ public interface ReviewRepository extends JpaRepository<Review, Long>, ReviewRep
      * 특정 상품에 대한 특정 사용자의 리뷰 조회 (중복 체크용)
      */
     Optional<Review> findByProductIdAndUserIdxAndIsDeletedFalse(Long productId, Integer userId);
+
+    @Query("SELECT CASE WHEN COUNT(r) > 0 THEN true ELSE false END " +
+            "FROM Review r " +
+            "WHERE r.order.idx = :orderIdx AND r.product.id = :productId")
+    boolean existsReviewByOrderAndProduct(@Param("orderIdx") Long orderIdx,
+                                          @Param("productId") Long productId);
+
 
     // =================================================================
     // 통계 조회 메서드
@@ -162,16 +172,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long>, ReviewRep
     // 권한 체크 메서드 (향후 주문 연동용)
     // =================================================================
 
-    /**
-     * 특정 사용자가 특정 상품을 구매했는지 확인 (향후 구현)
-     */
-    @Query("SELECT CASE WHEN COUNT(oi) > 0 THEN true ELSE false END " +
-            "FROM OrderItem oi " +
-            "JOIN oi.order o " +
-            "WHERE o.user.idx = :userId " +
-            "AND oi.product.id = :productId " +
-            "AND o.status = 'COMPLETED'")
-    Boolean hasUserPurchasedProduct(@Param("userId") Integer userId, @Param("productId") Long productId);
+    boolean existsByUserAndProductAndOrder(User user, Product product, Orders order);
 
     // =================================================================
     // 관리자용 메서드

@@ -3,6 +3,7 @@ package org.example.be17pickcook.domain.review.model;
 import jakarta.persistence.*;
 import lombok.*;
 import org.example.be17pickcook.common.BaseEntity;
+import org.example.be17pickcook.domain.order.model.Orders;
 import org.example.be17pickcook.domain.product.model.Product;
 import org.example.be17pickcook.domain.user.model.User;
 import org.hibernate.annotations.BatchSize;
@@ -35,9 +36,6 @@ public class Review extends BaseEntity {
     @Column(name = "review_id")
     private Long reviewId;
 
-    @Column(name = "title", length = 100, nullable = false)
-    private String title;
-
     @Column(name = "content", columnDefinition = "TEXT")
     private String content;
 
@@ -66,6 +64,10 @@ public class Review extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;  // 리뷰 대상 상품
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id", nullable = false)
+    private Orders order;
 
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
     @BatchSize(size = 10)  // N+1 방지
@@ -116,10 +118,7 @@ public class Review extends BaseEntity {
     /**
      * 리뷰 내용 수정
      */
-    public void updateContent(String title, String content, Integer rating) {
-        if (title != null && !title.trim().isEmpty()) {
-            this.title = title.trim();
-        }
+    public void updateContent(String content, Integer rating) {
         if (content != null && !content.trim().isEmpty()) {
             this.content = content.trim();
         }
