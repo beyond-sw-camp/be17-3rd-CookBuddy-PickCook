@@ -5,7 +5,11 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
+import org.example.be17pickcook.domain.likes.model.LikeTargetType;
+import org.example.be17pickcook.domain.likes.model.QLike;
 import org.example.be17pickcook.domain.recipe.model.*;
+import org.example.be17pickcook.domain.scrap.model.QScrap;
+import org.example.be17pickcook.domain.scrap.model.ScrapTargetType;
 import org.example.be17pickcook.domain.user.model.QUser;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -30,11 +34,11 @@ public class RecipeQueryRepository {
     }
 
     public Page<RecipeDto.RecipeListResponseDto> getRecipesFiltered(
-            String keyword, int page, int size, String dir) {
+            String keyword, int page, int size, String dir, Integer userIdx) {
 
         QRecipe recipe = QRecipe.recipe;
-        QRecipeComment recipeComment = QRecipeComment.recipeComment;
-        QUser user = QUser.user;
+        QLike likes = QLike.like;
+        QScrap scraps = QScrap.scrap;
 
         // 검색 조건
         BooleanBuilder builder = new BooleanBuilder();
@@ -59,12 +63,18 @@ public class RecipeQueryRepository {
                         recipe.likeCount,
                         recipe.scrapCount,
                         recipe.description,
-                        Expressions.FALSE, // likedByUser 기본값
-                        Expressions.FALSE  // scrappedByUser 기본값
+                        likes.idx.isNotNull(),
+                        scraps.idx.isNotNull()
                 ))
                 .from(recipe)
-                .leftJoin(recipe.user, user) // fetchJoin는 select에 recipe만 포함
-                .leftJoin(recipeComment).on(recipeComment.recipe.eq(recipe))
+                .leftJoin(likes)
+                    .on(likes.targetId.eq(recipe.idx)
+                            .and(likes.targetType.eq(LikeTargetType.RECIPE))
+                            .and(likes.user.idx.eq(userIdx)))
+                .leftJoin(scraps)
+                    .on(scraps.targetId.eq(recipe.idx)
+                            .and(scraps.targetType.eq(ScrapTargetType.RECIPE))
+                            .and(scraps.user.idx.eq(userIdx)))
                 .where(builder)
                 .groupBy(recipe.idx)
                 .orderBy("DESC".equalsIgnoreCase(dir) ? recipe.createdAt.desc() : recipe.createdAt.asc())

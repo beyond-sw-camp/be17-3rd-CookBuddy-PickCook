@@ -165,6 +165,7 @@ public class RecipeController {
     )
     @GetMapping("/search")
     public BaseResponse<PageResponse<RecipeDto.RecipeListResponseDto>> getRecipeKeyword(
+            @AuthenticationPrincipal UserDto.AuthUser authUser,
             @Parameter(description = "검색 키워드", example = "스파게티")
             @RequestParam(defaultValue = "") String keyword,
             @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
@@ -174,7 +175,9 @@ public class RecipeController {
             @Parameter(description = "정렬 방향 (DESC: 최신순, ASC: 오래된순)", example = "DESC")
             @RequestParam(defaultValue = "DESC") String dir) {
 
-        Page<RecipeDto.RecipeListResponseDto> recipes = recipeService.getRecipeKeyword(keyword, page, size, dir);
+        Integer userIdx = (authUser != null) ? authUser.getIdx() : null;
+
+        Page<RecipeDto.RecipeListResponseDto> recipes = recipeService.getRecipeKeyword(keyword, page, size, dir, userIdx);
         return BaseResponse.success(PageResponse.from(recipes));
     }
 }

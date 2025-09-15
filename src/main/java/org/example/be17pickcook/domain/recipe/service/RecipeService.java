@@ -239,7 +239,7 @@ public class RecipeService {
 
 
     // 레시피 검색
-    public Page<RecipeDto.RecipeListResponseDto> getRecipeKeyword(String keyword, int page, int size, String dir) {
-        return recipeQueryRepository.getRecipesFiltered(keyword, page, size, dir);
+    public Page<RecipeDto.RecipeListResponseDto> getRecipeKeyword(String keyword, int page, int size, String dir, Integer userIdx) {
+        return recipeQueryRepository.getRecipesFiltered(keyword, page, size, dir, userIdx);
     }
 }
