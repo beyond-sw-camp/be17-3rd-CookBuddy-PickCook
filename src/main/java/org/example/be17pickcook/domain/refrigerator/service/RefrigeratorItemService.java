@@ -57,6 +57,11 @@ public class RefrigeratorItemService {
      */
     @Transactional
     public RefrigeratorItemDto.Response create(RefrigeratorItemDto.Request dto, Integer userId) {
+        // 유통기한 검증 (선택사항)
+        if (dto.getExpirationDate() != null && dto.getExpirationDate().isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("유통기한은 오늘 또는 미래 날짜여야 합니다.");
+        }
+
         // 사용자 존재 확인
         User user = findUserById(userId);
 
@@ -106,15 +111,13 @@ public class RefrigeratorItemService {
         // 기존 아이템 조회
         RefrigeratorItem existingItem = findActiveItemByIdAndUserId(itemId, userId);
 
-        // 카테고리 변경 시 검증
+        // 카테고리 변경 시
         if (dto.getCategoryId() != null) {
             Category newCategory = findCategoryById(dto.getCategoryId());
-            existingItem = existingItem.toBuilder()
-                    .category(newCategory)
-                    .build();
+            existingItem.changeCategory(newCategory); // 기존 엔티티 유지
         }
 
-        // DTO 정보로 Entity 업데이트
+        // DTO 정보로 Entity 업데이트 (Mapper 사용)
         refrigeratorItemMapper.updateEntityFromDto(existingItem, dto);
 
         // 도메인 메서드로 비즈니스 규칙 적용
@@ -124,11 +127,11 @@ public class RefrigeratorItemService {
         if (dto.getQuantity() != null) {
             existingItem.changeQuantity(dto.getQuantity());
         }
-        if (dto.getExpirationDate() != null) {
-            existingItem.changeExpirationDate(dto.getExpirationDate());
-        }
         if (dto.getLocation() != null) {
             existingItem.changeLocation(dto.getLocation());
+        }
+        if (dto.getExpirationDate() != null) {
+            existingItem.changeExpirationDate(dto.getExpirationDate());
         }
 
         // 저장
