@@ -90,6 +90,7 @@ public class OrderController {
     )
     @GetMapping("/history")
     public BaseResponse<PageResponse<OrderDto.OrderInfoListDto>> getOrdersByPeriod(
+            @AuthenticationPrincipal UserDto.AuthUser authUser,
             @Parameter(description = "조회 기간 (예: 1month, 3months, 6months, 1year)", example = "1month")
             @RequestParam String period,
             @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
@@ -97,7 +98,9 @@ public class OrderController {
             @Parameter(description = "페이지당 주문 수", example = "10")
             @RequestParam int size) {
 
-        PageResponse<OrderDto.OrderInfoListDto> result = orderService.getOrdersByPeriodPaged(period, page, size);
+        Integer userIdx = authUser.getIdx();
+
+        PageResponse<OrderDto.OrderInfoListDto> result = orderService.getOrdersByPeriodPaged(userIdx, period, page, size);
         return BaseResponse.success(result);
     }
 

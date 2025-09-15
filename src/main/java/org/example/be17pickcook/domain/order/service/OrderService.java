@@ -211,7 +211,6 @@ public class OrderService {
 
     // 주문 상품 조회(단일)
     public OrderDto.OrderInfoDto getOrderInfo(Integer userIdx, Long productIdx, Long orderIdx) {
-        System.out.println("실행은 됟고 있어??");
         OrderItem orderItem = orderItemRepository.findByProductIdAndOrderId(productIdx, orderIdx)
                 .orElseThrow(() -> new IllegalArgumentException("주문 상품을 찾을 수 없습니다."));
 
@@ -220,7 +219,7 @@ public class OrderService {
 
 
     // 주문 목록
-    public PageResponse<OrderDto.OrderInfoListDto> getOrdersByPeriodPaged(String period, int page, int size) {
+    public PageResponse<OrderDto.OrderInfoListDto> getOrdersByPeriodPaged(Integer userIdx, String period, int page, int size) {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime start;
 
@@ -236,6 +235,7 @@ public class OrderService {
         List<OrderStatus> statuses = List.of(OrderStatus.PAID, OrderStatus.REFUNDED);
 
         Page<Orders> ordersPage = orderRepository.findAllWithItemsByCreatedAtBetweenAndStatuses(
+                userIdx,
                 start,
                 now,
                 statuses,

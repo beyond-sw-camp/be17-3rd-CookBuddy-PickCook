@@ -46,16 +46,20 @@ public interface OrderRepository extends JpaRepository<Orders, Long> {
             value = "SELECT DISTINCT o FROM Orders o " +
                     "LEFT JOIN FETCH o.orderItems oi " +
                     "LEFT JOIN FETCH oi.product " +
-                    "WHERE o.createdAt BETWEEN :start AND :end " +
+                    "WHERE o.user.idx = :userId " +
+                    "AND o.createdAt BETWEEN :start AND :end " +
                     "AND o.status IN :statuses",
             countQuery = "SELECT COUNT(o) FROM Orders o " +
-                    "WHERE o.createdAt BETWEEN :start AND :end " +
+                    "WHERE o.user.idx = :userId " +
+                    "AND o.createdAt BETWEEN :start AND :end " +
                     "AND o.status IN :statuses"
     )
     Page<Orders> findAllWithItemsByCreatedAtBetweenAndStatuses(
+            Integer userId,
             LocalDateTime start,
             LocalDateTime end,
             List<OrderStatus> statuses,
             Pageable pageable
     );
+
 }
