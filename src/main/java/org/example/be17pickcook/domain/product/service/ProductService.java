@@ -10,9 +10,11 @@ import org.example.be17pickcook.domain.cart.service.CartsService;
 import org.example.be17pickcook.domain.common.model.Category;
 import org.example.be17pickcook.domain.common.repository.CategoryRepository;
 import org.example.be17pickcook.domain.product.mapper.ProductMapper;
+import org.example.be17pickcook.domain.product.repository.ProductQueryRepository;
 import org.example.be17pickcook.domain.product.repository.ProductRepository;
 import org.example.be17pickcook.domain.product.model.Product;
 import org.example.be17pickcook.domain.product.model.ProductDto;
+import org.example.be17pickcook.domain.recipe.model.RecipeDto;
 import org.example.be17pickcook.domain.review.model.Review;
 import org.example.be17pickcook.domain.review.model.ReviewDto;
 import org.example.be17pickcook.domain.review.repository.ReviewRepository;
@@ -43,7 +45,7 @@ public class ProductService {
     private static final String DETAIL_IMAGE_URL = "https://example.com/default-large.jpg";
     private final CartsRepository cartsRepository;
     private final CategoryRepository categoryRepository;
-    private final ProductMapper productMapper;
+    private final ProductQueryRepository productQueryRepository;
 
     // 등록 (쓰기)
     @Transactional
@@ -310,6 +312,13 @@ public class ProductService {
                 throw BaseException.from(BaseResponseStatus.INVALID_SORT_FIELD);
             }
         }
+    }
+
+
+
+    // 상품 검색
+    public Page<ProductDto.ProductListResponse> getProductKeyword(String keyword, int page, int size, String dir, Integer userIdx) {
+        return productQueryRepository.getRecipesFiltered(keyword, page, size, dir, userIdx);
     }
 
 // =================================================================

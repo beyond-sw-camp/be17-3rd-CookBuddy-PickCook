@@ -13,6 +13,7 @@ import org.example.be17pickcook.common.BaseResponse;
 import org.example.be17pickcook.common.PageResponse;
 import org.example.be17pickcook.domain.product.model.ProductDto;
 import org.example.be17pickcook.domain.product.service.ProductService;
+import org.example.be17pickcook.domain.recipe.model.RecipeDto;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -193,6 +194,30 @@ public class ProductController {
         Pageable pageable = PageRequest.of(page, size, s);
 
         return BaseResponse.success(productService.getProductsByCategory(userIdx, categoryId, pageable));
+    }
+
+
+
+    @Operation(
+            summary = "상품 검색 (페이징 + 정렬 + 검색)",
+            description = "사용자가 입력한 키워드로 상품을 검색한 결과를 제공합니다."
+    )
+    @GetMapping("/search")
+    public BaseResponse<PageResponse<ProductDto.ProductListResponse>> getRecipeKeyword(
+            @AuthenticationPrincipal UserDto.AuthUser authUser,
+            @Parameter(description = "검색 키워드", example = "사과")
+            @RequestParam(defaultValue = "") String keyword,
+            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지당 게시글 수", example = "10")
+            @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "정렬 방향 (DESC: 최신순, ASC: 오래된순)", example = "DESC")
+            @RequestParam(defaultValue = "DESC") String dir) {
+
+        Integer userIdx = (authUser != null) ? authUser.getIdx() : null;
+
+        Page<ProductDto.ProductListResponse> products = productService.getProductKeyword(keyword, page, size, dir, userIdx);
+        return BaseResponse.success(PageResponse.from(products));
     }
 
     // =================================================================
