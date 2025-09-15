@@ -65,8 +65,11 @@ public class PostService {
         boolean hasLiked = likesService.hasUserLiked(userId, LikeTargetType.POST, postId);
         boolean hasScrapped = scrapService.hasUserScrapped(userId, ScrapTargetType.POST, postId);
 
-        // 4. DTO 변환
-        return PostDto.DetailResponse.from(post, hasLiked, hasScrapped);
+        // 4. 작성자 본인 여부
+        boolean isWriter = post.getUser().getIdx() == userId;
+
+        // 5. DTO 변환
+        return PostDto.DetailResponse.from(post, hasLiked, hasScrapped, isWriter);
     }
 
     // 게시글 작성

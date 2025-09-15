@@ -184,7 +184,10 @@ public class PostDto {
         @Schema(description = "수정일시", example = "2025년 1월 15일")
         private String updatedAt;
 
-        public static DetailResponse from(Post post, boolean hasLiked, boolean hasScrapped) {
+        @Schema(description = "작성자 본인인지 확인용", example = "true")
+        private Boolean isWriter;
+
+        public static DetailResponse from(Post post, boolean hasLiked, boolean hasScrapped, boolean isWriter) {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy년 M월 d일");
             return DetailResponse.builder()
                     .id(post.getId())
@@ -196,6 +199,7 @@ public class PostDto {
                     .scrapCount(post.getScrapCount() != null ? post.getScrapCount() : 0L)
                     .hasScrapped(hasScrapped)
                     .updatedAt(post.getUpdatedAt().format(formatter))
+                    .isWriter(isWriter)
                     .build();
         }
     }
