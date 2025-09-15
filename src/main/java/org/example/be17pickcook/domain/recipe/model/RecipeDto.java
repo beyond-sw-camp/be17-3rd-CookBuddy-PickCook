@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import org.example.be17pickcook.domain.user.model.User;
+import software.amazon.awssdk.services.s3.endpoints.internal.Value;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -98,9 +99,9 @@ public class RecipeDto {
         @Schema(description = "단계 이미지 URL")
         private String image_url;
 
-        public RecipeStep toEntity(Recipe recipe) {
+        public RecipeStep toEntity(Recipe recipe, int stepOrder) {
             return RecipeStep.builder()
-                    .step_order(step_order)
+                    .step_order(stepOrder)
                     .description(description)
                     .image_url(image_url)
                     .recipe(recipe)
@@ -124,11 +125,14 @@ public class RecipeDto {
         private String ingredient_name;
         @Schema(description = "재료 양", example = "200g")
         private String quantity;
+        @Schema(description = "주재료인지 아닌지 여부", example = "주재료면 true, 양념이면 false")
+        private Boolean isMainIngredient;
 
         public RecipeIngredient toEntity(Recipe recipe) {
             return RecipeIngredient.builder()
                     .ingredient_name(this.ingredient_name)
                     .quantity(this.quantity)
+                    .isMainIngredient(this.isMainIngredient != null ? this.isMainIngredient : true)
                     .recipe(recipe)
                     .build();
         }
@@ -137,6 +141,9 @@ public class RecipeDto {
             return RecipeIngredientDto.builder()
                     .ingredient_name(ingredient.getIngredient_name())
                     .quantity(ingredient.getQuantity())
+                    .isMainIngredient(
+                            ingredient.getIsMainIngredient() != null ? ingredient.getIsMainIngredient() : true
+                    )
                     .build();
         }
     }

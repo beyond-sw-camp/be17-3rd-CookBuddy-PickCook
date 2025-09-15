@@ -42,12 +42,6 @@ public class RecipeService {
     private final ScrapService scrapService;
     private final LikeRepository likesRepository;
     private final ScrapRepository scrapRepository;
-
-    // 기본 이미지
-    private static final String DEFAULT_SMALL_IMAGE = "https://example.com/default-small.jpg";
-    private static final String DEFAULT_LARGE_IMAGE = "https://example.com/default-large.jpg";
-    private static final String DEFAULT_STEP_IMAGE  = "https://example.com/default-step.jpg";
-    private final UserRepository userRepository;
     private final RecipeQueryRepository recipeQueryRepository;
 
 
@@ -57,12 +51,17 @@ public class RecipeService {
                          RecipeDto.RecipeRequestDto dto,
                          List<MultipartFile> files) throws SQLException, IOException {
 
+        // 만약 이미지 없을 경우
+        if (files == null) {
+            files = List.of(); // 빈 리스트로 초기화
+        }
+
         // 대표 이미지 업로드 (첫 2장은 대표 이미지 small, large)
         String imageSmallUrl = (files.size() > 0 && !files.get(0).isEmpty()) ?
-                s3UploadService.upload(files.get(0)) : DEFAULT_SMALL_IMAGE;
+                s3UploadService.upload(files.get(0)) : null;
 
         String imageLargeUrl = (files.size() > 1 && !files.get(1).isEmpty()) ?
-                s3UploadService.upload(files.get(1)) : DEFAULT_LARGE_IMAGE;
+                s3UploadService.upload(files.get(1)) : null;
 
 
         // 기본 Recipe 엔티티 생성
@@ -77,8 +76,8 @@ public class RecipeService {
             for (int i = 0; i < dto.getSteps().size(); i++) {
                 RecipeDto.RecipeStepDto stepDto = dto.getSteps().get(i);
                 String stepImageUrl = (files.size() > i + 2 && !files.get(i + 2).isEmpty()) ?
-                        s3UploadService.upload(files.get(i + 2)) : DEFAULT_STEP_IMAGE;
-                RecipeStep step = stepDto.toEntity(recipe);
+                        s3UploadService.upload(files.get(i + 2)) : null;
+                RecipeStep step = stepDto.toEntity(recipe, i + 1);
                 step.setImage_url(stepImageUrl);
 
                 recipe.addSteps(step);

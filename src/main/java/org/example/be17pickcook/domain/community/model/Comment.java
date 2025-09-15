@@ -27,7 +27,8 @@ public class Comment extends BaseEntity implements LikeCountable {
 
     @Column(nullable = false, length = 500) // 길이 제한 설정
     private String content;
-    private Long likeCount;
+    @Column(nullable = false)
+    private Long likeCount = 0L;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "post_id")
@@ -50,7 +51,13 @@ public class Comment extends BaseEntity implements LikeCountable {
     @Override
     public Long getLikeCount() { return this.likeCount; }
     @Override
-    public void increaseLike() { this.likeCount++; }
+    public void increaseLike() {
+        if (this.likeCount == null) this.likeCount = 0L;
+        this.likeCount++;
+    }
     @Override
-    public void decreaseLike() { if (this.likeCount > 0) this.likeCount--;}
+    public void decreaseLike() {
+        if (this.likeCount == null) this.likeCount = 0L;
+        if (this.likeCount > 0) this.likeCount--;
+    }
 }
