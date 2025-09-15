@@ -17,6 +17,7 @@ public class RecipeIngredient {
     private Integer idx;
     private String ingredient_name;
     private String quantity;
+    private Boolean isMainIngredient;
 
 
     @ManyToOne(fetch = FetchType.LAZY)
