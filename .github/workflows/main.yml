@@ -42,7 +42,7 @@ jobs:
       - name: run ssh
         uses: appleboy/ssh-action@v1
         with:
-          host: 175.197.41.119
+          host: 183.109.116.37
           username: test
           password: ${{ secrets.SSH_PASSWORD }}
           port: 225
