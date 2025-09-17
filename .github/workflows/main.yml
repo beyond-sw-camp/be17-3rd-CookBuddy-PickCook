@@ -47,7 +47,6 @@ jobs:
           password: ${{ secrets.SSH_PASSWORD }}
           port: 225
           script: |
-            export KUBECONFIG=/etc/kubernetes/admin.conf
             if kubectl get svc spring-svc -n hsy -o wide | grep -q "green"; then
               CURRENT_VER="green"
               NEXT_VER="blue"
