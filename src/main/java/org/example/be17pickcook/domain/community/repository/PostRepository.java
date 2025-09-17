@@ -19,16 +19,88 @@ public interface PostRepository extends JpaRepository<Post,Long> {
     // 홈화면에서 사용할 데이터 반환
     @Query("""
     SELECT p.id, p.title, pi.imageUrl, p.user.nickname, p.user.profileImage, 
-           p.likeCount, p.scrapCount, p.viewCount
+           p.likeCount, p.scrapCount, p.viewCount, p.updatedAt, p.content
     FROM Post p
     LEFT JOIN p.postImageList pi
-    WHERE pi.id = (
+    ON pi.id = (
         SELECT MIN(pi2.id) 
         FROM PostImage pi2 
         WHERE pi2.post = p
     )
 """)
     Page<Object[]> findAllPostData(Pageable pageable);
+
+    // 내가 쓴 글
+    @Query("""
+SELECT p.id, p.title, pi.imageUrl, p.user.nickname, p.user.profileImage, 
+       p.likeCount, p.scrapCount, p.viewCount, p.updatedAt, p.content
+FROM Post p
+LEFT JOIN p.postImageList pi
+       ON pi.id = (
+           SELECT MIN(pi2.id) 
+           FROM PostImage pi2 
+           WHERE pi2.post = p
+       )
+WHERE p.user.idx = :userId
+""")
+    Page<Object[]> findAllByAuthorId(@Param("userId") Integer userId, Pageable pageable);
+
+
+
+    // 내가 좋아요 누른 글
+    @Query("""
+SELECT p.id, p.title, pi.imageUrl, p.user.nickname, p.user.profileImage, 
+       p.likeCount, p.scrapCount, p.viewCount, p.updatedAt, p.content
+FROM Post p
+JOIN Like l ON l.targetId = p.id AND l.targetType = 'POST'
+LEFT JOIN p.postImageList pi
+       ON pi.id = (
+           SELECT MIN(pi2.id) 
+           FROM PostImage pi2 
+           WHERE pi2.post = p
+       )
+WHERE l.user.idx = :userId
+""")
+    Page<Object[]> findLikedPostsByUser(@Param("userId") Integer userId, Pageable pageable);
+
+
+
+    // 내가 스크랩한 글
+    @Query("""
+SELECT p.id, p.title, pi.imageUrl, p.user.nickname, p.user.profileImage, 
+       p.likeCount, p.scrapCount, p.viewCount, p.updatedAt, p.content
+FROM Post p
+JOIN Scrap s ON s.targetId = p.id AND s.targetType = 'POST'
+LEFT JOIN p.postImageList pi
+       ON pi.id = (
+           SELECT MIN(pi2.id) 
+           FROM PostImage pi2 
+           WHERE pi2.post = p
+       )
+WHERE s.user.idx = :userId
+""")
+    Page<Object[]> findScrappedPostsByUser(@Param("userId") Integer userId, Pageable pageable);
+
+
+
+    // 내가 댓글 단 글
+    @Query("""
+SELECT p.id, p.title, pi.imageUrl, p.user.nickname, p.user.profileImage, 
+       p.likeCount, p.scrapCount, p.viewCount, p.updatedAt, p.content
+FROM Post p
+JOIN Comment c ON c.post = p
+LEFT JOIN p.postImageList pi
+       ON pi.id = (
+           SELECT MIN(pi2.id) 
+           FROM PostImage pi2 
+           WHERE pi2.post = p
+       )
+WHERE c.user.idx = :userId
+GROUP BY p.id, p.title, pi.imageUrl, p.user.nickname, p.user.profileImage, 
+         p.likeCount, p.scrapCount, p.viewCount, p.updatedAt, p.content
+""")
+    Page<Object[]> findRepliedPostsByUser(@Param("userId") Integer userId, Pageable pageable);
+
 
 
     // 조회수 증가
@@ -44,4 +116,8 @@ public interface PostRepository extends JpaRepository<Post,Long> {
         where p.id = :postId
         """)
     Optional<Post> findPostWithDetails(@Param("postId") Long postId);
+
+
+    // 특정 게시글 ID와 작성자 ID로 게시글 조회
+    Optional<Post> findByIdAndUserIdx(Long postIdx, Integer userIdx);
 }

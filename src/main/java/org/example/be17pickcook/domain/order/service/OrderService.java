@@ -7,6 +7,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.be17pickcook.common.BaseResponse;
 import org.example.be17pickcook.common.PageResponse;
 import org.example.be17pickcook.domain.cart.repository.CartsRepository;
 import org.example.be17pickcook.domain.order.model.OrderItem;
@@ -17,6 +18,7 @@ import org.example.be17pickcook.domain.order.repository.OrderItemRepository;
 import org.example.be17pickcook.domain.order.repository.OrderRepository;
 import org.example.be17pickcook.domain.product.model.Product;
 import org.example.be17pickcook.domain.product.model.ProductDto;
+import org.example.be17pickcook.domain.review.repository.ReviewRepository;
 import org.example.be17pickcook.domain.user.model.User;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,6 +45,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final CartsRepository cartsRepository;
+    private final ReviewRepository reviewRepository;
     private final EntityManager entityManager;
 
 
@@ -179,23 +182,44 @@ public class OrderService {
 
         } catch (ExecutionException e) {
             log.error("포트원 결제 조회 실패", e.getCause());
+            updateOrderStatusToFailed(dto.getPaymentId());
             return new OrderDto.PaymentValidationResDto(null, OrderStatus.FAILED.name());
         } catch (TimeoutException e) {
             log.error("포트원 결제 조회 타임아웃", e);
+            updateOrderStatusToFailed(dto.getPaymentId());
             return new OrderDto.PaymentValidationResDto(null, OrderStatus.FAILED.name());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.error("포트원 결제 조회 중 인터럽트 발생", e);
+            updateOrderStatusToFailed(dto.getPaymentId());
             return new OrderDto.PaymentValidationResDto(null, OrderStatus.FAILED.name());
         } catch (Exception e) {
             log.error("포트원 결제 조회 중 오류 발생", e);
+            updateOrderStatusToFailed(dto.getPaymentId());
             return new OrderDto.PaymentValidationResDto(null, OrderStatus.FAILED.name());
         }
     }
 
 
+    private void updateOrderStatusToFailed(String paymentId) {
+        orderRepository.findByPaymentId(paymentId).ifPresent(order -> {
+            order.updateStatus(OrderStatus.FAILED);
+            log.debug("결제 검증 실패로 주문 상태 FAILED 업데이트, paymentId={}", paymentId);
+        });
+    }
+
+
+    // 주문 상품 조회(단일)
+    public OrderDto.OrderInfoDto getOrderInfo(Integer userIdx, Long productIdx, Long orderIdx) {
+        OrderItem orderItem = orderItemRepository.findByProductIdAndOrderId(productIdx, orderIdx)
+                .orElseThrow(() -> new IllegalArgumentException("주문 상품을 찾을 수 없습니다."));
+
+        return OrderDto.OrderInfoDto.fromEntity(orderItem);
+    }
+
+
     // 주문 목록
-    public PageResponse<OrderDto.OrderInfoListDto> getOrdersByPeriodPaged(String period, int page, int size) {
+    public PageResponse<OrderDto.OrderInfoListDto> getOrdersByPeriodPaged(Integer userIdx, String period, int page, int size) {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime start;
 
@@ -208,8 +232,15 @@ public class OrderService {
         }
 
         Pageable pageable = PageRequest.of(page, size);
+        List<OrderStatus> statuses = List.of(OrderStatus.PAID, OrderStatus.REFUNDED);
 
-        Page<Orders> ordersPage = orderRepository.findAllWithItemsByCreatedAtBetween(start, now, pageable);
+        Page<Orders> ordersPage = orderRepository.findAllWithItemsByCreatedAtBetweenAndStatuses(
+                userIdx,
+                start,
+                now,
+                statuses,
+                pageable
+        );
 
         // DTO 변환
         List<OrderDto.OrderInfoListDto> pageList = ordersPage.stream()
@@ -232,6 +263,15 @@ public class OrderService {
             throw new RuntimeException("본인 주문만 조회할 수 있습니다.");
         }
 
-        return OrderDto.OrderDetailDto.fromEntity(order);
+        List<OrderDto.OrderInfoDto> orderItemsWithReview = order.getOrderItems().stream()
+                .map(oi -> {
+                    boolean hasReview = reviewRepository.existsReviewByOrderAndProduct(
+                            order.getIdx(), oi.getProduct().getId()
+                    );
+                    return OrderDto.OrderInfoDto.fromEntity(oi, hasReview);
+                })
+                .toList();
+
+        return OrderDto.OrderDetailDto.fromEntity(order, orderItemsWithReview);
     }
 }

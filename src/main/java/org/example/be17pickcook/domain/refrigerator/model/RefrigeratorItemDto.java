@@ -68,7 +68,6 @@ public class RefrigeratorItemDto {
         @NotBlank(message = "수량은 필수입니다.")
         private String quantity;
 
-        /** 유통기한: 선택사항, 미래 날짜만 허용 */
         @Schema(description = "유통기한 (선택사항)",
                 example = "2025-02-15",
                 format = "date")
@@ -174,7 +173,6 @@ public class RefrigeratorItemDto {
         @Schema(description = "유통기한 (선택사항)",
                 example = "2025-03-15",
                 format = "date")
-        @FutureOrPresent(message = "유통기한은 오늘 또는 미래 날짜여야 합니다.")
         private LocalDate expirationDate;
     }
 

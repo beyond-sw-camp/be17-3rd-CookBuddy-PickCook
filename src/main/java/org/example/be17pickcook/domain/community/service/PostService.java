@@ -1,10 +1,12 @@
 package org.example.be17pickcook.domain.community.service;
 
 import lombok.RequiredArgsConstructor;
+import org.example.be17pickcook.common.BaseResponse;
 import org.example.be17pickcook.common.PageResponse;
 import org.example.be17pickcook.domain.community.model.Post;
 import org.example.be17pickcook.domain.community.model.PostDto;
 import org.example.be17pickcook.domain.community.model.PostImage;
+import org.example.be17pickcook.domain.community.repository.CommentRepository;
 import org.example.be17pickcook.domain.community.repository.PostImageRepository;
 import org.example.be17pickcook.domain.community.repository.PostQueryRepository;
 import org.example.be17pickcook.domain.community.repository.PostRepository;
@@ -18,9 +20,11 @@ import org.example.be17pickcook.domain.user.model.User;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.domain.user.repository.UserRepository;
 import org.springframework.data.domain.*;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -28,6 +32,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PostService {
     private final PostRepository postRepository;
+    private final CommentRepository commentRepository;
     private final PostQueryRepository postQueryRepository;
     private final LikeService likesService;
     private final ScrapService scrapService;
@@ -60,8 +65,11 @@ public class PostService {
         boolean hasLiked = likesService.hasUserLiked(userId, LikeTargetType.POST, postId);
         boolean hasScrapped = scrapService.hasUserScrapped(userId, ScrapTargetType.POST, postId);
 
-        // 4. DTO 변환
-        return PostDto.DetailResponse.from(post, hasLiked, hasScrapped);
+        // 4. 작성자 본인 여부
+        boolean isWriter = post.getUser().getIdx() == userId;
+
+        // 5. DTO 변환
+        return PostDto.DetailResponse.from(post, hasLiked, hasScrapped, isWriter);
     }
 
     // 게시글 작성
@@ -75,18 +83,42 @@ public class PostService {
     }
 
     // 메인 화면에서 쓸 게시글 조회
-    public PageResponse<PostDto.PostCardResponse> getMainPosts(Integer userIdx, Pageable pageable) {
-        // Object[] 배열로 필요한 컬럼만 조회
-        Page<Object[]> postPage = postRepository.findAllPostData(pageable);
+    public PageResponse<PostDto.PostCardResponse> getMainPosts(Integer userIdx, Pageable pageable, String filterType) {
+        Page<Object[]> postPage;
 
-        List<Long> postIds = new ArrayList<>();
+        switch (filterType) {
+            case "my":
+                postPage = postRepository.findAllByAuthorId(userIdx, pageable);
+                break;
+            case "liked":
+                postPage = postRepository.findLikedPostsByUser(userIdx, pageable);
+                break;
+            case "scrapped":
+                postPage = postRepository.findScrappedPostsByUser(userIdx, pageable);
+                break;
+            case "replied":
+                postPage = postRepository.findRepliedPostsByUser(userIdx, pageable);
+                break;
+            default:
+                postPage = postRepository.findAllPostData(pageable);
+                break;
+        }
 
-        // Object[] -> DTO 변환
+        List<Long> postIds = postPage.stream()
+                .map(obj -> (Long) obj[0])
+                .collect(Collectors.toList());
+
+        // 2. 댓글 수 조회 (별도 쿼리)
+        Map<Long, Long> commentCountMap = new HashMap<>();
+        if (!postIds.isEmpty()) {
+            commentRepository.countCommentsByPostIds(postIds)
+                    .forEach(obj -> commentCountMap.put((Long) obj[0], (Long) obj[1]));
+        }
+
+        // 3. Object[] -> DTO 변환
         List<PostDto.PostCardResponse> content = postPage.stream()
                 .map(obj -> {
                     Long id = (Long) obj[0];
-                    postIds.add(id);
-
                     return PostDto.PostCardResponse.builder()
                             .id(id)
                             .title((String) obj[1])
@@ -96,26 +128,54 @@ public class PostService {
                             .likeCount(obj[5] != null ? (Long) obj[5] : 0L)
                             .scrapCount(obj[6] != null ? (Long) obj[6] : 0L)
                             .viewCount(obj[7] != null ? (Long) obj[7] : 0L)
-                            .hasLiked(false)   // 나중에 업데이트
-                            .hasScrapped(false) // 나중에 업데이트
+                            .updatedAt((LocalDateTime) obj[8])
+                            .content((String) obj[9])
+                            .commentCount(commentCountMap.getOrDefault(id, 0L)) // 댓글 수 추가
+                            .hasLiked(false)
+                            .hasScrapped(false)
                             .build();
                 }).collect(Collectors.toList());
 
-        // 좋아요/스크랩 여부 조회
+        // 4. 좋아요/스크랩 여부 조회
         Set<Long> likedByUser = (userIdx == null || postIds.isEmpty()) ? Collections.emptySet() :
                 new HashSet<>(likeRepository.findLikedRecipeIdsByUser(LikeTargetType.POST, userIdx, postIds));
 
         Set<Long> scrappedByUser = (userIdx == null || postIds.isEmpty()) ? Collections.emptySet() :
                 new HashSet<>(scrapRepository.findScrappedRecipeIdsByUser(ScrapTargetType.POST, userIdx, postIds));
 
-        // 좋아요/스크랩 여부 반영
         content.forEach(dto -> {
             dto.setHasLiked(likedByUser.contains(dto.getId()));
             dto.setHasScrapped(scrappedByUser.contains(dto.getId()));
         });
 
-        // PageImpl로 감싸서 반환
+        // 5. PageImpl로 감싸서 반환
         return PageResponse.from(new PageImpl<>(content, pageable, postPage.getTotalElements()));
+    }
+
+
+    // 게시글 수정
+    @Transactional
+    public void updatePost(Long postId, PostDto.Request postDto, UserDto.AuthUser authUser) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException(("게시글이 존재하지 않습니다.")));
+
+        if (!post.getUser().getIdx().equals(authUser.getIdx())) {
+            throw new AccessDeniedException("본인 게시글만 수정 가능합니다.");
+        }
+
+        post.setTitle(postDto.getTitle());
+        post.setContent(postDto.getContent());
+
+        postRepository.save(post);
+    }
+
+    // 게시글 삭제
+    @Transactional
+    public void deletePost(Long postId, UserDto.AuthUser authUser) {
+        Post post = postRepository.findByIdAndUserIdx(postId, authUser.getIdx())
+                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+
+        postRepository.delete(post);
     }
 
 }

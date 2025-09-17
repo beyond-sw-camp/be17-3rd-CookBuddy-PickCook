@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import org.example.be17pickcook.domain.user.model.User;
+import software.amazon.awssdk.services.s3.endpoints.internal.Value;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -21,6 +22,8 @@ public class RecipeDto {
     public static class RecipeRequestDto { // 등록
         @Schema(description = "레시피 제목", example = "김치찌개")
         private String title;
+        @Schema(description = "레시피 설명", example = "신김치로 만드는 김치찌개")
+        private String description;
         @Schema(description = "조리 방법", example = "끓이기")
         private String cooking_method;
         @Schema(description = "레시피 카테고리", example = "한식")
@@ -53,6 +56,7 @@ public class RecipeDto {
         public Recipe toEntity(User authUser) {
             Recipe recipe = Recipe.builder()
                     .title(this.title)
+                    .description(this.description)
                     .cooking_method(this.cooking_method)
                     .category(this.category)
                     .time_taken(this.time_taken)
@@ -95,9 +99,9 @@ public class RecipeDto {
         @Schema(description = "단계 이미지 URL")
         private String image_url;
 
-        public RecipeStep toEntity(Recipe recipe) {
+        public RecipeStep toEntity(Recipe recipe, int stepOrder) {
             return RecipeStep.builder()
-                    .step_order(step_order)
+                    .step_order(stepOrder)
                     .description(description)
                     .image_url(image_url)
                     .recipe(recipe)
@@ -121,11 +125,14 @@ public class RecipeDto {
         private String ingredient_name;
         @Schema(description = "재료 양", example = "200g")
         private String quantity;
+        @Schema(description = "주재료인지 아닌지 여부", example = "주재료면 true, 양념이면 false")
+        private Boolean isMainIngredient;
 
         public RecipeIngredient toEntity(Recipe recipe) {
             return RecipeIngredient.builder()
                     .ingredient_name(this.ingredient_name)
                     .quantity(this.quantity)
+                    .isMainIngredient(this.isMainIngredient != null ? this.isMainIngredient : true)
                     .recipe(recipe)
                     .build();
         }
@@ -134,6 +141,9 @@ public class RecipeDto {
             return RecipeIngredientDto.builder()
                     .ingredient_name(ingredient.getIngredient_name())
                     .quantity(ingredient.getQuantity())
+                    .isMainIngredient(
+                            ingredient.getIsMainIngredient() != null ? ingredient.getIsMainIngredient() : true
+                    )
                     .build();
         }
     }
@@ -201,6 +211,8 @@ public class RecipeDto {
         private Long likeCount;
         @Schema(description = "스크랩 수", example = "12")
         private Long scrapCount;
+        @Schema(description = "레시피 설명", example = "신김치로 만드는 김치찌개")
+        private String description;
         @Schema(description = "로그인 사용자가 좋아요를 눌렀는지 여부", example = "true")
         private Boolean likedByUser;
         @Schema(description = "로그인 사용자가 스크랩을 눌렀는지 여부", example = "true")
@@ -208,7 +220,7 @@ public class RecipeDto {
 
         public RecipeListResponseDto(Long idx, String title, String cooking_method, String category,
                                      String time_taken, String difficulty_level, String serving_size,
-                                     String hashtags, String image_large_url, Long likeCount, Long scrapCount,
+                                     String hashtags, String image_large_url, Long likeCount, Long scrapCount, String description,
                                      Boolean likedByUser, Boolean scrappedByUser) {
             this.idx = idx;
             this.title = title;
@@ -221,6 +233,7 @@ public class RecipeDto {
             this.image_large_url = image_large_url;
             this.likeCount = likeCount;
             this.scrapCount = scrapCount;
+            this.description = description;
             this.likedByUser = likedByUser;
             this.scrappedByUser = scrappedByUser;
         }
@@ -243,6 +256,8 @@ public class RecipeDto {
         private Long idx;
         @Schema(description = "레시피 제목", example = "김치찌개")
         private String title;
+        @Schema(description = "레시피 설명", example = "신김치로 만드는 김치찌개")
+        private String description;
         @Schema(description = "조리 방법", example = "끓이기")
         private String cooking_method;
         @Schema(description = "레시피 카테고리", example = "한식")
@@ -295,6 +310,7 @@ public class RecipeDto {
             return RecipeResponseDto.builder()
                     .idx(recipe.getIdx())
                     .title(recipe.getTitle())
+                    .description(recipe.getDescription())
                     .cooking_method(recipe.getCooking_method())
                     .category(recipe.getCategory())
                     .time_taken(recipe.getTime_taken())

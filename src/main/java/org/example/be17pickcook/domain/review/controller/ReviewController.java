@@ -49,22 +49,23 @@ public class ReviewController {
                     @ApiResponse(responseCode = "403", description = "리뷰 작성 권한 없음 (미구매 상품)")
             }
     )
-    @PostMapping
-    public ResponseEntity<BaseResponse<ReviewDto.Response>> createReview(
+    @PostMapping("/orders/{orderId}/products/{productId}")
+    public BaseResponse createReview(
             @Parameter(description = "인증된 사용자 정보", hidden = true)
             @AuthenticationPrincipal UserDto.AuthUser authUser,
             @Parameter(description = "리뷰 작성 정보", required = true)
             @Valid @RequestBody ReviewDto.WriteRequest dto,
-            BindingResult bindingResult) {
+            BindingResult bindingResult,
+            @PathVariable Long orderId,
+            @PathVariable Long productId) {
 
         if (bindingResult.hasErrors()) {
             String errorMessage = bindingResult.getFieldErrors().get(0).getDefaultMessage();
-            return ResponseEntity.badRequest()
-                    .body(BaseResponse.error(BaseResponseStatus.REQUEST_ERROR, errorMessage));
+            return BaseResponse.success(errorMessage);
         }
 
-        ReviewDto.Response result = reviewService.createReview(authUser.getIdx(), dto);
-        return ResponseEntity.ok(BaseResponse.success(result));
+        reviewService.writeReview(authUser, productId, orderId, dto);
+        return BaseResponse.success("리뷰 등록 성공");
     }
 
     // =================================================================

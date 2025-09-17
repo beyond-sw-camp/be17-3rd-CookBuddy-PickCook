@@ -63,6 +63,8 @@ public class ProductDto {
     @Schema(description = "상품 목록 응답 정보")
     @Getter
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class ProductListResponse {
         @Schema(description = "상품 고유 ID", example = "1")
         private Long id;
@@ -82,15 +84,45 @@ public class ProductDto {
         @Schema(description = "장바구니 담았는지 여부", example = "true")
         private Boolean isInCart;
 
-        @Schema(description = "상품 평점", example = "5.4")
-        private Integer rating;
+        // =================================================================
+        // 리뷰 관련 필드 (수정됨)
+        // =================================================================
 
         @Schema(description = "리뷰 수", example = "23")
         private Long review_count;
 
-        // 장바구니 담았는지 여부
+        @Schema(description = "평균 별점 (0.0 ~ 5.0)", example = "4.3")
+        private Double average_rating;
+
+        // =================================================================
+        // 편의 메서드들
+        // =================================================================
+
+        // 장바구니 담았는지 여부 설정
         public void setIsInCart(Boolean isInCart) {
             this.isInCart = isInCart;
+        }
+
+        // 할인 적용된 최종 가격 계산
+        public Integer getFinalPrice() {
+            if (discount_rate == null || original_price == null) {
+                return original_price;
+            }
+            double discount = original_price * (discount_rate / 100.0);
+            return (int) Math.floor(original_price - discount);
+        }
+
+        // 평균 별점 포맷팅 (소수점 1자리)
+        public String getFormattedRating() {
+            if (average_rating == null || average_rating == 0.0) {
+                return "0.0";
+            }
+            return String.format("%.1f", average_rating);
+        }
+
+        // 리뷰가 있는지 확인
+        public boolean hasReviews() {
+            return review_count != null && review_count > 0;
         }
     }
 

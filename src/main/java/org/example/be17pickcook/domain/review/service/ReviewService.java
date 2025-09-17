@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.be17pickcook.common.exception.BaseException;
 import org.example.be17pickcook.common.BaseResponseStatus;
 import org.example.be17pickcook.domain.order.model.OrderItem;
+import org.example.be17pickcook.domain.order.model.Orders;
 import org.example.be17pickcook.domain.order.repository.OrderRepository;
 import org.example.be17pickcook.domain.product.model.Product;
 import org.example.be17pickcook.domain.product.repository.ProductRepository;
@@ -15,6 +16,7 @@ import org.example.be17pickcook.domain.review.repository.ReviewRepository;
 import org.example.be17pickcook.domain.review.repository.ReviewImageRepository;
 import org.example.be17pickcook.domain.review.repository.ReviewRepositoryCustom;
 import org.example.be17pickcook.domain.user.model.User;
+import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.domain.user.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -43,57 +45,38 @@ public class ReviewService {
     // =================================================================
 
     @Transactional
-    public ReviewDto.Response createReview(Integer userId, ReviewDto.WriteRequest dto) {
-        // =================================================================
-        // 1. 권한 검증 (구매 이력 + 중복 방지 + 기한 확인)
-        // =================================================================
-        validateReviewWritePermission(userId, dto.getProductId());
+    public void writeReview(UserDto.AuthUser authUser, Long productId, Long orderId, ReviewDto.WriteRequest request) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
-        // =================================================================
-        // 2. 사용자 및 상품 정보 조회
-        // =================================================================
-        User user = userRepository.findByIdAndNotDeleted(userId)
-                .orElseThrow(() -> BaseException.from(BaseResponseStatus.USER_NOT_FOUND));
+        Orders order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
 
-        Product product = productRepository.findById(dto.getProductId())
-                .orElseThrow(() -> BaseException.from(BaseResponseStatus.RESOURCE_NOT_FOUND));
+        User user = User.builder().idx(authUser.getIdx()).build();
 
-        // =================================================================
-        // 3. 이미지 개수 검증
-        // =================================================================
-        if (dto.getImageUrls() != null && dto.getImageUrls().size() > 5) {
-            throw BaseException.from(BaseResponseStatus.REVIEW_IMAGE_COUNT_EXCEEDED);
+        // 주문한 사람인지 확인
+        if (!order.getUser().getIdx().equals(user.getIdx())) {
+            throw new IllegalArgumentException("본인 주문에 대해서만 리뷰를 작성할 수 있습니다.");
         }
 
-        // =================================================================
-        // 4. MapStruct로 리뷰 엔티티 생성
-        // =================================================================
-        Review review = reviewMapper.writeRequestToEntity(dto);
-        review.setUser(user);
-        review.setProduct(product);
+        // 주문에 해당 상품이 포함되어 있는지 확인
+        boolean containsProduct = order.getOrderItems().stream()
+                .anyMatch(item -> item.getProduct().getId().equals(productId));
 
-        Review savedReview = reviewRepository.save(review);
-
-        // =================================================================
-        // 5. 이미지 처리 (순서 보장)
-        // =================================================================
-        if (dto.getImageUrls() != null && !dto.getImageUrls().isEmpty()) {
-            for (int i = 0; i < dto.getImageUrls().size(); i++) {
-                ReviewImage image = ReviewImage.builder()
-                        .review(savedReview)
-                        .imageUrl(dto.getImageUrls().get(i))
-                        .imageOrder(i + 1)
-                        .build();
-                reviewImageRepository.save(image);
-                savedReview.addImage(image);
-            }
+        if (!containsProduct) {
+            throw new IllegalArgumentException("해당 주문에는 지정한 상품이 포함되어 있지 않습니다.");
         }
 
-        // =================================================================
-        // 6. MapStruct로 응답 DTO 생성
-        // =================================================================
-        return reviewMapper.entityToResponse(savedReview, userId);
+        // 중복 리뷰인지 확인
+        boolean alreadyReviewed = reviewRepository.existsByUserAndProductAndOrder(user, product, order);
+        if (alreadyReviewed) {
+            throw new IllegalStateException("이미 리뷰를 작성한 상품입니다.");
+        }
+
+        Review review = request.toEntity(user, product, order);
+        reviewRepository.save(review);
     }
+
 
     // =================================================================
     // 리뷰 수정
@@ -115,7 +98,7 @@ public class ReviewService {
         }
 
         // 내용 수정
-        review.updateContent(dto.getTitle(), dto.getContent(), dto.getRating());
+        review.updateContent(dto.getContent(), dto.getRating());
 
         // 이미지 수정 (기존 이미지 삭제 후 새로 추가)
         if (dto.getImageUrls() != null) {

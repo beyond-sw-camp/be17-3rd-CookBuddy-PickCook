@@ -7,10 +7,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.example.be17pickcook.common.BaseResponse;
 import org.example.be17pickcook.common.PageResponse;
+import org.example.be17pickcook.domain.community.model.PostDto;
 import org.example.be17pickcook.domain.recipe.model.RecipeListResponseDto;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.domain.recipe.model.RecipeDto;
 import org.example.be17pickcook.domain.recipe.service.RecipeService;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -161,5 +163,29 @@ public class RecipeController {
             @RequestParam int size) {
 
         return BaseResponse.success(recipeService.getRecommendations(authUser.getIdx(), page, size));
+    }
+
+
+
+    @Operation(
+            summary = "레시피 검색 (페이징 + 정렬 + 검색)",
+            description = "사용자가 입력한 키워드로 레시피를 검색한 결과를 제공합니다."
+    )
+    @GetMapping("/search")
+    public BaseResponse<PageResponse<RecipeDto.RecipeListResponseDto>> getRecipeKeyword(
+            @AuthenticationPrincipal UserDto.AuthUser authUser,
+            @Parameter(description = "검색 키워드", example = "스파게티")
+            @RequestParam(defaultValue = "") String keyword,
+            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지당 게시글 수", example = "10")
+            @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "정렬 방향 (DESC: 최신순, ASC: 오래된순)", example = "DESC")
+            @RequestParam(defaultValue = "DESC") String dir) {
+
+        Integer userIdx = (authUser != null) ? authUser.getIdx() : null;
+
+        Page<RecipeDto.RecipeListResponseDto> recipes = recipeService.getRecipeKeyword(keyword, page, size, dir, userIdx);
+        return BaseResponse.success(PageResponse.from(recipes));
     }
 }

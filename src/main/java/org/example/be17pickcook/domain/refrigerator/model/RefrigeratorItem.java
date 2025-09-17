@@ -78,8 +78,6 @@ public class RefrigeratorItem extends BaseEntity{
     @Column(name = "quantity", nullable = false)
     private String quantity;
 
-    /** 유통기한: null 허용(미관리 시) 또는 오늘/미래 */
-    @FutureOrPresent(message = "유통기한은 오늘 또는 미래여야 합니다.")
     @Column(name = "expiration_date")
     private LocalDate expirationDate;
 
@@ -124,9 +122,6 @@ public class RefrigeratorItem extends BaseEntity{
 
     /** 유통기한 변경 */
     public void changeExpirationDate(LocalDate expirationDate) {
-        if (expirationDate != null && expirationDate.isBefore(LocalDate.now())) {
-            throw new IllegalArgumentException("유통기한은 오늘 또는 미래여야 합니다.");
-        }
         this.expirationDate = expirationDate;
     }
 

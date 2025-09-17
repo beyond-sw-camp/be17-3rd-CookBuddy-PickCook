@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.example.be17pickcook.common.BaseEntity;
 import org.example.be17pickcook.domain.recipe.model.RecipeNutrition;
+import org.example.be17pickcook.domain.review.model.Review;
 import org.example.be17pickcook.domain.user.model.User;
 
 import java.time.LocalDateTime;
@@ -41,6 +42,9 @@ public class Orders extends BaseEntity {
 
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private OrderDelivery orderDelivery;
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Review> reviews = new ArrayList<>();
 
     public void addItems(OrderItem item) {
         if (this.orderItems == null) this.orderItems = new ArrayList<>();

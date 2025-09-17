@@ -184,7 +184,10 @@ public class PostDto {
         @Schema(description = "수정일시", example = "2025년 1월 15일")
         private String updatedAt;
 
-        public static DetailResponse from(Post post, boolean hasLiked, boolean hasScrapped) {
+        @Schema(description = "작성자 본인인지 확인용", example = "true")
+        private Boolean isWriter;
+
+        public static DetailResponse from(Post post, boolean hasLiked, boolean hasScrapped, boolean isWriter) {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy년 M월 d일");
             return DetailResponse.builder()
                     .id(post.getId())
@@ -196,6 +199,7 @@ public class PostDto {
                     .scrapCount(post.getScrapCount() != null ? post.getScrapCount() : 0L)
                     .hasScrapped(hasScrapped)
                     .updatedAt(post.getUpdatedAt().format(formatter))
+                    .isWriter(isWriter)
                     .build();
         }
     }
@@ -235,6 +239,15 @@ public class PostDto {
         @Schema(description = "조회 수", example = "120")
         private Long viewCount;
 
+        @Schema(description = "작성일(수정일)", example = "2025.08.25")
+        private LocalDateTime updatedAt;
+
+        @Schema(description = "게시글 내용", example = "내용 본문")
+        private String content;
+
+        @Schema(description = "댓글 수", example = "12")
+        private Long commentCount;
+
         public void setHasLiked(boolean hasLiked) {
             this.hasLiked = hasLiked;
         }
@@ -259,6 +272,8 @@ public class PostDto {
                     .likeCount(post.getLikeCount() != null ? post.getLikeCount() : 0L)
                     .scrapCount(post.getScrapCount() != null ? post.getScrapCount() : 0L)
                     .viewCount(post.getViewCount() != null ? post.getViewCount() : 0L)
+                    .updatedAt(post.getUpdatedAt())
+                    .content(post.getContent())
                     .build();
         }
     }

@@ -19,13 +19,15 @@ import java.util.Optional;
 public interface RecipeRepository extends JpaRepository<Recipe, Long> {
     @Query("SELECT r FROM Recipe r " +
             "LEFT JOIN FETCH r.ingredients i " +
+            "LEFT JOIN FETCH r.steps s " +
             "LEFT JOIN FETCH r.user u " +
-            "LEFT JOIN FETCH r.nutrition n " + // ~~ToOne은 한 개이기 때문에 중복 안 생김
+            "LEFT JOIN FETCH r.nutrition n " +
             "WHERE r.idx = :id")
     Optional<Recipe> findDetailById(@Param("id") Long id);
 
     @Query("SELECT r.idx, r.title, r.cooking_method, r.category, r.time_taken, " +
-            "r.difficulty_level, r.serving_size, r.hashtags, r.image_large_url, r.likeCount, r.scrapCount FROM Recipe r")
+            "r.difficulty_level, r.serving_size, r.hashtags, r.image_large_url, " +
+            "r.likeCount, r.scrapCount, r.description FROM Recipe r")
     Page<Object[]> findAllOnlyRecipe(Pageable pageable);
 
     @Query("SELECT new org.example.be17pickcook.domain.recipe.model.RecipeListResponseDto(" +

@@ -22,6 +22,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -60,21 +61,25 @@ public class UserController {
             }
     )
     @PostMapping("/signup")
-    public ResponseEntity<BaseResponse<Void>> signup(
-            @Parameter(description = "회원가입 정보", required = true)
+    public BaseResponse<Map<String, Object>> signup(
             @Valid @RequestBody UserDto.Register dto,
             BindingResult bindingResult) {
 
         if (bindingResult.hasErrors()) {
             String errorMessage = bindingResult.getFieldErrors().get(0).getDefaultMessage();
-            return ResponseEntity.badRequest()
-                    .body(BaseResponse.error(BaseResponseStatus.REQUEST_ERROR, errorMessage));
+            return BaseResponse.error(BaseResponseStatus.REQUEST_ERROR, errorMessage);
         }
 
         userService.register(dto);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(BaseResponse.success(null, BaseResponseStatus.SIGNUP_SUCCESS));
+
+        Map<String, Object> responseMap = new HashMap<>();
+        responseMap.put("email", dto.getEmail());  // 필요하면 반환
+        responseMap.put("nickname", dto.getNickname());
+
+        // 프론트에서 success와 message를 바로 읽도록 custom message 지정
+        return BaseResponse.success(responseMap, "회원가입이 완료되었습니다.");
     }
+
 
     @Operation(
             summary = "이메일 인증",
