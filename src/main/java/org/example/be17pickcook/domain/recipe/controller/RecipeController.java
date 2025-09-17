@@ -105,20 +105,28 @@ public class RecipeController {
             @RequestParam(required = false) String category,
             @Parameter(description = "조리방법 필터 (끓이기, 굽기, 볶기, 찌기, 튀기기, 기타)")
             @RequestParam(required = false) String cookingMethod) {
+            @Parameter(description = "정렬 방식 (latest, oldest, likes, scraps)", example = "latest")
+            @RequestParam(defaultValue = "latest") String sortType) {
+
 
         Integer userIdx = (authUser != null) ? authUser.getIdx() : null;
 
         Sort sort = switch (sortType) {
             case "oldest" -> Sort.by(Sort.Direction.ASC, "createdAt");
+            case "likes" -> Sort.by(Sort.Direction.DESC, "likeCount");
+            case "scraps" -> Sort.by(Sort.Direction.DESC, "scrapCount");
+
             default -> Sort.by(Sort.Direction.DESC, "createdAt"); // latest
         };
 
         Pageable pageable = PageRequest.of(page, size, sort);
 
+
         // 필터링된 레시피 목록 조회
         return BaseResponse.success(
                 recipeService.getFilteredRecipeList(userIdx, pageable, difficulty, category, cookingMethod)
         );
+
     }
 
     @Operation(

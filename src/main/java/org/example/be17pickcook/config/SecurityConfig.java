@@ -51,16 +51,6 @@ public class SecurityConfig {
         corsConfiguration.setExposedHeaders(List.of("*"));
         corsConfiguration.setAllowCredentials(true);
 
-        // k8s 환경 추가
-        corsConfiguration.addAllowedOrigin("http://192.168.88.101:30080");
-        corsConfiguration.addAllowedOrigin("https://192.168.88.101:30080");
-        corsConfiguration.addAllowedOriginPattern("http://192.168.88.*:*");
-        corsConfiguration.addAllowedOriginPattern("https://192.168.88.*:*");
-
-        corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        corsConfiguration.setAllowedHeaders(List.of("*"));
-        corsConfiguration.setExposedHeaders(List.of("*"));
-        corsConfiguration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfiguration);  // 올바른 변수 사용
