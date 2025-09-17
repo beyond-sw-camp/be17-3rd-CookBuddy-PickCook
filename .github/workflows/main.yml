@@ -1,9 +1,7 @@
 name: project deployment
-
 on:
   push:
     branches: [develop]
-
 jobs:
   build:
     name: build
@@ -11,84 +9,106 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-
-      - name: Build jar with Gradle
+      - name: Build jar with Gradle (uses build cache)
         uses: gradle/actions/setup-gradle@v4
-
       - name: Gradle build
         run: |
           chmod +x ./gradlew
           ./gradlew clean bootJar
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/pickcook-backend:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/pickcook-backend:${{ github.run_number }}
 
   deploy:
     name: deploy
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: Deploy via SSH (Blue-Green)
+      - name: run ssh
         uses: appleboy/ssh-action@v1
         with:
           host: 175.197.41.119
           username: test
-          password: qwer1234
+          password: ${{ secrets.SSH_PASSWORD }}
           port: 225
           script: |
-            # 1️⃣ 새 이미지 pull
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/pickcook-backend:latest
-
-            # 2️⃣ 현재 Nginx 포트 확인
-            CUR_PORT=$(grep -oE '8080|8081' /etc/nginx/sites-enabled/default)
-            if [ "$CUR_PORT" = "8080" ]; then
-              OLD_PORT=8080
-              NEW_PORT=8081
+            if kubectl get svc spring-svc -n hsy -o wide | grep -q "green"; then
+              CURRENT_VER="green"
+              NEXT_VER="blue"
             else
-              OLD_PORT=8081
-              NEW_PORT=8080
+              CURRENT_VER="blue"
+              NEXT_VER="green"
             fi
+            
+            cat <<EOF | kubectl apply -f -
+            apiVersion: apps/v1
+            kind: Deployment
+            metadata:
+              name: spring-deployment-${NEXT_VER}
+              namespace: hsy
+            spec:
+              selector:
+                matchLabels:
+                  type: app
+                  ver: ${NEXT_VER}
+              replicas: 1
+              strategy:
+                type: RollingUpdate
+              template:
+                metadata:
+                  labels:
+                    type: app
+                    ver: ${NEXT_VER}
+                spec:
+                  containers:
+                    - name: container
+                      image: hsy2709/pickcook-backend:${{ github.run_number }}
+                      livenessProbe:
+                        httpGet:
+                          path: /health
+                          port: 8080
+                        initialDelaySeconds: 20
+                        periodSeconds: 10
+                      readinessProbe:
+                        httpGet:
+                          path: /test
+                          port: 8080
+                        initialDelaySeconds: 20
+                        periodSeconds: 10
+                        successThreshold: 3
+                  terminationGracePeriodSeconds: 0
+            EOF
 
-            echo "Old port: $OLD_PORT"
-            echo "New port: $NEW_PORT"
-
-            # 3️⃣ 새 컨테이너 실행
-            docker run -d --name back-$NEW_PORT -p $NEW_PORT:8080 ${{ secrets.DOCKERHUB_USERNAME }}/pickcook-backend:latest
-
-            # 4️⃣ 헬스체크 (최대 3분)
-            for i in $(seq 1 36); do
-              if RESP=$(curl -fsS --max-time 3 "http://127.0.0.1:${NEW_PORT}/health" || true); then
-                echo "Health response: $RESP"
-                if echo "$RESP" | grep -qi 'ok'; then
-                  echo "New container is healthy."
-                  break
-                fi
-              fi
-              sleep 5
-            done
-
-            # 5️⃣ Nginx 포트 전환
-            sudo sed -i "s/$OLD_PORT/$NEW_PORT/g" /etc/nginx/sites-enabled/default
-            sudo nginx -s reload
-
-            # 6️⃣ 이전 컨테이너 제거
-            docker rm -f back-$OLD_PORT 2>/dev/null || true
+            kubectl rollout status deployment/spring-deployment-${NEXT_VER} -n hsy
+            cat <<EOF | kubectl apply -f -
+            apiVersion: v1
+            kind: Service
+            metadata:
+              name: spring-svc
+              namespace: hsy
+            spec:
+              selector:
+                type: app
+                ver: ${NEXT_VER}
+              ports:
+                - port: 8080
+                  targetPort: 8080
+              type: LoadBalancer
+            EOF
+            
+            kubectl scale deployment spring-deployment-${CURRENT_VER} -n hsy --replicas=0
