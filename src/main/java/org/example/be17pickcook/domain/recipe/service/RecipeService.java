@@ -47,8 +47,7 @@ public class RecipeService {
     private static final String DEFAULT_SMALL_IMAGE = "https://example.com/default-small.jpg";
     private static final String DEFAULT_LARGE_IMAGE = "https://example.com/default-large.jpg";
     private static final String DEFAULT_STEP_IMAGE  = "https://example.com/default-step.jpg";
-    private final UserRepository userRepository;
-    private final RecipeQueryRepository recipeQueryRepository;
+
 
 
     // 레시피 등록
@@ -180,8 +179,62 @@ public class RecipeService {
         return PageResponse.from(dtoPage);
     }
 
-    public PageResponse<RecipeListResponseDto> getRecipesFiltered(String keyword, List<String> categories, List<String> difficulties, String sortBy, int page, int size, String dir) {
-        return recipeQueryRepository.getRecipesFiltered(keyword, categories, difficulties, sortBy, page, size);
+    public PageResponse<RecipeDto.RecipeListResponseDto> getFilteredRecipeList(
+            Integer userIdx, Pageable pageable, String difficulty, String category, String cookingMethod) {
+
+        // 1. 필터링된 레시피 조회 (Object[] 방식 - 성능 최적화)
+        Page<Recipe> recipePage = recipeRepository.findByFilters(difficulty, category, cookingMethod, pageable);
+
+        // 2. Recipe -> Object[] 변환하여 기존 로직 재사용
+        Page<Object[]> recipeObjectPage = recipePage.map(recipe -> new Object[]{
+                recipe.getIdx(),
+                recipe.getTitle(),
+                recipe.getCooking_method(),
+                recipe.getCategory(),
+                recipe.getTime_taken(),
+                recipe.getDifficulty_level(),
+                recipe.getServing_size(),
+                recipe.getHashtags(),
+                recipe.getImage_large_url(),
+                recipe.getLikeCount(),
+                recipe.getScrapCount()
+        });
+
+        // 3. 기존 getRecipeList와 동일한 로직 사용
+        List<Long> recipeIds = new ArrayList<>();
+        Page<RecipeDto.RecipeListResponseDto> dtoPage = recipeObjectPage.map(arr -> {
+            Long idx = (Long) arr[0];
+            recipeIds.add(idx);
+
+            return RecipeDto.RecipeListResponseDto.builder()
+                    .idx(idx)
+                    .title((String) arr[1])
+                    .cooking_method((String) arr[2])
+                    .category((String) arr[3])
+                    .time_taken((String) arr[4])
+                    .difficulty_level((String) arr[5])
+                    .serving_size((String) arr[6])
+                    .hashtags((String) arr[7])
+                    .image_large_url((String) arr[8])
+                    .likeCount((Long) arr[9])
+                    .scrapCount((Long) arr[10])
+                    .build();
+        });
+
+        // 4. 좋아요/스크랩 상태 설정 (기존 로직과 동일)
+        Set<Long> likedByUser = (userIdx == null || recipeIds.isEmpty()) ? Collections.emptySet() :
+                new HashSet<>(likesRepository.findLikedRecipeIdsByUser(LikeTargetType.RECIPE, userIdx, recipeIds));
+
+        Set<Long> scrappedByUser = (userIdx == null || recipeIds.isEmpty()) ? Collections.emptySet() :
+                new HashSet<>(scrapRepository.findScrappedRecipeIdsByUser(ScrapTargetType.RECIPE, userIdx, recipeIds));
+
+        // 5. DTO에 좋아요/스크랩 정보 설정
+        dtoPage.forEach(dto -> {
+            dto.setLikedByUser(likedByUser.contains(dto.getIdx()));
+            dto.setScrapInfo(scrappedByUser.contains(dto.getIdx()));
+        });
+
+        return PageResponse.from(dtoPage);
     }
 
 

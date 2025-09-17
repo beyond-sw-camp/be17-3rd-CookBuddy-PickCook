@@ -36,6 +36,16 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
             "WHERE r.idx IN :ids")
     List<RecipeListResponseDto> findAllOnlyRecipeWithIds(@Param("ids") List<Long> ids);
 
+    // 기존 findByFilters 메서드를 아래로 교체 (NULL과 빈 문자열 모두 처리)
+    @Query("SELECT r FROM Recipe r WHERE " +
+            "(:difficulty IS NULL OR :difficulty = '' OR r.difficulty_level = :difficulty) AND " +
+            "(:category IS NULL OR :category = '' OR r.category = :category) AND " +
+            "(:cookingMethod IS NULL OR :cookingMethod = '' OR r.cooking_method = :cookingMethod)")
+    Page<Recipe> findByFilters(@Param("difficulty") String difficulty,
+                               @Param("category") String category,
+                               @Param("cookingMethod") String cookingMethod,
+                               Pageable pageable);
+
 }
 
 
