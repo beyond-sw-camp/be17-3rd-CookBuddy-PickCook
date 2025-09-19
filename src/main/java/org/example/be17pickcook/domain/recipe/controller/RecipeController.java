@@ -97,8 +97,17 @@ public class RecipeController {
             @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "페이지당 레시피 수", example = "10")
             @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "정렬 방식 (latest, oldest)", example = "latest")
+            @RequestParam(defaultValue = "latest") String sortType,
+            @Parameter(description = "난이도 필터 (쉬움, 보통, 어려움)")
+            @RequestParam(required = false) String difficulty,
+            @Parameter(description = "카테고리 필터 (반찬, 국&찌개, 일품, 밥, 후식, 기타)")
+            @RequestParam(required = false) String category,
+            @Parameter(description = "조리방법 필터 (끓이기, 굽기, 볶기, 찌기, 튀기기, 기타)")
+            @RequestParam(required = false) String cookingMethod) {
             @Parameter(description = "정렬 방식 (latest, oldest, likes, scraps)", example = "latest")
             @RequestParam(defaultValue = "latest") String sortType) {
+
 
         Integer userIdx = (authUser != null) ? authUser.getIdx() : null;
 
@@ -106,11 +115,18 @@ public class RecipeController {
             case "oldest" -> Sort.by(Sort.Direction.ASC, "createdAt");
             case "likes" -> Sort.by(Sort.Direction.DESC, "likeCount");
             case "scraps" -> Sort.by(Sort.Direction.DESC, "scrapCount");
+
             default -> Sort.by(Sort.Direction.DESC, "createdAt"); // latest
         };
 
         Pageable pageable = PageRequest.of(page, size, sort);
-        return BaseResponse.success(recipeService.getRecipeList(userIdx, pageable));
+
+
+        // 필터링된 레시피 목록 조회
+        return BaseResponse.success(
+                recipeService.getFilteredRecipeList(userIdx, pageable, difficulty, category, cookingMethod)
+        );
+
     }
 
     @Operation(

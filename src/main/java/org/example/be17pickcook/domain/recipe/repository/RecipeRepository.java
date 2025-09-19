@@ -19,13 +19,16 @@ import java.util.Optional;
 public interface RecipeRepository extends JpaRepository<Recipe, Long> {
     @Query("SELECT r FROM Recipe r " +
             "LEFT JOIN FETCH r.ingredients i " +
+            "LEFT JOIN FETCH r.steps s " +
             "LEFT JOIN FETCH r.user u " +
-            "LEFT JOIN FETCH r.nutrition n " + // ~~ToOne은 한 개이기 때문에 중복 안 생김
+            "LEFT JOIN FETCH r.nutrition n " +
             "WHERE r.idx = :id")
     Optional<Recipe> findDetailById(@Param("id") Long id);
 
     @Query("SELECT r.idx, r.title, r.cooking_method, r.category, r.time_taken, " +
-            "r.difficulty_level, r.serving_size, r.hashtags, r.image_large_url, r.likeCount, r.scrapCount, r.description FROM Recipe r")
+            "r.difficulty_level, r.serving_size, r.hashtags, r.image_large_url, " +
+            "r.likeCount, r.scrapCount, r.description FROM Recipe r")
+
     Page<Object[]> findAllOnlyRecipe(Pageable pageable);
 
     @Query("SELECT new org.example.be17pickcook.domain.recipe.model.RecipeListResponseDto(" +
@@ -35,6 +38,16 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
             "FROM Recipe r " +
             "WHERE r.idx IN :ids")
     List<RecipeListResponseDto> findAllOnlyRecipeWithIds(@Param("ids") List<Long> ids);
+
+    // 기존 findByFilters 메서드를 아래로 교체 (NULL과 빈 문자열 모두 처리)
+    @Query("SELECT r FROM Recipe r WHERE " +
+            "(:difficulty IS NULL OR :difficulty = '' OR r.difficulty_level = :difficulty) AND " +
+            "(:category IS NULL OR :category = '' OR r.category = :category) AND " +
+            "(:cookingMethod IS NULL OR :cookingMethod = '' OR r.cooking_method = :cookingMethod)")
+    Page<Recipe> findByFilters(@Param("difficulty") String difficulty,
+                               @Param("category") String category,
+                               @Param("cookingMethod") String cookingMethod,
+                               Pageable pageable);
 
 }
 
