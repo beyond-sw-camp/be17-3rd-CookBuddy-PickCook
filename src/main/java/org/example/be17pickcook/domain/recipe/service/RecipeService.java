@@ -91,7 +91,7 @@ public class RecipeService {
 
     // 특정 레시피 조회 + 좋아요 정보 + 스크랩 정보 포함
     public RecipeDto.RecipeResponseDto getRecipe(Long recipeId, Integer userIdx) {
-        Recipe recipe = recipeRepository.findDetailById(recipeId)
+        Recipe recipe = recipeRepository.findById(recipeId)  // <- findDetailById를 findById로 변경
                 .orElseThrow(() -> new IllegalArgumentException("해당 레시피가 존재하지 않습니다. id=" + recipeId));
 
 //        Integer likeCount = likesService.getLikeCount(LikeTargetType.RECIPE, recipeId);
