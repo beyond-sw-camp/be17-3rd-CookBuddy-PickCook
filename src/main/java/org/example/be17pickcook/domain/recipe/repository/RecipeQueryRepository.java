@@ -1,6 +1,7 @@
 package org.example.be17pickcook.domain.recipe.repository;
 
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -83,6 +84,79 @@ public class RecipeQueryRepository {
                 .fetch();
 
         // 전체 건수 조회
+        Long total = queryFactory
+                .select(recipe.count())
+                .from(recipe)
+                .where(builder)
+                .fetchOne();
+
+        Pageable pageable = PageRequest.of(page, size);
+        return new PageImpl<>(content, pageable, total != null ? total : 0);
+    }
+
+    // 📍 위치: RecipeQueryRepository.java에 새 메서드 추가 (기존 getRecipesFiltered 메서드 아래)
+
+    public Page<RecipeDto.RecipeListResponseDto> getRecipesWithFilter(
+            int page, int size, String sortType, String difficulty,
+            String category, String cookingMethod, Integer userIdx) {
+
+        QRecipe recipe = QRecipe.recipe;
+        QLike likes = QLike.like;
+        QScrap scraps = QScrap.scrap;
+
+        // 1. 동적 필터 조건 구성
+        BooleanBuilder builder = new BooleanBuilder();
+
+        // 난이도 필터
+        if (difficulty != null && !difficulty.isBlank()) {
+            builder.and(recipe.difficulty_level.eq(difficulty));
+        }
+
+        // 카테고리 필터
+        if (category != null && !category.isBlank()) {
+            builder.and(recipe.category.eq(category));
+        }
+
+        // 조리방법 필터
+        if (cookingMethod != null && !cookingMethod.isBlank()) {
+            builder.and(recipe.cooking_method.eq(cookingMethod));
+        }
+
+        // 2. 정렬 조건 설정
+        OrderSpecifier<?> orderSpecifier = switch (sortType) {
+            case "oldest" -> recipe.createdAt.asc();
+            case "likes" -> recipe.likeCount.desc();
+            case "scraps" -> recipe.scrapCount.desc();
+            default -> recipe.createdAt.desc(); // latest
+        };
+
+        // 3. 데이터 조회
+        List<RecipeDto.RecipeListResponseDto> content = queryFactory
+                .select(Projections.constructor(
+                        RecipeDto.RecipeListResponseDto.class,
+                        recipe.idx,
+                        recipe.title,
+                        recipe.cooking_method,
+                        recipe.category,
+                        recipe.time_taken,
+                        recipe.difficulty_level,
+                        recipe.serving_size,
+                        recipe.hashtags,
+                        recipe.image_large_url,
+                        recipe.likeCount,
+                        recipe.scrapCount,
+                        recipe.description,
+                        Expressions.constant(false), // likedByUser
+                        Expressions.constant(false)  // scrappedByUser
+                ))
+                .from(recipe)
+                .where(builder)
+                .orderBy(orderSpecifier)
+                .offset((long) page * size)
+                .limit(size)
+                .fetch();
+
+        // 4. 전체 건수 조회
         Long total = queryFactory
                 .select(recipe.count())
                 .from(recipe)

@@ -7,15 +7,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.example.be17pickcook.common.BaseResponse;
 import org.example.be17pickcook.common.PageResponse;
-import org.example.be17pickcook.domain.community.model.PostDto;
 import org.example.be17pickcook.domain.recipe.model.RecipeListResponseDto;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.domain.recipe.model.RecipeDto;
 import org.example.be17pickcook.domain.recipe.service.RecipeService;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -29,7 +25,7 @@ import java.util.List;
 /**
  * 레시피 관리 컨트롤러
  * - 레시피 CRUD API
- * - 레시피 목록 조회 (페이징, 정렬)
+ * - 레시피 목록 조회 (페이징, 정렬, 필터링)
  * - 레시피 추천 기능
  * - 이미지 첨부 지원
  */
@@ -38,10 +34,6 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/api/recipe")
 public class RecipeController {
-
-    // =================================================================
-    // 의존성 주입
-    // =================================================================
 
     private final RecipeService recipeService;
 
@@ -79,11 +71,14 @@ public class RecipeController {
     // =================================================================
 
     @Operation(
-            summary = "레시피 목록 조회 (페이징)",
+            summary = "레시피 목록 조회 (페이징 + 필터링)",
             description = "등록된 레시피 목록을 페이지 단위로 조회합니다. " +
                     "page: 0부터 시작하는 페이지 번호, " +
                     "size: 페이지당 레코드 수, " +
-                    "sortType: 정렬 방식 (latest: 최신순, oldest: 오래된순, likes: 좋아요순, scraps: 스크랩순)",
+                    "sortType: 정렬 방식 (latest: 최신순, oldest: 오래된순, likes: 좋아요순, scraps: 스크랩순), " +
+                    "difficulty: 난이도 필터 (쉬움, 보통, 어려움), " +
+                    "category: 카테고리 필터 (반찬, 국&찌개, 일품, 밥, 후식, 기타), " +
+                    "cookingMethod: 조리방법 필터 (끓이기, 굽기, 볶기, 찌기, 튀기기, 기타)",
             responses = {
                     @ApiResponse(responseCode = "200", description = "조회 성공"),
                     @ApiResponse(responseCode = "400", description = "잘못된 파라미터")
@@ -97,7 +92,7 @@ public class RecipeController {
             @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "페이지당 레시피 수", example = "10")
             @RequestParam(defaultValue = "10") int size,
-            @Parameter(description = "정렬 방식 (latest, oldest)", example = "latest")
+            @Parameter(description = "정렬 방식 (latest, oldest, likes, scraps)", example = "latest")
             @RequestParam(defaultValue = "latest") String sortType,
             @Parameter(description = "난이도 필터 (쉬움, 보통, 어려움)")
             @RequestParam(required = false) String difficulty,
@@ -105,28 +100,11 @@ public class RecipeController {
             @RequestParam(required = false) String category,
             @Parameter(description = "조리방법 필터 (끓이기, 굽기, 볶기, 찌기, 튀기기, 기타)")
             @RequestParam(required = false) String cookingMethod) {
-            @Parameter(description = "정렬 방식 (latest, oldest, likes, scraps)", example = "latest")
-            @RequestParam(defaultValue = "latest") String sortType) {
-
 
         Integer userIdx = (authUser != null) ? authUser.getIdx() : null;
 
-        Sort sort = switch (sortType) {
-            case "oldest" -> Sort.by(Sort.Direction.ASC, "createdAt");
-            case "likes" -> Sort.by(Sort.Direction.DESC, "likeCount");
-            case "scraps" -> Sort.by(Sort.Direction.DESC, "scrapCount");
-
-            default -> Sort.by(Sort.Direction.DESC, "createdAt"); // latest
-        };
-
-        Pageable pageable = PageRequest.of(page, size, sort);
-
-
-        // 필터링된 레시피 목록 조회
-        return BaseResponse.success(
-                recipeService.getFilteredRecipeList(userIdx, pageable, difficulty, category, cookingMethod)
-        );
-
+        return BaseResponse.success(recipeService.getRecipeListWithFilter(
+                userIdx, page, size, sortType, difficulty, category, cookingMethod));
     }
 
     @Operation(
@@ -172,8 +150,6 @@ public class RecipeController {
 
         return BaseResponse.success(recipeService.getRecommendations(authUser.getIdx(), page, size));
     }
-
-
 
     @Operation(
             summary = "레시피 검색 (페이징 + 정렬 + 검색)",
