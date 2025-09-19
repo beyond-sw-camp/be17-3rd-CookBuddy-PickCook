@@ -187,8 +187,9 @@ public class RecipeDto {
 
     @Getter
     @Builder
-    @Schema(description = "레시피 목록 조회 응답 DTO")
+    @Schema(description = "레시피 목록 응답 DTO")
     public static class RecipeListResponseDto {
+
         @Schema(description = "레시피 ID", example = "1")
         private Long idx;
         @Schema(description = "레시피 제목", example = "김치찌개")
@@ -218,9 +219,11 @@ public class RecipeDto {
         @Schema(description = "로그인 사용자가 스크랩을 눌렀는지 여부", example = "true")
         private Boolean scrappedByUser;
 
-        public RecipeListResponseDto(Long idx, String title, String cooking_method, String category,
-                                     String time_taken, String difficulty_level, String serving_size,
-                                     String hashtags, String image_large_url, Long likeCount, Long scrapCount, String description,
+        // 📝 QueryDSL Projections.constructor를 위한 생성자 (유일한 생성자)
+        public RecipeListResponseDto(Long idx, String title, String cooking_method,
+                                     String category, String time_taken, String difficulty_level,
+                                     String serving_size, String hashtags, String image_large_url,
+                                     Long likeCount, Long scrapCount, String description,
                                      Boolean likedByUser, Boolean scrappedByUser) {
             this.idx = idx;
             this.title = title;
@@ -242,7 +245,6 @@ public class RecipeDto {
             this.likedByUser = likedByUser;
         }
 
-        // 스크랩 관련 값 세팅 메서드
         public void setScrapInfo(Boolean scrappedByUser) {
             this.scrappedByUser = scrappedByUser;
         }
