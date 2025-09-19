@@ -186,7 +186,6 @@ public class RecipeDto {
     }
 
     @Getter
-    @Builder
     @Schema(description = "레시피 목록 응답 DTO")
     public static class RecipeListResponseDto {
 
