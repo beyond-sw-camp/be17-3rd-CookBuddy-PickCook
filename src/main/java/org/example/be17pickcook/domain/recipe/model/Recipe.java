@@ -52,6 +52,9 @@ public class Recipe extends BaseEntity implements LikeCountable, ScrapCountable 
     @OneToOne(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
     private RecipeNutrition nutrition;
 
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<RecipeComment> comments = new ArrayList<>();
+
 
 
 

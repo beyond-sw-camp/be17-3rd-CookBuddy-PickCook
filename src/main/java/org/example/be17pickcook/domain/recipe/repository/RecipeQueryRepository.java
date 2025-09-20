@@ -35,7 +35,7 @@ public class RecipeQueryRepository {
     }
 
     public Page<RecipeDto.RecipeListResponseDto> getRecipesFiltered(
-            String keyword, int page, int size, String dir, Integer userIdx) {
+            Integer userIdx, String keyword, int page, int size, String sortType, String difficulty, String category, String cookingMethod ) {
 
         QRecipe recipe = QRecipe.recipe;
         QLike likes = QLike.like;
@@ -47,6 +47,29 @@ public class RecipeQueryRepository {
             builder.and(recipe.title.containsIgnoreCase(keyword)
                     .or(recipe.description.containsIgnoreCase(keyword)));
         }
+
+        // 난이도 필터
+        if (difficulty != null && !difficulty.isBlank()) {
+            builder.and(recipe.difficulty_level.eq(difficulty));
+        }
+
+        // 카테고리 필터
+        if (category != null && !category.isBlank()) {
+            builder.and(recipe.category.eq(category));
+        }
+
+        // 조리방법 필터
+        if (cookingMethod != null && !cookingMethod.isBlank()) {
+            builder.and(recipe.cooking_method.eq(cookingMethod));
+        }
+
+        // 정렬 조건
+        OrderSpecifier<?> orderSpecifier = switch (sortType) {
+            case "oldest" -> recipe.createdAt.asc();
+            case "likes" -> recipe.likeCount.desc();
+            case "scraps" -> recipe.scrapCount.desc();
+            default -> recipe.createdAt.desc();
+        };
 
         // 데이터 조회
         List<RecipeDto.RecipeListResponseDto> content = queryFactory
@@ -78,8 +101,8 @@ public class RecipeQueryRepository {
                             .and(scraps.user.idx.eq(userIdx)))
                 .where(builder)
                 .groupBy(recipe.idx)
-                .orderBy("DESC".equalsIgnoreCase(dir) ? recipe.createdAt.desc() : recipe.createdAt.asc())
-                .offset(page * size)
+                .orderBy(orderSpecifier)
+                .offset((long) page * size)
                 .limit(size)
                 .fetch();
 

@@ -239,45 +239,11 @@ public class RecipeService {
 
 
 
-    // 필터링된 레시피 목록 조회 (새로 추가)
-    public PageResponse<RecipeDto.RecipeListResponseDto> getRecipeListWithFilter(
-            Integer userIdx, int page, int size, String sortType,
+    // 레시피 목록 조회 (필터링 + 검색)
+    public Page<RecipeDto.RecipeListResponseDto> getRecipeListWithFilter(
+            Integer userIdx, String keyword, int page, int size, String sortType,
             String difficulty, String category, String cookingMethod) {
 
-        // 1. RecipeQueryRepository를 통해 필터링된 레시피 조회
-        Page<RecipeDto.RecipeListResponseDto> recipePage = recipeQueryRepository.getRecipesWithFilter(
-                page, size, sortType, difficulty, category, cookingMethod, userIdx);
-
-        // 2. recipeIds 추출 (좋아요/스크랩 정보 조회용)
-        List<Long> recipeIds = recipePage.getContent().stream()
-                .map(RecipeDto.RecipeListResponseDto::getIdx)
-                .toList();
-
-        if (recipeIds.isEmpty()) {
-            return PageResponse.from(recipePage);
-        }
-
-        // 3. 로그인 사용자 기준 좋아요 여부 조회
-        Set<Long> likedByUser = (userIdx == null) ? Collections.emptySet() :
-                new HashSet<>(likesRepository.findLikedRecipeIdsByUser(
-                        LikeTargetType.RECIPE, userIdx, recipeIds));
-
-        // 4. 로그인 사용자 기준 스크랩 여부 조회
-        Set<Long> scrappedByUser = (userIdx == null) ? Collections.emptySet() :
-                new HashSet<>(scrapRepository.findScrappedRecipeIdsByUser(
-                        ScrapTargetType.RECIPE, userIdx, recipeIds));
-
-        // 5. 좋아요/스크랩 정보를 DTO에 설정
-        recipePage.getContent().forEach(dto -> {
-            dto.setLikedByUser(likedByUser.contains(dto.getIdx()));
-            dto.setScrapInfo(scrappedByUser.contains(dto.getIdx()));
-        });
-
-        return PageResponse.from(recipePage);
-    }
-
-    // 레시피 검색
-    public Page<RecipeDto.RecipeListResponseDto> getRecipeKeyword(String keyword, int page, int size, String dir, Integer userIdx) {
-        return recipeQueryRepository.getRecipesFiltered(keyword, page, size, dir, userIdx);
+        return recipeQueryRepository.getRecipesFiltered(userIdx, keyword, page, size, sortType, difficulty, category, cookingMethod);
     }
 }
