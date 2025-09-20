@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.be17pickcook.domain.community.repository.CommentRepository;
 import org.example.be17pickcook.domain.community.repository.PostRepository;
 import org.example.be17pickcook.domain.likes.model.LikeCountable;
+import org.example.be17pickcook.domain.recipe.repository.RecipeCommentRepository;
 import org.example.be17pickcook.domain.recipe.repository.RecipeRepository;
 import org.example.be17pickcook.domain.user.model.User;
 import org.example.be17pickcook.domain.user.model.UserDto;
@@ -22,6 +23,7 @@ public class LikeService {
     private final RecipeRepository recipeRepository;
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
+    private final RecipeCommentRepository recipeCommentRepository;
 
     private LikeCountable getTargetEntity(LikeTargetType targetType, Long targetId) {
         return switch (targetType) {
@@ -30,6 +32,8 @@ public class LikeService {
             case POST -> postRepository.findById(targetId)
                     .orElseThrow(() -> new IllegalArgumentException("커뮤니티 글이 없습니다."));
             case COMMENT -> commentRepository.findById(targetId)
+                    .orElseThrow(() -> new IllegalArgumentException("댓글이 없습니다."));
+            case RECIPE_COMMENT -> recipeCommentRepository.findById(targetId)
                     .orElseThrow(() -> new IllegalArgumentException("댓글이 없습니다."));
         };
     }

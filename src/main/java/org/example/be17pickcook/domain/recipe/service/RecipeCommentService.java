@@ -2,6 +2,9 @@ package org.example.be17pickcook.domain.recipe.service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.be17pickcook.common.service.S3UploadService;
+import org.example.be17pickcook.domain.likes.model.LikeTargetType;
+import org.example.be17pickcook.domain.likes.repository.LikeRepository;
+import org.example.be17pickcook.domain.likes.service.LikeService;
 import org.example.be17pickcook.domain.recipe.model.Recipe;
 import org.example.be17pickcook.domain.recipe.model.RecipeComment;
 import org.example.be17pickcook.domain.recipe.model.RecipeCommentDto;
@@ -25,10 +28,12 @@ public class RecipeCommentService {
     private final RecipeCommentRepository commentRepository;
     private final RecipeRepository recipeRepository;
     private final UserRepository userRepository;
-    private final S3UploadService s3UploadService;
+    private final LikeService likeService;
 
     @Transactional
-    public RecipeCommentDto.Response addComment(RecipeCommentDto.Request request, MultipartFile image, int userId) throws SQLException, IOException {
+    public void addComment(RecipeCommentDto.Request request, int userId)
+            throws SQLException, IOException {
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -41,21 +46,47 @@ public class RecipeCommentService {
                     .orElseThrow(() -> new RuntimeException("Parent comment not found"));
         }
 
+        // 댓글 엔티티 생성
         RecipeComment comment = request.toEntity(user, recipe, parentComment);
-        if (image != null && !image.isEmpty()){
-            String imageUrl = s3UploadService.upload(image);
-            comment.setImage(RecipeCommentImage.builder().recipeComment(comment).imageUrl(imageUrl).build());
-        }
-        RecipeComment savedComment = commentRepository.save(comment);
 
-        return RecipeCommentDto.Response.fromEntity(savedComment);
+        // 이미지 URL이 있으면 연결
+        if (request.getImageUrl() != null && !request.getImageUrl().isBlank()) {
+            RecipeCommentImage image = RecipeCommentImage.builder()
+                    .imageUrl(request.getImageUrl())
+                    .build();
+            comment.setImage(image);
+        }
+
+        commentRepository.save(comment);
     }
 
     @Transactional(readOnly = true)
-    public List<RecipeCommentDto.Response> getComments(Long recipeId) {
+    public List<RecipeCommentDto.Response> getComments(Long recipeId, Integer userIdx) {
         List<RecipeComment> comments = commentRepository.findByRecipeIdxAndParentCommentIsNullOrderByCreatedAtAsc(recipeId);
+
         return comments.stream()
-                .map(RecipeCommentDto.Response::fromEntity)
+                .map(comment -> mapCommentWithLike(comment, userIdx))
                 .collect(Collectors.toList());
+    }
+
+    private RecipeCommentDto.Response mapCommentWithLike(RecipeComment comment, Integer userIdx) {
+        RecipeCommentDto.Response dto = RecipeCommentDto.Response.fromEntity(comment);
+
+        // 최상위 댓글 hasLiked 세팅
+        dto.setHasLiked(likeService.hasUserLiked(userIdx, LikeTargetType.RECIPE_COMMENT, comment.getId()));
+
+        // 자식 댓글도 재귀적으로 hasLiked 세팅
+        if (dto.getChildren() != null) {
+            dto.getChildren().forEach(childDto -> setChildHasLiked(childDto, userIdx));
+        }
+
+        return dto;
+    }
+
+    private void setChildHasLiked(RecipeCommentDto.Response dto, Integer userIdx) {
+        dto.setHasLiked(likeService.hasUserLiked(userIdx, LikeTargetType.RECIPE_COMMENT, dto.getId()));
+        if (dto.getChildren() != null) {
+            dto.getChildren().forEach(child -> setChildHasLiked(child, userIdx));
+        }
     }
 }

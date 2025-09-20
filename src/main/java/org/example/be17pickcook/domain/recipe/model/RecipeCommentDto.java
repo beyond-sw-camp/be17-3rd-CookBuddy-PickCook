@@ -29,6 +29,9 @@ public class RecipeCommentDto {
         @Schema(description = "부모 댓글 ID (대댓글인 경우)", example = "3")
         private Long parentCommentId; // 대댓글이면 부모 comment ID
 
+        @Schema(description = "첨부 이미지 URL", example = "https://s3.amazonaws.com/bucket/key.png")
+        private String imageUrl;
+
         public RecipeComment toEntity(User user, Recipe recipe, RecipeComment parentComment) {
             return RecipeComment.builder()
                     .content(content)
@@ -74,6 +77,12 @@ public class RecipeCommentDto {
         @Schema(description = "대댓글 목록")
         private List<Response> children;
 
+        @Schema(description = "좋아요 수", example = "3")
+        private Long likeCount;
+
+        @Schema(description = "사용자가 좋아요를 눌렀는지 여부")
+        private boolean hasLiked;
+
         public static Response fromEntity(RecipeComment comment) {
             return Response.builder()
                     .id(comment.getId())
@@ -89,7 +98,12 @@ public class RecipeCommentDto {
                                     .map(Response::fromEntity)
                                     .collect(Collectors.toList())
                             : new ArrayList<>())
-                    .build();
+                    .likeCount(comment.getLikeCount())
+                    .build(); // hasLiked는 서비스에서 따로 set
+        }
+
+        public void setHasLiked(boolean hasLiked) {
+            this.hasLiked = hasLiked;
         }
     }
 }

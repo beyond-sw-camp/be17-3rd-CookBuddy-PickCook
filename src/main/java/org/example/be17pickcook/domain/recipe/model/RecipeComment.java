@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.example.be17pickcook.common.BaseEntity;
+import org.example.be17pickcook.domain.likes.model.LikeCountable;
 import org.example.be17pickcook.domain.user.model.User;
 
 import java.util.ArrayList;
@@ -17,7 +18,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "recipe_comments")
-public class RecipeComment extends BaseEntity {
+public class RecipeComment extends BaseEntity implements LikeCountable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "recipe_comment_id")
@@ -25,6 +26,9 @@ public class RecipeComment extends BaseEntity {
 
     @Column(nullable = false, length = 1000)
     private String content;
+
+    @Column(nullable = false)
+    private Long likeCount = 0L;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "recipe_id")
@@ -51,5 +55,20 @@ public class RecipeComment extends BaseEntity {
     public void setImage(RecipeCommentImage image) {
         this.image = image;
         image.setRecipeComment(this);
+    }
+
+    @Override
+    public Long getIdxLike() { return this.id; }
+    @Override
+    public Long getLikeCount() { return this.likeCount; }
+    @Override
+    public void increaseLike() {
+        if (this.likeCount == null) this.likeCount = 0L;
+        this.likeCount++;
+    }
+    @Override
+    public void decreaseLike() {
+        if (this.likeCount == null) this.likeCount = 0L;
+        if (this.likeCount > 0) this.likeCount--;
     }
 }

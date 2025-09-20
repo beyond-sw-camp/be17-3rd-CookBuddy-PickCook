@@ -33,7 +33,7 @@ public class RecipeCommentController {
     // 의존성 주입
     // =================================================================
 
-    private final RecipeCommentService commentService;
+    private final RecipeCommentService recipeCommentService;
 
     // =================================================================
     // 레시피 댓글 관련 API
@@ -50,16 +50,14 @@ public class RecipeCommentController {
             }
     )
     @PostMapping
-    public BaseResponse<RecipeCommentDto.Response> addComment(
+    public BaseResponse addComment(
             @Parameter(description = "댓글 작성 정보", required = true)
-            @RequestPart("data") RecipeCommentDto.Request request,
-            @Parameter(description = "첨부할 이미지 파일 (선택사항)")
-            @RequestPart(value = "image", required = false) MultipartFile image,
+            @RequestBody RecipeCommentDto.Request request,
             @Parameter(description = "인증된 사용자 정보", hidden = true)
             @AuthenticationPrincipal UserDto.AuthUser authUser) throws SQLException, IOException {
 
-        request.setRecipeId(request.getRecipeId());
-        return BaseResponse.success(commentService.addComment(request, image, authUser.getIdx()));
+        recipeCommentService.addComment(request, authUser.getIdx());
+        return BaseResponse.success("댓글 등록 성공");
     }
 
     @Operation(
@@ -72,9 +70,11 @@ public class RecipeCommentController {
     )
     @GetMapping
     public BaseResponse<List<RecipeCommentDto.Response>> getComments(
+            @Parameter(description = "인증된 사용자 정보", hidden = true)
+            @AuthenticationPrincipal UserDto.AuthUser authUser,
             @Parameter(description = "댓글을 조회할 레시피 ID", required = true, example = "1")
             @RequestParam Long recipeId) {
 
-        return BaseResponse.success(commentService.getComments(recipeId));
+        return BaseResponse.success(recipeCommentService.getComments(recipeId, authUser.getIdx()));
     }
 }
