@@ -4,13 +4,15 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.be17pickcook.common.PageResponse;
 import org.example.be17pickcook.common.service.S3UploadService;
+import org.example.be17pickcook.domain.community.model.Post;
+import org.example.be17pickcook.domain.community.model.PostDto;
 import org.example.be17pickcook.domain.likes.model.LikeTargetType;
 import org.example.be17pickcook.domain.likes.repository.LikeRepository;
 import org.example.be17pickcook.domain.likes.service.LikeService;
 import org.example.be17pickcook.domain.recipe.model.*;
+import org.example.be17pickcook.domain.recipe.repository.RecipeCommentRepository;
 import org.example.be17pickcook.domain.recipe.repository.RecipeIngredientRepository;
 import org.example.be17pickcook.domain.recipe.repository.RecipeQueryRepository;
-import org.example.be17pickcook.domain.refrigerator.model.RefrigeratorItem;
 import org.example.be17pickcook.domain.refrigerator.repository.RefrigeratorItemRepository;
 import org.example.be17pickcook.domain.scrap.model.ScrapTargetType;
 import org.example.be17pickcook.domain.scrap.repository.ScrapRepository;
@@ -18,9 +20,9 @@ import org.example.be17pickcook.domain.scrap.service.ScrapService;
 import org.example.be17pickcook.domain.user.model.User;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.domain.recipe.repository.RecipeRepository;
-import org.example.be17pickcook.domain.user.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -43,6 +45,7 @@ public class RecipeService {
     private final LikeRepository likesRepository;
     private final ScrapRepository scrapRepository;
     private final RecipeQueryRepository recipeQueryRepository;
+    private final RecipeCommentRepository recipeCommentRepository;
 
 
     // 레시피 등록
@@ -211,7 +214,7 @@ public class RecipeService {
                 .toList();
 
         if (recommendedRecipeIds.isEmpty()) {
-            return new PageResponse<>(Collections.emptyList(), page, size, 0, 0);
+            return new PageResponse<>(Collections.emptyList(), page, size, 0, 0, null);
         }
 
         // 5. DTO 조회
@@ -234,7 +237,7 @@ public class RecipeService {
         int totalElements = scoredRecipes.size();
         int totalPages = (int) Math.ceil((double) totalElements / size);
 
-        return new PageResponse<>(pageContent, page, size, totalElements, totalPages);
+        return new PageResponse<>(pageContent, page, size, totalElements, totalPages, null);
     }
 
 
@@ -246,4 +249,150 @@ public class RecipeService {
 
         return recipeQueryRepository.getRecipesFiltered(userIdx, keyword, page, size, sortType, difficulty, category, cookingMethod);
     }
+
+
+    // 마이페이지에서 쓸 레시피 목록 조회
+    public PageResponse<RecipeListResponseDto> getRecipeForMypage(Integer userIdx, Pageable pageable, String filterType) {
+        Page<RecipeListResponseDto> recipePage;
+
+        switch (filterType) {
+            case "liked":
+                recipePage = recipeRepository.findLikedRecipesByUser(userIdx, pageable);
+                break;
+            case "scrapped":
+                recipePage = recipeRepository.findScrappedRecipesByUser(userIdx, pageable);
+                break;
+            case "replied":
+                recipePage = recipeRepository.findRepliedRecipesByUser(userIdx, pageable);
+                break;
+            default:
+                recipePage = recipeRepository.findAllByAuthorId(userIdx, pageable);
+                break;
+        }
+
+        List<Long> recipeIds = recipePage.stream()
+                .map(RecipeListResponseDto::getIdx)
+                .toList();
+
+        // ✅ 댓글 수 조회
+        Map<Long, Long> commentCountMap = new HashMap<>();
+        if (!recipeIds.isEmpty()) {
+            recipeCommentRepository.countCommentsByRecipeIds(recipeIds)
+                    .forEach(obj -> commentCountMap.put((Long) obj[0], (Long) obj[1]));
+        }
+
+        // ✅ 좋아요/스크랩 여부 조회
+        Set<Long> likedByUser = (userIdx == null || recipeIds.isEmpty()) ? Collections.emptySet() :
+                new HashSet<>(likesRepository.findLikedRecipeIdsByUser(LikeTargetType.RECIPE, userIdx, recipeIds));
+
+        Set<Long> scrappedByUser = (userIdx == null || recipeIds.isEmpty()) ? Collections.emptySet() :
+                new HashSet<>(scrapRepository.findScrappedRecipeIdsByUser(ScrapTargetType.RECIPE, userIdx, recipeIds));
+
+        // ✅ DTO에 값 세팅
+        recipePage.forEach(dto -> {
+            dto.setLikedByUser(likedByUser.contains(dto.getIdx()));
+            dto.setScrapInfo(scrappedByUser.contains(dto.getIdx()));
+            dto.setCommentCount(commentCountMap.getOrDefault(dto.getIdx(), 0L));
+        });
+
+        return PageResponse.from(recipePage);
+    }
+
+    // 레시피 수정
+    @Transactional
+    public void updateRecipe(Long recipeId, RecipeDto.RecipeRequestDto recipeDto,
+                             List<MultipartFile> files, UserDto.AuthUser authUser) throws IOException, SQLException {
+
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new IllegalArgumentException("레시피가 존재하지 않습니다."));
+
+        if (!recipe.getUser().getIdx().equals(authUser.getIdx())) {
+            throw new AccessDeniedException("본인 레시피만 수정 가능합니다.");
+        }
+
+        // 기존 이미지 삭제
+        if (files != null && !files.isEmpty()) {
+            if (files.size() > 0 && recipe.getImage_small_url() != null) {
+                s3UploadService.deleteByUrl(recipe.getImage_small_url());
+            }
+            if (files.size() > 1 && recipe.getImage_large_url() != null) {
+                s3UploadService.deleteByUrl(recipe.getImage_large_url());
+            }
+        }
+
+        // 새 이미지 업로드
+        if (files != null) {
+            if (files.size() > 0 && !files.get(0).isEmpty()) {
+                recipe.setImage_small_url(s3UploadService.upload(files.get(0)));
+            }
+            if (files.size() > 1 && !files.get(1).isEmpty()) {
+                recipe.setImage_large_url(s3UploadService.upload(files.get(1)));
+            }
+        }
+
+        // 기본 필드 업데이트
+        recipe.setTitle(recipeDto.getTitle());
+        recipe.setDescription(recipeDto.getDescription());
+        recipe.setCooking_method(recipeDto.getCooking_method());
+        recipe.setCategory(recipeDto.getCategory());
+        recipe.setTime_taken(recipeDto.getTime_taken());
+        recipe.setDifficulty_level(recipeDto.getDifficulty_level());
+        recipe.setServing_size(recipeDto.getServing_size());
+        recipe.setHashtags(recipeDto.getHashtags());
+        recipe.setTip(recipeDto.getTip());
+
+        // Steps, Ingredients 교체
+        recipe.clearSteps();       // 기존 Steps 삭제
+        recipe.clearIngredients(); // 기존 재료 삭제
+
+        if (recipeDto.getSteps() != null) {
+            for (int i = 0; i < recipeDto.getSteps().size(); i++) {
+                RecipeDto.RecipeStepDto stepDto = recipeDto.getSteps().get(i);
+                String stepImageUrl = (files != null && files.size() > i + 2 && !files.get(i + 2).isEmpty())
+                        ? s3UploadService.upload(files.get(i + 2)) : null;
+                RecipeStep step = stepDto.toEntity(recipe, i + 1);
+                step.setImage_url(stepImageUrl);
+                recipe.addSteps(step);
+            }
+        }
+
+        if (recipeDto.getIngredients() != null) {
+            for (RecipeDto.RecipeIngredientDto ingDto : recipeDto.getIngredients()) {
+                RecipeIngredient ing = ingDto.toEntity(recipe);
+                recipe.addIngredient(ing);
+            }
+        }
+
+        recipeRepository.save(recipe);
+    }
+
+
+
+
+    @Transactional
+    public void deleteRecipe(Long recipeId, UserDto.AuthUser authUser) {
+        Recipe recipe = recipeRepository.findByIdxAndUserIdx(recipeId, authUser.getIdx())
+                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+
+        // 레시피 대표 이미지 삭제
+        if (recipe.getImage_small_url() != null) {
+            s3UploadService.deleteByUrl(recipe.getImage_small_url());
+        }
+        if (recipe.getImage_large_url() != null) {
+            s3UploadService.deleteByUrl(recipe.getImage_large_url());
+        }
+
+        // Steps 이미지 삭제
+        if (recipe.getSteps() != null) {
+            recipe.getSteps().forEach(step -> {
+                if (step.getImage_url() != null) {
+                    s3UploadService.deleteByUrl(step.getImage_url());
+                }
+            });
+        }
+
+        // 레시피 삭제
+        recipeRepository.delete(recipe);
+    }
+
 }

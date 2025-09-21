@@ -22,10 +22,7 @@ import org.example.be17pickcook.domain.review.repository.ReviewRepository;
 import org.example.be17pickcook.domain.user.model.User;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -231,7 +228,7 @@ public class OrderService {
             default: start = now.minusMonths(3);
         }
 
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         List<OrderStatus> statuses = List.of(OrderStatus.PAID, OrderStatus.REFUNDED);
 
         Page<Orders> ordersPage = orderRepository.findAllWithItemsByCreatedAtBetweenAndStatuses(
@@ -249,7 +246,7 @@ public class OrderService {
 
         Page<OrderDto.OrderInfoListDto> dtoPage = new PageImpl<>(pageList, pageable, ordersPage.getTotalElements());
 
-        return PageResponse.from(dtoPage);
+        return PageResponse.from(dtoPage, ordersPage.hasNext());
     }
 
 

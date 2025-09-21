@@ -1,10 +1,7 @@
 package org.example.be17pickcook.domain.recipe.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Getter
 @Builder
@@ -15,8 +12,11 @@ public class RecipeIngredient {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer idx;
+    @Setter
     private String ingredient_name;
+    @Setter
     private String quantity;
+    @Setter
     private Boolean isMainIngredient;
 
 

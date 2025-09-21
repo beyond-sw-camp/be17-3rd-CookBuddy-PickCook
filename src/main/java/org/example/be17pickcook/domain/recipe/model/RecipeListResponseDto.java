@@ -5,13 +5,16 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.time.LocalDateTime;
+
 @Getter
-@Builder
 public class RecipeListResponseDto {
     @Schema(description = "레시피 ID", example = "1")
     private Long idx;
     @Schema(description = "레시피 제목", example = "김치찌개")
     private String title;
+    @Schema(description = "레시피 설명", example = "맛있는 김치찌개")
+    private String description;
     @Schema(description = "조리 방법", example = "끓이기")
     private String cooking_method;
     @Schema(description = "레시피 카테고리", example = "한식")
@@ -34,13 +37,20 @@ public class RecipeListResponseDto {
     private Boolean likedByUser;
     @Schema(description = "로그인 사용자가 스크랩을 눌렀는지 여부", example = "true")
     private Boolean scrappedByUser;
+    @Schema(description = "레시피 게시물에 달린 댓글 수", example = "34")
+    private Long commentCount;
+    @Schema(description = "레시피 업데이트일", example = "2025.08.15")
+    private LocalDateTime updatedAt;
 
-    public RecipeListResponseDto(Long idx, String title, String cooking_method, String category,
+
+    @Builder
+    public RecipeListResponseDto(Long idx, String title, String description, String cooking_method, String category,
                                  String time_taken, String difficulty_level, String serving_size,
                                  String hashtags, String image_large_url, Long likeCount, Long scrapCount,
-                                 Boolean likedByUser, Boolean scrappedByUser) {
+                                 Long commentCount, Boolean likedByUser, Boolean scrappedByUser, LocalDateTime updatedAt) {
         this.idx = idx;
         this.title = title;
+        this.description = description;
         this.cooking_method = cooking_method;
         this.category = category;
         this.time_taken = time_taken;
@@ -50,8 +60,31 @@ public class RecipeListResponseDto {
         this.image_large_url = image_large_url;
         this.likeCount = likeCount;
         this.scrapCount = scrapCount;
+        this.commentCount = commentCount;
         this.likedByUser = likedByUser;
         this.scrappedByUser = scrappedByUser;
+        this.updatedAt = updatedAt;
+    }
+
+
+    public RecipeListResponseDto(Long idx, String title, String description, String cooking_method, String category,
+                                 String time_taken, String difficulty_level, String serving_size,
+                                 String hashtags, String image_large_url, Long likeCount, Long scrapCount,
+                                 Long commentCount, LocalDateTime updatedAt) {
+        this.idx = idx;
+        this.title = title;
+        this.description = description;
+        this.cooking_method = cooking_method;
+        this.category = category;
+        this.time_taken = time_taken;
+        this.difficulty_level = difficulty_level;
+        this.serving_size = serving_size;
+        this.hashtags = hashtags;
+        this.image_large_url = image_large_url;
+        this.likeCount = likeCount;
+        this.scrapCount = scrapCount;
+        this.commentCount = commentCount;
+        this.updatedAt = updatedAt;
     }
 
     // 좋아요 관련 값 세팅 메서드 (반 정규화 전)
@@ -66,5 +99,9 @@ public class RecipeListResponseDto {
     // 스크랩 관련 값 세팅 메서드
     public void setScrapInfo(Boolean scrappedByUser) {
         this.scrappedByUser = scrappedByUser;
+    }
+
+    public void setCommentCount(Long commentCount) {
+        this.commentCount = commentCount;
     }
 }
