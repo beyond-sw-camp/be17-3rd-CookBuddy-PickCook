@@ -1,10 +1,7 @@
 package org.example.be17pickcook.domain.recipe.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.example.be17pickcook.common.BaseEntity;
 import org.example.be17pickcook.domain.likes.model.LikeCountable;
 import org.example.be17pickcook.domain.scrap.model.ScrapCountable;
@@ -22,16 +19,27 @@ public class Recipe extends BaseEntity implements LikeCountable, ScrapCountable 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idx;
+    @Setter
     private String title;
+    @Setter
     private String description;
+    @Setter
     private String cooking_method;
+    @Setter
     private String category;
+    @Setter
     private String time_taken;
+    @Setter
     private String difficulty_level;
+    @Setter
     private String serving_size;
+    @Setter
     private String hashtags;
+    @Setter
     private String image_small_url;
+    @Setter
     private String image_large_url;
+    @Setter
     private String tip;
 
     // 반정규화 적용 (기본값 0 보장)
@@ -77,6 +85,14 @@ public class Recipe extends BaseEntity implements LikeCountable, ScrapCountable 
 
         this.ingredients.add(ingredient);
         ingredient.setRecipe(this);
+    }
+
+    public void clearIngredients() {
+        ingredients.clear(); // 기존 데이터 삭제
+    }
+
+    public void clearSteps() {
+        steps.clear();
     }
 
 

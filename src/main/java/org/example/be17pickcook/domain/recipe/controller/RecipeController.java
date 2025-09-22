@@ -2,16 +2,21 @@ package org.example.be17pickcook.domain.recipe.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.example.be17pickcook.common.BaseResponse;
 import org.example.be17pickcook.common.PageResponse;
+import org.example.be17pickcook.domain.community.model.PostDto;
 import org.example.be17pickcook.domain.recipe.model.RecipeListResponseDto;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.domain.recipe.model.RecipeDto;
 import org.example.be17pickcook.domain.recipe.service.RecipeService;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -152,5 +157,71 @@ public class RecipeController {
             @RequestParam int size) {
 
         return BaseResponse.success(recipeService.getRecommendations(authUser.getIdx(), page, size));
+    }
+
+
+    @Operation(
+            summary = "마이페이지용 레시피 목록 조회",
+            description = "레시피를 다양한 조건(댓글, 좋아요, 스크랩, 작성자)을 기준으로 목록 조회를 합니다."
+    )
+    @GetMapping("/mrlist")
+    public BaseResponse<PageResponse<RecipeListResponseDto>> getRecipeForMypage(
+            @Parameter(description = "인증된 사용자 정보", hidden = true)
+            @AuthenticationPrincipal UserDto.AuthUser authUser,
+            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지당 게시글 수", example = "4")
+            @RequestParam(defaultValue = "4") int size,
+            @Parameter(description = "정렬 타입 (latest: 최신순, oldest: 오래된순, likes: 좋아요순, scraps: 스크랩순)", example = "latest")
+            @RequestParam(defaultValue = "latest") String sortType,
+            @Parameter(description = "필터 타입 (all: 전체글, my: 내가 쓴 글, liked: 내가 좋아요 누른 글, scrapped: 내가 스크랩한 글, replied: 내가 댓글 단 글", example = "all")
+            @RequestParam(defaultValue = "all") String filterType) {
+
+        Integer userIdx = (authUser != null) ? authUser.getIdx() : null;
+
+        Sort sort = switch (sortType) {
+            case "oldest" -> Sort.by(Sort.Direction.ASC, "createdAt");
+            case "likes" -> Sort.by(Sort.Direction.DESC, "likeCount");
+            case "scraps" -> Sort.by(Sort.Direction.DESC, "scrapCount");
+            default -> Sort.by(Sort.Direction.DESC, "createdAt"); // latest
+        };
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+        return BaseResponse.success(recipeService.getRecipeForMypage(userIdx, pageable, filterType));
+    }
+
+
+    // 레시피 수정
+    @Operation(
+            summary = "레시피 수정",
+            description = "기존 레시피를 수정합니다. 작성자 본인만 수정 가능"
+    )
+    @PutMapping("/{recipeId}")
+    public BaseResponse<String> updateRecipe(
+            @PathVariable Long recipeId,
+            @RequestPart("recipe") RecipeDto.RecipeRequestDto recipeDto,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files,
+            @Parameter(description = "인증된 사용자 정보", hidden = true)
+            @AuthenticationPrincipal UserDto.AuthUser authUser) throws SQLException, IOException {
+
+        recipeService.updateRecipe(recipeId, recipeDto, files, authUser);
+        return BaseResponse.success("게시글 수정 성공");
+    }
+
+
+    // 레시피 삭제
+    @Operation(
+            summary = "레시피 삭제",
+            description = "레시피를 삭제합니다. 작성자 본인만 삭제 가능"
+    )
+    @DeleteMapping("/{recipeId}")
+    public BaseResponse<String> deleteRecipe(
+            @PathVariable Long recipeId,
+            @Parameter(description = "인증된 사용자 정보", hidden = true)
+            @AuthenticationPrincipal UserDto.AuthUser authUser) {
+
+        recipeService.deleteRecipe(recipeId, authUser);
+
+        return BaseResponse.success("게시글 삭제 성공");
     }
 }

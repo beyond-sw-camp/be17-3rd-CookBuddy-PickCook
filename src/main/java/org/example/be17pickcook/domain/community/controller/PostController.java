@@ -133,13 +133,6 @@ public class PostController {
     @PutMapping("/{postId}")
     public BaseResponse<String> updatePost(
             @PathVariable Long postId,
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "게시글 수정 DTO",
-                    required = true,
-                    content = @io.swagger.v3.oas.annotations.media.Content(
-                            schema = @Schema(implementation = PostDto.Request.class)
-                    )
-            )
             @RequestBody PostDto.Request postDto,
             @Parameter(description = "인증된 사용자 정보", hidden = true)
             @AuthenticationPrincipal UserDto.AuthUser authUser) {

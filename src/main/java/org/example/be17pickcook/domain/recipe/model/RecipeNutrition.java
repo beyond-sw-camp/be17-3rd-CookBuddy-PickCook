@@ -1,10 +1,7 @@
 package org.example.be17pickcook.domain.recipe.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Getter
 @Builder
@@ -15,10 +12,15 @@ public class RecipeNutrition {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idx;
+    @Setter
     private Integer calories;
+    @Setter
     private Integer carbs;
+    @Setter
     private Integer protein;
+    @Setter
     private Integer fat;
+    @Setter
     private Integer sodium;
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)

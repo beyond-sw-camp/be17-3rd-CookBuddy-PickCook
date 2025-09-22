@@ -1,10 +1,7 @@
 package org.example.be17pickcook.domain.recipe.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Getter
 @Builder
@@ -15,8 +12,11 @@ public class RecipeStep {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idx;
+    @Setter
     private Integer step_order;
+    @Setter
     private String description;
+    @Setter
     private String image_url;
 
     @ManyToOne(fetch = FetchType.LAZY)
