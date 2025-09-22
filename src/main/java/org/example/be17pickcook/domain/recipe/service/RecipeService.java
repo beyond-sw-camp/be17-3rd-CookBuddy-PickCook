@@ -18,8 +18,8 @@ import org.example.be17pickcook.domain.scrap.service.ScrapService;
 import org.example.be17pickcook.domain.user.model.User;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.example.be17pickcook.domain.recipe.repository.RecipeRepository;
-import org.example.be17pickcook.domain.user.repository.UserRepository;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -245,5 +245,11 @@ public class RecipeService {
             String difficulty, String category, String cookingMethod) {
 
         return recipeQueryRepository.getRecipesFiltered(userIdx, keyword, page, size, sortType, difficulty, category, cookingMethod);
+    }
+
+    // 비로그인용 인기 레시피
+    public Page<RecipeListResponseDto> getPopularRecipes(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return recipeRepository.findPopularRecipes(pageable);
     }
 }

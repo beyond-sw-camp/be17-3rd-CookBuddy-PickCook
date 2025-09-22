@@ -100,6 +100,16 @@ public class RecipeController {
         return BaseResponse.success(PageResponse.from(recipes));
     }
 
+    @Operation(summary = "인기 레시피 조회", description = "비로그인 사용자용으로 좋아요 수 기준 인기 레시피를 반환합니다.")
+    @GetMapping("/popular")
+    public BaseResponse<PageResponse<RecipeListResponseDto>> getPopularRecipes(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "6") int size
+    ) {
+        Page<RecipeListResponseDto> recipes = recipeService.getPopularRecipes(page, size);
+        return BaseResponse.success(PageResponse.from(recipes));
+    }
+
     @Operation(
             summary = "특정 레시피 조회",
             description = "레시피 ID를 기반으로 레시피 상세 정보를 조회합니다. " +

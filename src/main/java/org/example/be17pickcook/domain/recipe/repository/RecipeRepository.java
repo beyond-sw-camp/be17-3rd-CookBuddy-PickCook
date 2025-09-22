@@ -49,6 +49,13 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
                                @Param("cookingMethod") String cookingMethod,
                                Pageable pageable);
 
+    @Query("SELECT new org.example.be17pickcook.domain.recipe.model.RecipeListResponseDto(" +
+            "r.idx, r.title, r.cooking_method, r.category, r.time_taken, " +
+            "r.difficulty_level, r.serving_size, r.hashtags, r.image_large_url, " +
+            "r.likeCount, r.scrapCount, false, false) " +
+            "FROM Recipe r " +
+            "ORDER BY r.likeCount DESC")
+    Page<RecipeListResponseDto> findPopularRecipes(Pageable pageable);
 }
 
 
