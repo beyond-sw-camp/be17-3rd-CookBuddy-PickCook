@@ -42,6 +42,7 @@ public class RecipeListResponseDto {
     @Schema(description = "레시피 업데이트일", example = "2025.08.15")
     private LocalDateTime updatedAt;
 
+    public RecipeListResponseDto() {}
 
     @Builder
     public RecipeListResponseDto(Long idx, String title, String description, String cooking_method, String category,
