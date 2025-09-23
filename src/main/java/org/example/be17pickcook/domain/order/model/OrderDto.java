@@ -245,6 +245,9 @@ public class OrderDto {
         @Schema(description = "주문 번호", example = "ORD20250115-12345")
         private String orderNumber;
 
+        @Schema(description = "주문 아이디", example = "UUID")
+        private String paymentId;
+
         @Schema(description = "총 결제 금액", example = "25000")
         private Integer total_price;
 
@@ -263,6 +266,7 @@ public class OrderDto {
         public static OrderDetailDto fromEntity(Orders order, List<OrderInfoDto> orderItems) {
             return OrderDetailDto.builder()
                     .orderNumber(order.getOrderNumber())
+                    .paymentId(order.getPaymentId())
                     .total_price(order.getTotal_price())
                     .approvedAt(order.getApprovedAt())
                     .paymentMethod(order.getPaymentMethod())

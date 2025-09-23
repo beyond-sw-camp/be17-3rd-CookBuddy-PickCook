@@ -1,10 +1,7 @@
 package org.example.be17pickcook.domain.order.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.example.be17pickcook.common.BaseEntity;
 import org.example.be17pickcook.domain.recipe.model.RecipeNutrition;
 import org.example.be17pickcook.domain.review.model.Review;
@@ -27,6 +24,7 @@ public class Orders extends BaseEntity {
     private String paymentId;
     private String orderNumber; // 고객에게 보여줄 주문 아이디
     private Integer total_price;
+    @Setter
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
     private String paymentMethod;
@@ -45,6 +43,9 @@ public class Orders extends BaseEntity {
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Review> reviews = new ArrayList<>();
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Refund> refunds = new ArrayList<>();
 
     public void addItems(OrderItem item) {
         if (this.orderItems == null) this.orderItems = new ArrayList<>();

@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.be17pickcook.common.BaseResponse;
 import org.example.be17pickcook.common.PageResponse;
 import org.example.be17pickcook.domain.order.model.OrderDto;
+import org.example.be17pickcook.domain.order.model.RefundDto;
 import org.example.be17pickcook.domain.order.service.OrderService;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -143,5 +144,19 @@ public class OrderController {
         Integer userIdx = (authUser != null) ? authUser.getIdx() : null;
         OrderDto.OrderInfoDto result = orderService.getOrderInfo(userIdx, productId, orderId);
         return BaseResponse.success(result);
+    }
+
+
+    @Operation(
+            summary = "환불",
+            description = "결제 취소 (전액/부분)"
+    )
+    @PostMapping("/refund")
+    public BaseResponse cancelPayment(
+            @AuthenticationPrincipal UserDto.AuthUser authUser,
+            @RequestBody RefundDto.RefundRequestDto requestDto
+    ) {
+        RefundDto.RefundResponseDto response = orderService.refundPayment(requestDto, authUser.getIdx());
+        return BaseResponse.success("환불 성공");
     }
 }

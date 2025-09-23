@@ -7,33 +7,33 @@ import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.be17pickcook.common.BaseResponse;
 import org.example.be17pickcook.common.PageResponse;
 import org.example.be17pickcook.domain.cart.repository.CartsRepository;
-import org.example.be17pickcook.domain.order.model.OrderItem;
-import org.example.be17pickcook.domain.order.model.OrderStatus;
-import org.example.be17pickcook.domain.order.model.Orders;
-import org.example.be17pickcook.domain.order.model.OrderDto;
+import org.example.be17pickcook.domain.order.model.*;
 import org.example.be17pickcook.domain.order.repository.OrderItemRepository;
 import org.example.be17pickcook.domain.order.repository.OrderRepository;
-import org.example.be17pickcook.domain.product.model.Product;
-import org.example.be17pickcook.domain.product.model.ProductDto;
+import org.example.be17pickcook.domain.order.repository.RefundRepository;
 import org.example.be17pickcook.domain.review.repository.ReviewRepository;
+import org.example.be17pickcook.domain.order.model.PaymentClientJvmWrapperKt;
 import org.example.be17pickcook.domain.user.model.User;
 import org.example.be17pickcook.domain.user.model.UserDto;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
+import org.springframework.web.client.RestTemplate;
+
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -43,7 +43,9 @@ public class OrderService {
     private final OrderItemRepository orderItemRepository;
     private final CartsRepository cartsRepository;
     private final ReviewRepository reviewRepository;
+    private final RefundRepository refundRepository;
     private final EntityManager entityManager;
+    private final RestTemplate restTemplate;
 
 
     @Value("${portone.secret-key}")
@@ -270,5 +272,92 @@ public class OrderService {
                 .toList();
 
         return OrderDto.OrderDetailDto.fromEntity(order, orderItemsWithReview);
+    }
+
+
+    @Transactional
+    public RefundDto.RefundResponseDto refundPayment(RefundDto.RefundRequestDto requestDto, Integer userIdx) {
+
+        // Refund 엔티티 생성
+        Refund refund = requestDto.toEntity(userIdx);
+        refund.setStatus(RefundStatus.PENDING);
+        refundRepository.saveAndFlush(refund); // 최초 저장
+
+        try {
+            // 포트원 API 호출
+            String url = "https://api.portone.io/payments/" + requestDto.getPaymentId() + "/cancel";
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", "PortOne " + portoneSecretKey);
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            String body = buildRequestBody(requestDto);
+            HttpEntity<String> request = new HttpEntity<>(body, headers);
+
+            ResponseEntity<String> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.POST,
+                    request,
+                    String.class
+            );
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                Integer refundedAmount = requestDto.getAmount() != null
+                        ? requestDto.getAmount().intValue()
+                        : refund.getOrder().getTotal_price();
+
+                // Refund 상태 업데이트
+                refund.setStatus(RefundStatus.SUCCESS);
+                refund.setAmount(refundedAmount);
+                refundRepository.saveAndFlush(refund);
+
+                // OrderItem 상태 업데이트
+                Long orderId = requestDto.getOrderId();
+                Long productId = requestDto.getProductId();
+
+                Optional<OrderItem> orderItemOpt = orderItemRepository.findByOrderIdxAndProductId(orderId, productId);
+                if (orderItemOpt.isPresent()) {
+                    OrderItem orderItem = orderItemOpt.get();
+                    orderItem.setDeliveryStatus(DeliveryStatus.REFUNDED);
+                    orderItemRepository.save(orderItem);
+                } else {
+                    log.warn("환불 대상 OrderItem이 존재하지 않습니다. orderId={}, productId={}", orderId, productId);
+                }
+
+                return RefundDto.RefundResponseDto.success(requestDto.getPaymentId(), refundedAmount);
+
+            } else {
+                refund.setStatus(RefundStatus.FAILED);
+                refundRepository.saveAndFlush(refund);
+                return RefundDto.RefundResponseDto.fail(requestDto.getPaymentId());
+            }
+
+        } catch (Exception e) {
+            log.error("환불 요청 실패", e);
+            refund.setStatus(RefundStatus.FAILED);
+            refundRepository.saveAndFlush(refund);
+            return RefundDto.RefundResponseDto.fail(requestDto.getPaymentId());
+        }
+    }
+
+
+
+
+
+
+    /**
+     * 포트원 API Body 생성
+     */
+    private String buildRequestBody(RefundDto.RefundRequestDto dto) {
+        StringBuilder sb = new StringBuilder("{");
+        sb.append("\"reason\":\"").append(dto.getReason()).append("\"");
+        if (dto.getAmount() != null) {
+            sb.append(",\"amount\":").append(dto.getAmount());
+        }
+        if (dto.getCurrentCancellableAmount() != null) {
+            sb.append(",\"currentCancellableAmount\":").append(dto.getCurrentCancellableAmount());
+        }
+        sb.append("}");
+        return sb.toString();
     }
 }

@@ -32,4 +32,6 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
             @Param("productId") Long productId,
             @Param("orderId") Long orderId
     );
+
+    Optional<OrderItem> findByOrderIdxAndProductId(Long orderId, Long productId);
 }

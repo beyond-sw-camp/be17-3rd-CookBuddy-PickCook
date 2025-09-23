@@ -36,4 +36,8 @@ public class OrderItem extends BaseEntity {
     private Product product;
 
     public void setOrder(Orders order) { this.order = order; }
+
+    public void setDeliveryStatus(DeliveryStatus deliveryStatus) {
+        this.deliveryStatus = deliveryStatus;
+    }
 }
