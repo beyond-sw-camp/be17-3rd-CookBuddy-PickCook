@@ -145,6 +145,9 @@ public class ReviewDto {
         @Schema(description = "상품 ID", example = "10")
         private Long productId;
 
+        @Schema(description = "상품명", example = "맛있는 김치찌개")
+        private String productName; // 추가
+
         @Schema(description = "리뷰 내용", example = "배송도 빠르고 상품 상태도 좋았습니다.")
         private String content;
 
@@ -172,7 +175,6 @@ public class ReviewDto {
         @Schema(description = "이미지 개수", example = "2")
         private Integer imageCount;
 
-        // Entity -> Response 변환
         public static Response fromEntity(Review review, Integer currentUserId) {
             return Response.builder()
                     .reviewId(review.getReviewId())
@@ -191,18 +193,12 @@ public class ReviewDto {
                     .build();
         }
 
-        private static String formatDateTime(LocalDateTime dateTime) {
-            if (dateTime == null) return null;
-            return dateTime.format(DateTimeFormatter.ofPattern("yyyy.MM.dd"));
-        }
-
-        /**
-         * Entity를 Response로 변환 (currentUserId 포함)
-         */
+        // Entity -> Response 변환
         public static Response fromEntityWithUserContext(Review review, Integer currentUserId) {
             return Response.builder()
                     .reviewId(review.getReviewId())
                     .productId(review.getProduct().getId())
+                    .productName(review.getProduct().getTitle()) // 상품명 추가
                     .content(review.getContent())
                     .rating(review.getRating())
                     .author(AuthorInfo.fromUser(review.getUser()))
@@ -217,7 +213,16 @@ public class ReviewDto {
                     .imageCount(review.getImageCount())
                     .build();
         }
+
+        private static String formatDateTime(LocalDateTime dateTime) {
+            if (dateTime == null) return null;
+            return dateTime.format(DateTimeFormatter.ofPattern("yyyy.MM.dd"));
+        }
     }
+
+
+
+
 
     // =================================================================
     // 작성자 정보 DTO
